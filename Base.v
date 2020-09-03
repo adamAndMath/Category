@@ -17,3 +17,13 @@ Proof.
   now left.
   now right.
 Qed.
+
+Lemma eq_sig {T} {P: T -> Prop} (x y: sig P): x = y <-> proj1_sig x = proj1_sig y.
+Proof.
+  split; intros H.
+  now f_equal.
+  apply eq_sig_hprop.
+  intro.
+  apply proof_irrelevance.
+  exact H.
+Qed.

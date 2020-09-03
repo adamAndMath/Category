@@ -1,8 +1,9 @@
+Require Export Monad.
 Require Export Sets.Rel.
 Require Export Sets.Sets.
 
 Section ex1.
-Program Definition T: Sets ~~> Sets := {|
+Program Definition T: SET ~> SET := {|
   fobj := pow;
   fmap X Y f := setf_of (fun A => { map f x | x ⋴ A }) _;
 |}.
@@ -70,115 +71,164 @@ Next Obligation.
 Qed.
 
 Section ex2.
-Program Definition K: Category := {|
-  obj := Sets;
-  hom X Y := X ~> (T Y);
-  id X := setf_of single _;
-  comp X Y Z g f := setf_of (fun x => ∪ {map g y | y ⋴ map f x}) _;
-|}.
-Next Obligation.
+
+Definition T_lift: id SET ~> T.
+Proof.
+  unshelve econstructor; simpl.
+  intros X.
+  refine (setf_of single _).
+  intros x Hx.
   apply in_pow.
   intros z Hz.
   apply in_single in Hz.
-  now subst z.
-Qed.
-Next Obligation.
-  apply in_pow.
-  intros z Hz.
-  apply in_flat_map in Hz.
-  destruct Hz as [y [Hy Hz]].
-  apply (mapto f) in H.
-  apply in_pow in H.
-  apply H in Hy.
-  apply (mapto g) in Hy.
-  apply in_pow in Hy.
-  apply Hy, Hz.
-Qed.
-Next Obligation.
+  subst z.
+  exact Hx.
+  intros X Y f.
+  simpl.
   apply setf_eq.
   intros x Hx.
   rewrite !(map_ap _ _ Hx).
   simpl.
+  rewrite <- map_ap.
+  symmetry.
+  apply map_single.
+Defined.
+
+Definition T_flatten: T ∘ T ~> T.
+Proof.
+  unshelve econstructor; simpl.
+  intros X.
+  refine (setf_of union _).
+  intros x Hx.
+  apply in_pow.
+  intros z Hz.
+  apply in_union in Hz.
+  destruct Hz as [y [Hy Hz]].
+  apply in_pow in Hx.
+  apply Hx in Hy.
+  apply in_pow in Hy.
+  apply Hy, Hz.
+  intros X Y f.
+  simpl.
+  apply setf_eq.
+  intros x Hx.
+  rewrite !(map_ap _ _ Hx).
+  simpl.
+  apply in_pow in Hx.
   apply antisymmetry.
-  + intros z Hz.
-    apply in_flat_map in Hz.
+  all: intros z Hz.
+  + apply in_flat_map in Hz.
     destruct Hz as [y [Hy Hz]].
-    rewrite (map_ap _ _ Hx) in Hy.
-    simpl in Hy.
-    apply in_flat_map in Hy.
+    specialize (Hx _ Hy).
+    rewrite (map_ap _ _ Hx) in Hz.
+    simpl in Hz.
+    apply in_map in Hz.
+    destruct Hz as [p [Hp Hz]].
+    subst z.
+    apply in_map'.
+    apply in_union.
+    now exists y.
+  + apply in_map in Hz.
+    destruct Hz as [y [Hy Hz]].
+    subst z.
+    apply in_union in Hy.
+    destruct Hy as [z [Hz Hy]].
+    apply in_flat_map.
+    exists z.
+    split.
+    exact Hz.
+    apply Hx in Hz.
+    rewrite (map_ap _ _ Hz).
+    simpl.
+    apply in_map', Hy.
+Defined.
+
+Lemma T_flatten_comm (X: set): T_flatten X ∘ fmap T (T_flatten X) = T_flatten X ∘ T_flatten (T X).
+Proof.
+  apply setf_eq.
+  intros x Hx.
+  rewrite !(map_ap _ _ Hx).
+  simpl.
+  apply in_pow in Hx.
+  apply antisymmetry.
+  all: intros z Hz.
+  + apply in_flat_map in Hz.
+    destruct Hz as [y [Hy Hz]].
+    specialize (Hx _ Hy).
+    rewrite (map_ap _ _ Hx) in Hz.
+    simpl in Hz.
+    apply in_union in Hz.
+    destruct Hz as [v [Hv Hz]].
+    apply in_union.
+    exists v; split.
+    apply in_union.
+    exists y; split.
+    all: assumption.
+  + apply in_union in Hz.
+    destruct Hz as [y [Hy Hz]].
+    apply in_union in Hy.
     destruct Hy as [v [Hv Hy]].
     apply in_flat_map.
     exists v.
     split.
     exact Hv.
-    assert (v ∈ b).
-    apply (mapto h) in Hx.
-    apply in_pow in Hx.
-    apply Hx, Hv.
-    rewrite (map_ap _ _ H).
+    rewrite (map_ap _ _ (Hx v Hv)).
     simpl.
-    apply in_flat_map.
+    apply in_union.
     now exists y.
-  + intros z Hz.
-    apply in_flat_map in Hz.
-    destruct Hz as [y [Hy Hz]].
-    assert (y ∈ b).
-    apply (mapto h) in Hx.
-    apply in_pow in Hx.
-    apply Hx, Hy.
-    rewrite (map_ap _ _ H) in Hz.
-    apply in_flat_map in Hz.
-    destruct Hz as [v [Hv Hz]].
-    apply in_flat_map.
-    exists v.
-    split.
-    rewrite (map_ap _ _ Hx).
-    simpl.
-    apply in_flat_map.
-    now exists y.
-    exact Hz.
 Qed.
-Next Obligation.
-  apply setf_eq.
+
+Lemma T_flatten_lift_l (X: set): T_flatten X ∘ T_lift (T X) = id (T X).
+Proof.
+  apply setf_eq; simpl.
   intros x Hx.
-  rewrite (map_ap _ _ Hx).
+  rewrite !(map_ap _ _ Hx).
   simpl.
-  apply antisymmetry.
-  + intros z Hz.
-    apply in_flat_map in Hz.
-    destruct Hz as [y [Hy Hz]].
-    assert (y ∈ b).
-    apply (mapto f) in Hx.
-    apply in_pow in Hx.
-    apply Hx, Hy.
-    rewrite (map_ap _ _ H) in Hz.
-    simpl in Hz.
-    apply in_single in Hz.
-    now subst z.
-  + intros z Hz.
-    apply in_flat_map.
-    exists z.
-    split.
-    exact Hz.
-    assert (z ∈ b).
-    apply (mapto f) in Hx.
-    apply in_pow in Hx.
-    apply Hx, Hz.
-    rewrite (map_ap _ _ H).
-    now apply in_single.
-Qed.
-Next Obligation.
-  apply setf_eq.
-  intros x Hx.
-  rewrite (map_ap _ _ Hx).
-  simpl.
-  rewrite (map_ap _ _ Hx).
-  simpl.
-  rewrite map_single.
   apply union_single.
 Qed.
 
-Program Definition K_to_Rel: K ~~> Rel := {|
+Lemma T_flatten_lift_r (X: set): T_flatten X ∘ fmap T (T_lift X) = id (T X).
+Proof.
+  apply setf_eq; simpl.
+  intros x Hx.
+  rewrite !(map_ap _ _ Hx).
+  simpl.
+  apply in_pow in Hx.
+  apply antisymmetry.
+  all: intros z Hz.
+  + apply in_flat_map in Hz.
+    destruct Hz as [y [Hy Hz]].
+    rewrite (map_ap _ _ (Hx y Hy)) in Hz.
+    simpl in Hz.
+    apply in_single in Hz.
+    now subst z.
+  + apply in_flat_map.
+    exists z.
+    split.
+    exact Hz.
+    rewrite (map_ap _ _ (Hx z Hz)).
+    simpl.
+    now apply in_single.
+Qed.
+
+Definition T_monad_mixin: Monad.mixin_of T :=
+  Monad.Mixin SET T T_lift T_flatten T_flatten_comm T_flatten_lift_l T_flatten_lift_r.
+
+Global Canonical T_monad: Monad SET :=
+  Monad.Pack SET T T_monad_mixin.
+
+Definition K: Category := MCat T_monad.
+
+Lemma K_comp_correct {X Y Z: K} (g: Y ~> Z) (f: X ~> Y) x: x ∈ X -> map (g ∘ f) x = ∪ {map g y | y ⋴ map f x}.
+Proof.
+  intros Hx.
+  rewrite (map_ap _ _ Hx).
+  simpl.
+  rewrite <- map_ap.
+  reflexivity.
+Qed.
+
+Program Definition K_to_Rel: K ~> REL := {|
   fobj X := X;
   fmap X Y f x y := x ∈ X /\ y ∈ map f x;
 |}.
@@ -190,13 +240,7 @@ Next Obligation.
   apply H, H0.
 Qed.
 Next Obligation.
-  extensionality x.
-  extensionality y.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
-  simpl.
-  apply propositional_extensionality.
+  rel_eq x y.
   split.
   all: intros [Hx Hy].
   all: split; [exact Hx | ].
@@ -210,19 +254,14 @@ Next Obligation.
   now apply in_single.
 Qed.
 Next Obligation.
-  extensionality x.
-  extensionality z.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
-  simpl.
-  apply propositional_extensionality.
+  rel_eq x z.
   split.
   + intros [Hx Hz].
     rewrite (map_ap _ _ Hx) in Hz.
     simpl in Hz.
     apply in_flat_map in Hz.
     destruct Hz as [y [Hy Hz]].
+    rewrite <- map_ap in Hy.
     exists y.
     repeat split.
     apply (mapto g) in Hx.
@@ -235,10 +274,12 @@ Next Obligation.
     rewrite (map_ap _ _ Hx).
     simpl.
     apply in_flat_map.
-    now exists y.
+    exists y; split.
+    rewrite <- map_ap.
+    all: assumption.
 Qed.
 
-Program Definition Rel_to_K: Rel ~~> K := {|
+Program Definition Rel_to_K: REL ~> K := {|
   fobj X := X;
   fmap X Y f x := { y ⋴ Y | f x y};
 |}.
@@ -264,14 +305,9 @@ Next Obligation.
   1, 2: apply proj2_sig.
 Qed.
 Next Obligation.
-  extensionality x.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
-  simpl.
-  destruct x as [x Hx].
-  simpl.
-  rewrite (map_ap _ _ Hx).
+  apply setf_eq.
+  intros x Hx.
+  rewrite !(map_ap _ _ Hx).
   simpl.
   apply set_eq_ext.
   intros z.
@@ -279,7 +315,7 @@ Next Obligation.
   split.
   + intros [Hz [y [yz xy]]].
     assert (Hy: y ∈ b).
-    apply (proj2_sig (g x y)), xy.
+    apply (proj2_sig g x y xy).
     exists y.
     split.
     now apply in_sep.
@@ -297,100 +333,67 @@ Next Obligation.
     now exists y.
 Qed.
 
-Program Definition iso_KRel: @iso Cat K Rel := {|
-  to := K_to_Rel;
-  from := Rel_to_K;
-|}.
-Next Obligation.
-  apply fun_eq; simpl.
-  split; [easy | ].
-  intros X Y f ex ey.
+Lemma KRel_inv_l: Rel_to_K ∘ K_to_Rel = id K.
+Proof.
+  fun_eq.
   rewrite !eq_iso_refl.
-  clear ex ey.
+  unfold inv; simpl.
+  rewrite comp_id_r.
+  rewrite comp_id_l.
+  clear H2 H3.
+  rename H into X, H0 into Y, H1 into f.
   apply setf_eq.
   intros x Hx.
-  simpl.
   rewrite (map_ap _ _ Hx).
   simpl.
   apply antisymmetry.
-  + intros z Hz.
-    apply in_flat_map in Hz.
-    destruct Hz as [y [Hy Hz]].
-    rewrite (map_ap _ _ Hx) in Hy.
-    simpl in Hy.
-    apply in_single in Hy.
-    subst y.
-    rewrite (map_ap _ _ Hx) in Hz.
-    simpl in Hz.
-    apply in_flat_map in Hz.
-    destruct Hz as [y [Hy Hz]].
-    rewrite (map_ap _ _ Hx) in Hy.
-    simpl in Hy.
-    apply in_sep in Hy.
-    destruct Hy as [Hy [_ H]].
-    rewrite (map_ap _ _ Hy) in Hz.
-    simpl in Hz.
-    apply in_single in Hz.
-    now subst y.
-  + intros z Hz.
-    apply in_flat_map.
-    exists x.
-    split.
-    all: rewrite (map_ap _ _ Hx).
-    all: simpl.
-    now apply in_single.
-    apply in_flat_map.
-    assert (z ∈ Y).
+  all: intros z Hz.
+  + apply in_sep in Hz.
+    now destruct Hz as [_ [_ H]].
+  + apply in_sep.
+    repeat split.
     apply (mapto f) in Hx.
     apply in_pow in Hx.
     apply Hx, Hz.
-    exists z.
-    split.
-    rewrite (map_ap _ _ Hx).
-    simpl.
-    now apply in_sep.
-    rewrite (map_ap _ _ H).
-    simpl.
-    now apply in_single.
+    all: assumption.
 Qed.
-Next Obligation.
-  apply fun_eq; simpl.
-  split; [easy | ].
-  intros X Y f ex ey.
+
+Lemma KRel_inv_r: K_to_Rel ∘ Rel_to_K = id REL.
+Proof.
+  fun_eq.
   rewrite !eq_iso_refl.
-  clear ex ey.
-  extensionality x.
-  extensionality y.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
-  simpl.
-  apply propositional_extensionality.
+  unfold inv; simpl.
+  rewrite comp_id_r.
+  rewrite comp_id_l.
+  clear H2 H3.
+  rename H into X, H0 into Y, H1 into f.
+  rel_eq x y.
   split.
-  + intros [x' [[y' [[Hy Hy'] [_ H]]] [Hx Hx']]].
-    subst x' y'.
-    rewrite (map_ap _ _ Hx) in H.
-    simpl in H.
-    now apply in_sep in H.
+  + intros [Hx Hy].
+    rewrite (map_ap _ _ Hx) in Hy.
+    simpl in Hy.
+    now apply in_sep in Hy.
   + intros xy.
-    specialize (proj2_sig (f x y) xy) as [Hx Hy].
-    exists x.
-    repeat split.
-    exists y.
-    repeat split.
-    1, 2, 4: assumption.
+    specialize (proj2_sig f x y xy) as [Hx Hy].
+    split.
+    exact Hx.
     rewrite (map_ap _ _ Hx).
     simpl.
     now apply in_sep.
 Qed.
-End ex2.
+
+Definition iso_KRel_mixin: Isomorphism.mixin_of K_to_Rel :=
+  Isomorphism.Mixin Cat K REL K_to_Rel Rel_to_K KRel_inv_l KRel_inv_r.
+
+Definition iso_KRel: iso K REL :=
+  Isomorphism.Pack K_to_Rel iso_KRel_mixin.
 
 Section ex3.
 
-Lemma pi1_not_monic: ~forall A B: Sets, @monic Sets (A × B) A π₁.
+Lemma pi1_not_monic: ~forall A B: set, @monic SET (A × B) A π₁.
 Proof.
   unfold monic.
-  enough (exists (A B C: Sets) (g1 g2: C ~> A × B), @π₁ _ A B ∘ g1 = π₁ ∘ g2 /\ ~(g1 = g2)).
+  enough (exists (A B C: set) (g1 g2: C ~> A × B), @π₁ _ A B ∘ g1 = π₁ ∘ g2 /\ ~(g1 = g2)).
   destruct H as [A [B [C [g1 [g2 [H n]]]]]].
   contradict n.
   eapply n, H.
@@ -433,35 +436,14 @@ Proof.
   subst x.
   rewrite !intersect_pair.
   reflexivity.
-  unfold join; simpl; unfold set_join.
-  generalize (
-    (Sets.set_join_obligation_1 (single Ø) (single Ø) 
-     {Ø, single Ø} (fun x : {x : set | x ∈ single Ø} => x)
-     (setf_of (fun _ : set => Ø) HØ))
-  ) (
-    (Sets.set_join_obligation_1 (single Ø) (single Ø) 
-     {Ø, single Ø} (fun x : {x : set | x ∈ single Ø} => x)
-     (setf_of (fun _ : set => single Ø) Hs))
-  ).
-  intros H1 H2 H.
-  assert (forall x,
-    setf_of
-      (fun x : set =>
-       pair (map (fun x0 : {x0 : set | x0 ∈ single Ø} => x0) x)
-         (map (setf_of (fun _ : set => Ø) HØ) x)) H1 x =
-    setf_of
-      (fun x : set =>
-       pair (map (fun x0 : {x0 : set | x0 ∈ single Ø} => x0) x)
-         (map (setf_of (fun _ : set => single Ø) Hs) x)) H2 x
-
-  ).
-  now rewrite H.
-  clear H; rename H0 into H.
-  specialize (H (exist _ Ø (proj2 (in_single _ _) eq_refl))).
-  unfold setf_of in H; simpl in H.
-  apply eq_sig_fst in H.
-  clear - H.
-  rewrite !(map_ap _ _ (proj2 (in_single _ _) eq_refl)) in H.
+  intros H.
+  rewrite setf_eq in H.
+  assert (H0: Ø ∈ single Ø).
+  now apply in_single.
+  specialize (H Ø H0).
+  rewrite !(map_ap _ _ H0) in H.
+  simpl in H.
+  rewrite !(map_ap _ _ H0) in H.
   simpl in H.
   apply pair_inj, proj2 in H.
   symmetry in H.
@@ -469,10 +451,10 @@ Proof.
   apply single_not_empty.
 Qed.
 
-Lemma pi1_not_epic: ~forall A B: Sets, @epic Sets (A × B) A π₁.
+Lemma pi1_not_epic: ~forall A B: set, @epic SET (A × B) A π₁.
 Proof.
   unfold epic.
-  enough (exists (A B C: Sets) (g1 g2: A ~> C), g1 ∘ @π₁ _ A B = g2 ∘ π₁ /\ ~(g1 = g2)).
+  enough (exists (A B C: set) (g1 g2: A ~> C), g1 ∘ @π₁ _ A B = g2 ∘ π₁ /\ ~(g1 = g2)).
   destruct H as [A [B [C [g1 [g2 [H n]]]]]].
   contradict n.
   eapply n, H.
@@ -486,40 +468,30 @@ Proof.
   now right.
   simpl.
   split.
-  extensionality x.
-  destruct x as [x Hx].
+  apply setf_eq.
+  intros x Hx.
+  rewrite !(map_ap _ _ Hx).
+  simpl.
   apply in_cartisian in Hx.
-  destruct Hx as [_ [y [_ [Hy _]]]].
-  now apply in_empty in Hy.
-  intros H.
-  cut (forall x,
-    (fun _ : {x : set | x ∈ single Ø} =>
-     exist (fun y : set => y ∈ {Ø, single Ø}) Ø
-       (match in_upair Ø Ø (single Ø) with
-        | conj _ x => x
-        end (or_introl eq_refl))) x =
-    (fun _ : {x : set | x ∈ single Ø} =>
-     exist (fun y : set => y ∈ {Ø, single Ø}) (single Ø)
-       (match in_upair (single Ø) Ø (single Ø) with
-        | conj _ x => x
-        end (or_intror eq_refl))) x
-  ).
-  2: now rewrite H.
-  clear H; intro H.
-  assert (Ø ∈ single Ø).
-  now apply in_single.
-  specialize (H (exist _ Ø H0)).
-  simpl in H.
-  apply eq_sig_fst in H.
-  rewrite <- set_eq_ext in H.
-  generalize (proj2 (H Ø) H0).
+  destruct Hx as [_ [z [_ [Hz _]]]].
+  contradict Hz.
   apply in_empty.
+  intros H.
+  rewrite setf_eq in H.
+  assert (HØ: Ø ∈ single Ø).
+  now apply in_single.
+  specialize (H Ø HØ).
+  rewrite !(map_ap _ _ HØ) in H.
+  simpl in H.
+  symmetry in H.
+  contradict H.
+  apply single_not_empty.
 Qed.
 
 Lemma join_pi_id {C: ProdCategory} {a b: C}: ⟨π₁, π₂⟩ = @id C (a × b).
 Proof.
-  rewrite <- (join_pi (id C)).
-  f_equiv.
+  rewrite <- (join_pi (id (a × b))).
+  f_equal.
   all: symmetry.
   all: apply comp_id_r.
 Qed.

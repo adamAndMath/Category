@@ -1,20 +1,25 @@
 Require Export Structure.
 Require Export Basic.
 
-Program Definition Sets: Category := {|
-  obj := set;
-  hom X Y := {x: set | x ∈ X} -> {y: set | y ∈ Y};
-  id X x := x;
-  comp X Y Z f g x := f (g x);
-|}.
+Definition SET_mixin: Category.mixin_of set :=
+  Category.Mixin
+    set
+    (fun X Y: set => {x: set | x ∈ X} -> {y: set | y ∈ Y})
+    (fun _ x => x)
+    (fun _ _ _ f g x => f (g x))
+    (fun _ _ _ _ _ _ _ => eq_refl)
+    (fun _ _ _ => eq_refl)
+    (fun _ _ _ => eq_refl).
 
-Definition map {X Y: Sets} (f: X ~> Y) (x: set): set :=
+Canonical SET: Category := Category.Pack set SET_mixin.
+
+Definition map {X Y: set} (f: X ~> Y) (x: set): set :=
   match dec (x ∈ X) with
   | left Hx => proj1_sig (f (exist _ x Hx))
   | right _ => Ø
   end.
 
-Theorem mapto {X Y: Sets} (f: X ~> Y) (x: set): x ∈ X -> map f x ∈ Y.
+Theorem mapto {X Y: set} (f: X ~> Y) (x: set): x ∈ X -> map f x ∈ Y.
 Proof.
   intros H.
   unfold map.
@@ -23,10 +28,10 @@ Proof.
   contradiction.
 Qed.
 
-Definition setf_of {X Y: Sets} (map: set -> set) (mapto: forall x, x ∈ X -> map x ∈ Y): X ~> Y :=
+Definition setf_of {X Y: set} (map: set -> set) (mapto: forall x, x ∈ X -> map x ∈ Y): X ~> Y :=
   fun p => exist _ (map (proj1_sig p)) (mapto (proj1_sig p) (proj2_sig p)).
 
-Theorem map_ap {X Y: Sets} (f: X ~> Y) (x: set) (Hx: x ∈ X): map f x = proj1_sig (f (exist _ x Hx)).
+Theorem map_ap {X Y: set} (f: X ~> Y) (x: set) (Hx: x ∈ X): map f x = proj1_sig (f (exist _ x Hx)).
 Proof.
   unfold map.
   destruct (dec (x ∈ X)).
@@ -35,7 +40,7 @@ Proof.
   contradiction.
 Qed.
 
-Theorem setf_eta {X Y: Sets} (f: X ~> Y): f = setf_of (map f) (mapto f).
+Theorem setf_eta {X Y: set} (f: X ~> Y): f = setf_of (map f) (mapto f).
 Proof.
   extensionality x.
   destruct x as [x Hx].
@@ -47,7 +52,7 @@ Proof.
   apply map_ap.
 Qed.
 
-Theorem setf_eq {X Y: Sets} (f g: X ~> Y): f = g <-> (forall x, x ∈ X -> map f x = map g x).
+Theorem setf_eq {X Y: set} (f g: X ~> Y): f = g <-> (forall x, x ∈ X -> map f x = map g x).
 Proof.
   split.
   intros fg x Hx.
@@ -62,7 +67,7 @@ Proof.
   apply H, proj2_sig.
 Qed.
 
-Program Definition set_join {A B C: Sets} (f: A ~> B) (g: A ~> C): A ~> cartisian B C :=
+Program Definition set_join {A B C: set} (f: A ~> B) (g: A ~> C): A ~> cartisian B C :=
   setf_of (fun x => pair (map f x) (map g x)) _.
 Next Obligation.
   apply in_cartisian.
@@ -72,7 +77,7 @@ Next Obligation.
   apply mapto, H.
 Qed.
 
-Program Definition set_pi1 {A B: Sets}: (cartisian A B: Sets) ~> A :=
+Program Definition set_pi1 {A B: set}: (cartisian A B: set) ~> A :=
   setf_of (fun p => ∪ ∩ p) _.
 Next Obligation.
   apply in_cartisian in H.
@@ -83,7 +88,7 @@ Next Obligation.
   exact Ha.
 Qed.
 
-Program Definition set_pi2 {A B: Sets}: (cartisian A B: Sets) ~> B :=
+Program Definition set_pi2 {A B: set}: (cartisian A B: set) ~> B :=
   setf_of (fun p => (∪ ∪ p) \ (∪ ∩ p) ∪ (∩ ∪ p)) _.
 Next Obligation.
   apply in_cartisian in H.
@@ -131,7 +136,7 @@ Next Obligation.
       now right.
 Qed.
 
-Lemma set_pi1_join (A B C: Sets) (f: A ~> B) (g: A ~> C): set_pi1 ∘ set_join f g = f.
+Lemma set_pi1_join (A B C: set) (f: A ~> B) (g: A ~> C): set_pi1 ∘ set_join f g = f.
 Proof.
   apply setf_eq.
   intros a Ha.
@@ -142,7 +147,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma set_pi2_join (A B C: Sets) (f: A ~> B) (g: A ~> C): set_pi2 ∘ set_join f g = g.
+Lemma set_pi2_join (A B C: set) (f: A ~> B) (g: A ~> C): set_pi2 ∘ set_join f g = g.
 Proof.
   apply setf_eq.
   intros a Ha.
@@ -176,7 +181,7 @@ Proof.
     exact H.
 Qed.
 
-Lemma set_join_pi (A B C: Sets) (f: A ~> cartisian B C): set_join (set_pi1 ∘ f) (set_pi2 ∘ f) = f.
+Lemma set_join_pi (A B C: set) (f: A ~> cartisian B C): set_join (set_pi1 ∘ f) (set_pi2 ∘ f) = f.
 Proof.
   apply setf_eq.
   intros a Ha.
@@ -219,21 +224,21 @@ Proof.
 Qed.
 
 Definition setprod_mixin :=
-  ProdCategory.Mixin Sets cartisian (@set_join) (@set_pi1) (@set_pi2) set_pi1_join set_pi2_join set_join_pi.
+  ProdCategory.Mixin SET cartisian (@set_join) (@set_pi1) (@set_pi2) set_pi1_join set_pi2_join set_join_pi.
 
-Canonical setprod := ProdCategory.Pack Sets setprod_mixin.
+Canonical setprod := ProdCategory.Pack SET setprod_mixin.
 
-Definition set_one: Sets := single Ø.
-Program Definition set_to_one {A: Sets}: A ~> set_one :=
+Definition set_one: set := single Ø.
+Program Definition set_to_one {A: set}: A ~> set_one :=
   setf_of (fun _ => Ø) _.
 Next Obligation.
   now apply in_single.
 Qed.
 
-Lemma set_to_one_comp {A B: Sets} (f: A ~> B): set_to_one ∘ f = set_to_one.
+Lemma set_to_one_comp {A B: set} (f: A ~> B): set_to_one ∘ f = set_to_one.
 Proof. now apply setf_eq. Qed.
 
-Lemma set_one_to_one: set_to_one = id Sets.
+Lemma set_one_to_one: set_to_one = id set_one.
 Proof.
   apply setf_eq.
   intros x Hx.
@@ -244,6 +249,6 @@ Proof.
 Qed.
 
 Definition settop_mixin :=
-  TopCategory.Mixin Sets set_one (@set_to_one) (@set_to_one_comp) set_one_to_one.
+  TopCategory.Mixin SET set_one (@set_to_one) (@set_to_one_comp) set_one_to_one.
 
-Canonical settop := TopCategory.Pack Sets settop_mixin.
+Canonical settop := TopCategory.Pack SET settop_mixin.

@@ -64,11 +64,9 @@ Next Obligation.
   rewrite !(map_ap _ _ Hx).
   rewrite (map_ap _ _ Hg).
   do 2 f_equal.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
-  reflexivity.
+  now apply eq_sig.
 Qed.
+End ex1.
 
 Section ex2.
 
@@ -290,9 +288,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   extensionality x.
-  apply eq_sig_hprop.
-  intro.
-  apply proof_irrelevance.
+  apply eq_sig.
   simpl.
   apply set_eq_ext.
   intros y.
@@ -335,13 +331,12 @@ Qed.
 
 Lemma KRel_inv_l: Rel_to_K ∘ K_to_Rel = id K.
 Proof.
-  fun_eq.
+  fun_eq X Y f.
   rewrite !eq_iso_refl.
   unfold inv; simpl.
   rewrite comp_id_r.
   rewrite comp_id_l.
-  clear H2 H3.
-  rename H into X, H0 into Y, H1 into f.
+  clear H H0.
   apply setf_eq.
   intros x Hx.
   rewrite (map_ap _ _ Hx).
@@ -360,13 +355,12 @@ Qed.
 
 Lemma KRel_inv_r: K_to_Rel ∘ Rel_to_K = id REL.
 Proof.
-  fun_eq.
+  fun_eq X Y f.
   rewrite !eq_iso_refl.
   unfold inv; simpl.
   rewrite comp_id_r.
   rewrite comp_id_l.
-  clear H2 H3.
-  rename H into X, H0 into Y, H1 into f.
+  clear H H0.
   rel_eq x y.
   split.
   + intros [Hx Hy].
@@ -387,6 +381,7 @@ Definition iso_KRel_mixin: Isomorphism.mixin_of K_to_Rel :=
 
 Definition iso_KRel: iso K REL :=
   Isomorphism.Pack K_to_Rel iso_KRel_mixin.
+End ex2.
 
 Section ex3.
 
@@ -402,7 +397,7 @@ Proof.
   exists (single Ø).
   1: unshelve eexists.
   2: unshelve eexists.
-  1, 2: apply join.
+  1, 2: apply fork.
   1, 3: apply id.
   1: refine (setf_of (fun _ => Ø) _).
   2: refine (setf_of (fun _ => single Ø) _).
@@ -488,22 +483,22 @@ Proof.
   apply single_not_empty.
 Qed.
 
-Lemma join_pi_id {C: ProdCategory} {a b: C}: ⟨π₁, π₂⟩ = @id C (a × b).
+Lemma fork_pi_id {C: ProdCategory} {a b: C}: ⟨π₁, π₂⟩ = @id C (a × b).
 Proof.
-  rewrite <- (join_pi (id (a × b))).
+  rewrite <- (fork_eta (id (a × b))).
   f_equal.
   all: symmetry.
   all: apply comp_id_r.
 Qed.
 
-Lemma comp_join {C: ProdCategory} {a b c d: C} (f : b ~> c) (g: b ~> d) (h: a ~> b):
+Lemma comp_fork {C: ProdCategory} {a b c d: C} (f : b ~> c) (g: b ~> d) (h: a ~> b):
   ⟨f, g⟩ ∘ h = ⟨f ∘ h, g ∘ h⟩.
 Proof.
-  rewrite <- (join_pi _).
+  rewrite <- (fork_eta _).
   f_equal.
   all: rewrite comp_assoc.
-  now rewrite pi1_join.
-  now rewrite pi2_join.
+  now rewrite pi1_fork.
+  now rewrite pi2_fork.
 Qed.
 
 Definition lift {C: ProdCategory} {a b c d: C} (f: a ~> c) (g: b ~> d): a × b ~> c × d :=
@@ -513,12 +508,12 @@ Lemma lift_correct {C: ProdCategory} {a b c d e: C} (f: b ~> d) (g: c ~> e) (h1:
   lift f g ∘ ⟨h1, h2⟩ = ⟨f ∘ h1, g ∘ h2⟩.
 Proof.
   unfold lift.
-  rewrite comp_join.
+  rewrite comp_fork.
   f_equiv.
   all: rewrite <- comp_assoc.
   all: f_equiv.
-  apply pi1_join.
-  apply pi2_join.
+  apply pi1_fork.
+  apply pi2_fork.
 Qed.
 
 Lemma lift_unique {C: ProdCategory} {a b c d: C} (f: a ~> c) (g: b ~> d) (u: a × b ~> c × d):
@@ -530,19 +525,19 @@ Proof.
   rewrite <- H.
   rewrite <- (comp_id_r u) at 2.
   f_equiv.
-  apply join_pi_id.
+  apply fork_pi_id.
 Qed.
 
 Lemma lift_comp {C: ProdCategory} {a1 a2 b1 b2 c1 c2: C} (f1: a1 ~> b1) (f2: a2 ~> b2) (g1: b1 ~> c1) (g2: b2 ~> c2):
   lift g1 g2 ∘ lift f1 f2 = lift (g1 ∘ f1) (g2 ∘ f2).
 Proof.
   unfold lift.
-  rewrite comp_join.
+  rewrite comp_fork.
   f_equiv.
   all: rewrite <- !comp_assoc.
   all: f_equiv.
-  apply pi1_join.
-  apply pi2_join.
+  apply pi1_fork.
+  apply pi2_fork.
 Qed.
 
 End ex3.

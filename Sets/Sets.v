@@ -1,5 +1,5 @@
 Require Export Structure.
-Require Export Basic.
+Require Export Sets.Basic.
 
 Definition SET_mixin: Category.mixin_of set :=
   Category.Mixin
@@ -67,7 +67,7 @@ Proof.
   apply H, proj2_sig.
 Qed.
 
-Program Definition set_join {A B C: set} (f: A ~> B) (g: A ~> C): A ~> cartisian B C :=
+Program Definition set_fork {A B C: set} (f: A ~> B) (g: A ~> C): A ~> cartisian B C :=
   setf_of (fun x => pair (map f x) (map g x)) _.
 Next Obligation.
   apply in_cartisian.
@@ -136,95 +136,91 @@ Next Obligation.
       now right.
 Qed.
 
-Lemma set_pi1_join (A B C: set) (f: A ~> B) (g: A ~> C): set_pi1 ∘ set_join f g = f.
+Lemma set_fork_pi (A B C: set) (f: A ~> B) (g: A ~> C) (h: A ~> cartisian B C): h = set_fork f g <-> set_pi1 ∘ h = f /\ set_pi2 ∘ h = g.
 Proof.
-  apply setf_eq.
-  intros a Ha.
-  rewrite (map_ap _ _ Ha).
-  simpl.
-  rewrite intersect_pair.
-  rewrite union_single.
-  reflexivity.
-Qed.
-
-Lemma set_pi2_join (A B C: set) (f: A ~> B) (g: A ~> C): set_pi2 ∘ set_join f g = g.
-Proof.
-  apply setf_eq.
-  intros a Ha.
-  rewrite (map_ap _ _ Ha).
-  simpl.
-  rewrite union_pair, intersect_pair.
-  rewrite union_single.
-  apply set_eq_ext.
-  intros z.
-  rewrite in_binunion, in_diff.
-  rewrite in_union, in_intersect.
-  2: apply upair_not_empty.
-  setoid_rewrite in_upair.
   split.
-  + intros [[[y [[Hy | Hy] Hz]] H] | H].
-    1, 2: subst y.
-    contradiction.
-    exact Hz.
-    apply H.
-    now right.
-  + intros Hz.
-    destruct (classic (z ∈ map f a)).
-    all: [> right | left].
-    intros x [Hx | Hx].
-    1, 2: now subst x.
+  + intros H.
+    subst h.
     split.
-    exists (map g a).
+    all: apply setf_eq.
+    all: intros a Ha.
+    all: rewrite (map_ap _ _ Ha).
+    all: simpl.
+    rewrite intersect_pair.
+    rewrite union_single.
+    reflexivity.
+    rewrite union_pair, intersect_pair.
+    rewrite union_single.
+    apply set_eq_ext.
+    intros z.
+    rewrite in_binunion, in_diff.
+    rewrite in_union, in_intersect.
+    2: apply upair_not_empty.
+    setoid_rewrite in_upair.
     split.
-    now right.
-    exact Hz.
-    exact H.
-Qed.
-
-Lemma set_join_pi (A B C: set) (f: A ~> cartisian B C): set_join (set_pi1 ∘ f) (set_pi2 ∘ f) = f.
-Proof.
-  apply setf_eq.
-  intros a Ha.
-  rewrite (map_ap _ _ Ha).
-  simpl.
-  do 2 rewrite (map_ap _ _ Ha).
-  simpl.
-  rewrite <- map_ap.
-  specialize (mapto f a Ha) as Hf.
-  apply in_cartisian in Hf.
-  destruct Hf as [b [c [Hb [Hc Hf]]]].
-  rewrite Hf.
-  rewrite union_pair, intersect_pair.
-  rewrite union_single.
-  f_equal.
-  apply set_eq_ext.
-  intros z.
-  rewrite in_binunion, in_diff.
-  rewrite in_union, in_intersect.
-  2: apply upair_not_empty.
-  setoid_rewrite in_upair.
-  split.
-  + intros [[[y [[Hy | Hy] Hz]] H] | H].
-    1, 2: subst y.
-    contradiction.
-    exact Hz.
-    apply H.
-    now right.
-  + intros Hz.
-    destruct (classic (z ∈ b)).
-    all: [> right | left].
-    intros x [Hx | Hx].
-    1, 2: now subst x.
+    - intros [[[y [[Hy | Hy] Hz]] H] | H].
+      1, 2: subst y.
+      contradiction.
+      exact Hz.
+      apply H.
+      now right.
+    - intros Hz.
+      destruct (classic (z ∈ map f a)).
+      all: [> right | left].
+      intros x [Hx | Hx].
+      1, 2: now subst x.
+      split.
+      exists (map g a).
+      split.
+      now right.
+      exact Hz.
+      exact H.
+  + intros [Hf Hg].
+    subst f g.
+    rename h into f.
+    symmetry.
+    apply setf_eq.
+    intros a Ha.
+    rewrite (map_ap _ _ Ha).
+    simpl.
+    do 2 rewrite (map_ap _ _ Ha).
+    simpl.
+    rewrite <- map_ap.
+    specialize (mapto f a Ha) as Hf.
+    apply in_cartisian in Hf.
+    destruct Hf as [b [c [Hb [Hc Hf]]]].
+    rewrite Hf.
+    rewrite union_pair, intersect_pair.
+    rewrite union_single.
+    f_equal.
+    apply set_eq_ext.
+    intros z.
+    rewrite in_binunion, in_diff.
+    rewrite in_union, in_intersect.
+    2: apply upair_not_empty.
+    setoid_rewrite in_upair.
     split.
-    exists c.
-    split.
-    now right.
-    exact Hz.
-    exact H.
+    - intros [[[y [[Hy | Hy] Hz]] H] | H].
+      1, 2: subst y.
+      contradiction.
+      exact Hz.
+      apply H.
+      now right.
+    - intros Hz.
+      destruct (classic (z ∈ b)).
+      all: [> right | left].
+      intros x [Hx | Hx].
+      1, 2: now subst x.
+      split.
+      exists c.
+      split.
+      now right.
+      exact Hz.
+      exact H.
 Qed.
 
 Definition setprod_mixin :=
-  ProdCategory.Mixin SET cartisian (@set_join) (@set_pi1) (@set_pi2) set_pi1_join set_pi2_join set_join_pi.
+  ProdCategory.Mixin SET cartisian (@set_fork) (@set_pi1) (@set_pi2) set_fork_pi.
 
 Canonical setprod := ProdCategory.Pack SET setprod_mixin.
 
@@ -235,20 +231,17 @@ Next Obligation.
   now apply in_single.
 Qed.
 
-Lemma set_to_one_comp {A B: set} (f: A ~> B): set_to_one ∘ f = set_to_one.
-Proof. now apply setf_eq. Qed.
-
-Lemma set_one_to_one: set_to_one = id set_one.
+Lemma set_to_one_unique {A: set} (f: A ~> set_one): set_to_one = f.
 Proof.
   apply setf_eq.
   intros x Hx.
-  rewrite !(map_ap _ _ Hx).
-  simpl.
-  symmetry.
-  apply in_single, Hx.
-Qed.
+  transitivity Ø.
+  2: symmetry.
+  all: apply in_single.
+  all: apply mapto, Hx.
+Qed. 
 
 Definition settop_mixin :=
-  TopCategory.Mixin SET set_one (@set_to_one) (@set_to_one_comp) set_one_to_one.
+  TopCategory.Mixin SET set_one (@set_to_one) (@set_to_one_unique).
 
 Canonical settop := TopCategory.Pack SET settop_mixin.

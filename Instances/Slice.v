@@ -68,7 +68,15 @@ Canonical cat: Category :=
 
 End category.
 
+Arguments dom {C c} _.
+Arguments oarr {C c} _.
+Arguments arr {C c f g} _.
+Arguments comm {C c f g} _.
+
 End Slice.
 
 Notation Slice := Slice.cat.
 Infix "/" := Slice.
+
+Definition Coslice (C: Category) (c: C) := co (co C / c).
+Infix "\" := Coslice (at level 40, left associativity).

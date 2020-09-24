@@ -265,3 +265,10 @@ Theorem iso_co {C: Category} (x y: C): (x: co C) ≃ y <-> x ≃ y.
     constructor.
     apply co_iso, i.
 Qed.
+
+Lemma is_eq_co {C: Category} {x y: C} (f: x ~> y): is_eq f -> is_eq (f: (y: co C) ~> x).
+Proof.
+  intros [e H].
+  subst f y.
+  exact is_eq_id.
+Qed.

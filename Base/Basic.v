@@ -6,6 +6,7 @@ Require Export Coq.Classes.Morphisms.
 Require Export Coq.Program.Basics.
 Require Export Coq.Program.Tactics.
 Global Set Universe Polymorphism.
+Global Set Polymorphic Inductive Cumulativity.
 
 Lemma dec (P: Prop): {P} + {~P}.
 Proof.

@@ -112,7 +112,7 @@ Proof.
   rewrite cof_inv_r in H.
   exact H.
 Qed.
-
+(*
 Lemma parallel_limit_ex_co {C: Category} (F: co Parallel ~> C): limit_ex F <-> limit_ex (F ∘ Parallel.dual).
 Proof.
   rewrite !limit_ex_alt.
@@ -151,9 +151,12 @@ Proof.
       simpl in Hu.
 
 Lemma parallel_limit_co {C: Category} (F: co Parallel ~> C) (l: C) (η: Δ l ~> F): is_limit F (cone_nat l η) <-> is_limit (F ∘ Parallel.dual) (cone_nat l (eq__)).
-
+*)
 Definition is_lim {D C: Category} (F: Fun D C ~> C) := Δ -| F.
 Definition ex_lim (D C: Category) := exists F: Fun D C ~> C, is_lim F.
+
+Definition is_colim {D C: Category} (F: Fun D C ~> C) := F -| Δ.
+Definition ex_colim (D C: Category) := exists F: Fun D C ~> C, is_colim F.
 
 Lemma ex_lim_correct (D C: Category): ex_lim D C -> has_limit D C.
 Proof.
@@ -182,6 +185,44 @@ Proof.
     rewrite adj2.
     apply comp_id_l.
 Qed.
+
+(*Lemma ex_colim_correct (D C: Category): ex_colim D C -> has_colimit D C.
+Proof.
+  intros [L [ɛ [η adj]]] F.
+  apply adjoint_by_alt in adj.
+  destruct adj as [adj1 adj2].
+  apply limit_ex_alt.
+  exists (L F).
+  unshelve eexists.
+  set (η F).
+  simpl in h |- *.
+  change (F ~> _) with (F ~> Δ (L F)) in h.
+  change (Δ (L F) ~> cof F).
+  unshelve eexists.
+  simpl.
+  exact (fun x => η (Δ x)).
+
+  exists (L F), (η F).
+  intros n ϵ.
+  exists (fmap L ϵ ∘ η n).
+  split.
+  + rewrite fmap_comp, comp_assoc.
+    change (ɛ F ∘ fmap (Δ ∘ L) ϵ ∘ fmap Δ (η n) = ϵ).
+    rewrite naturality.
+    simpl fmap at 1.
+    rewrite <- comp_assoc.
+    rewrite adj1.
+    apply comp_id_r.
+  + intros f Hf.
+    subst ϵ.
+    rewrite fmap_comp.
+    change (fmap L (ɛ F) ∘ fmap (L ∘ Δ) f ∘ η n = f).
+    rewrite <- comp_assoc.
+    setoid_rewrite <- (naturality η f).
+    rewrite comp_assoc.
+    rewrite adj2.
+    apply comp_id_l.
+Qed.*)
 
 (*Instance ex_lim_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) ex_lim.
 Proof.

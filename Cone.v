@@ -78,6 +78,14 @@ Definition Cones_mixin {S T: Category} (F: S ~> T): Category.mixin_of (Cone F) :
 Canonical Cones {S T: Category} (F: S ~> T): Category :=
   Category.Pack (Cone F) (Cones_mixin F).
 
+Lemma mediator_is_eq {S T: Category} {F: S ~> T} {x y: Cone F} (f: x ~> y): is_eq f -> is_eq (mediator f).
+Proof.
+  intros [e H].
+  subst f y.
+  simpl.
+  apply is_eq_id.
+Qed.
+
 Definition nat_cone {S T: Category} {F: S ~> T} (c: Cone F): Δ (vertex c) ~> F := {|
   transform := edge c: forall x, Δ (vertex c) x ~> F x;
   naturality x y f := eq_trans (comp_id_r _) (eq_sym (edge_comm c f));

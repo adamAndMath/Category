@@ -19,9 +19,15 @@ Instances/Cat/Initial.v
 Instances/Cat/Product.v
 Instances/Cat/Coproduct.v
 Instances/Cat.v
+Instances/Typ.v
 Instances/Poset.v
 Instances/Arrow.v
 Instances/Slice.v
+Instances/Comma.v
+Instances/Comma/Slice.v
+Instances/Comma/Arrow.v
+Instances/Comma/Cone.v
+Instances/Comma/Adjoint.v
 Instances.v
 Monad.v
 Sets/Basic.v

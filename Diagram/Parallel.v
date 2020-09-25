@@ -128,6 +128,12 @@ Definition dual_mixin: Isomorphism.mixin_of dual_to :=
 Definition dual: cat <~> co cat :=
   Isomorphism.Pack dual_to dual_mixin.
 
+Lemma dual_iso: cat ≃ co cat.
+Proof.
+  constructor.
+  exact dual.
+Qed.
+
 End Parallel.
 
 Notation Parallel := Parallel.cat.

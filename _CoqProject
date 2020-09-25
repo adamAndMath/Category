@@ -9,6 +9,7 @@ Base.v
 Cone.v
 Limit.v
 Diagram/Parallel.v
+Diagram/DArrow.v
 Structure/Terminal.v
 Structure/Initial.v
 Structure/Product.v

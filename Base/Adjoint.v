@@ -14,40 +14,12 @@ Proof.
   all: etransitivity.
   1, 3: apply natural_eq.
   all: simpl.
-  all: change (from ?i) with (to i⁻¹).
   all: split.
   all: intros H x.
   all: specialize (H x).
-  + rewrite (is_eq_refl (to (α F G F) x)), comp_id_r in H.
-    rewrite H.
-    apply is_eq_refl.
-    apply is_eq_comp.
-    apply (transform_is_eq (λ F)), unitor_l_is_eq.
-    apply (transform_is_eq (ρ F)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α F G F)), associator_is_eq.
-  + rewrite (is_eq_refl (to (α F G F) x)), comp_id_r.
-    rewrite H.
-    symmetry.
-    apply is_eq_refl.
-    apply is_eq_comp.
-    apply (transform_is_eq (λ F)), unitor_l_is_eq.
-    apply (transform_is_eq (ρ F)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α F G F)), associator_is_eq.
-  + rewrite (is_eq_refl (to (α G F G)⁻¹ x)), comp_id_r in H.
-    rewrite H.
-    apply is_eq_refl.
-    apply is_eq_comp.
-    apply (transform_is_eq (λ G)), unitor_l_is_eq.
-    apply (transform_is_eq (ρ G)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α G F G)⁻¹), is_eq_inv, associator_is_eq.
-  + rewrite (is_eq_refl (to (α G F G)⁻¹ x)), comp_id_r.
-    rewrite H.
-    symmetry.
-    apply is_eq_refl.
-    apply is_eq_comp.
-    apply (transform_is_eq (λ G)), unitor_l_is_eq.
-    apply (transform_is_eq (ρ G)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α G F G)⁻¹), is_eq_inv, associator_is_eq.
+  1, 3: rewrite !comp_id_r in H.
+  3, 4: rewrite !comp_id_r.
+  all: exact H.
 Qed.
 
 Definition adjoint {C D: Category} (F: D ~> C) (G: C ~> D) :=
@@ -87,43 +59,26 @@ Proof.
   ].
   + intros x.
     simpl.
-    rewrite (is_eq_refl (to (ρ F') (G' (F' (F x))))), comp_id_l.
-    rewrite (is_eq_refl (from (α F' F G) (G' (F' (F x))))), comp_id_r.
-    rewrite (is_eq_refl (to (α (F' ∘ F) G G') (F' (F x)))), comp_id_r.
-    rewrite (is_eq_refl (from (α (G ∘ G') F' F) x)), comp_id_l.
-    rewrite (is_eq_refl (to (α G G' F') (F x))), comp_id_l.
-    rewrite (is_eq_refl (from (ρ G) (F x))), comp_id_r.
+    rewrite !comp_id_l, !comp_id_r.
     rewrite <- adj'.
     rewrite <- comp_assoc.
-    f_equiv.
+    f_equal.
     rewrite <- fmap_comp.
-    f_equiv.
+    f_equal.
     rewrite fmap_comp, comp_assoc.
     change (ɛ ((G' ∘ F') (F x)) ∘ fmap (F ∘ G) (η' (F x)) ∘ fmap F (η x) = η' (F x)).
     rewrite (naturality ɛ (η' (F x))).
     rewrite <- comp_assoc.
     rewrite adj.
     apply comp_id_r.
-    all: change (from ?i) with (to i⁻¹).
-    apply (transform_is_eq (ρ G)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α G G' F')), associator_is_eq.
-    apply (transform_is_eq (α (G ∘ G') F' F)⁻¹), is_eq_inv, associator_is_eq.
-    apply (transform_is_eq (α (F' ∘ F) G G')), associator_is_eq.
-    apply (transform_is_eq (α F' F G)⁻¹), is_eq_inv, associator_is_eq.
-    apply (transform_is_eq (ρ F')), unitor_r_is_eq.
   + intros x.
     simpl.
-    rewrite (is_eq_refl (to (ρ F') (G' x))), comp_id_l.
-    rewrite (is_eq_refl (from (α F' F G) (G' x))), comp_id_r.
-    rewrite (is_eq_refl (to (α (F' ∘ F) G G') x)), comp_id_r.
-    rewrite (is_eq_refl (from (α (G ∘ G') F' F) (G (G' x)))), comp_id_l.
-    rewrite (is_eq_refl (to (α G G' F') (F (G (G' x))))), comp_id_l.
-    rewrite (is_eq_refl (from (ρ G) (F (G (G' x))))), comp_id_r.
+    rewrite !comp_id_l, !comp_id_r.
     rewrite <- adj.
     rewrite comp_assoc.
-    f_equiv.
+    f_equal.
     rewrite <- fmap_comp.
-    f_equiv.
+    f_equal.
     rewrite fmap_comp, <- comp_assoc.
     change (fmap G' (ɛ' x) ∘ (fmap (G' ∘ F') (ɛ (G' x)) ∘ η' ((F ∘ G) (G' x))) = ɛ (G' x)).
     rewrite <- naturality.
@@ -133,13 +88,6 @@ Proof.
     apply (f_equal (fun f => f ∘ _)).
     exact (adj' x).
     apply comp_id_l.
-    all: change (from ?i) with (to i⁻¹).
-    apply (transform_is_eq (ρ G)⁻¹), is_eq_inv, unitor_r_is_eq.
-    apply (transform_is_eq (α G G' F')), associator_is_eq.
-    apply (transform_is_eq (α (G ∘ G') F' F)⁻¹), is_eq_inv, associator_is_eq.
-    apply (transform_is_eq (α (F' ∘ F) G G')), associator_is_eq.
-    apply (transform_is_eq (α F' F G)⁻¹), is_eq_inv, associator_is_eq.
-    apply (transform_is_eq (ρ F')), unitor_r_is_eq.
 Qed.
 
 Instance adjoint_iso (C D: Category): Proper (isomorphic (Fun D C) ==> isomorphic (Fun C D) ==> iff) adjoint.

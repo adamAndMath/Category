@@ -512,3 +512,5 @@ Proof.
   intros [φ Hφ].
   exact (comma2adjoint φ Hφ).
 Qed.
+
+End Adjoint_Comma.

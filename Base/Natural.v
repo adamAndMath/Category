@@ -174,87 +174,131 @@ Proof.
   apply naturality.
 Qed.
 
-Definition unitor_l {S T: Category} (F: S ~> T): id T ∘ F <~> F := eq_iso (comp_id_l F).
-Definition unitor_r {S T: Category} (F: S ~> T): F ∘ id S <~> F := eq_iso (comp_id_r F).
-Definition associator {A B C D: Category} (F: C ~> D) (G: B ~> C) (H: A ~> B): F ∘ (G ∘ H) <~> F ∘ G ∘ H := eq_iso (comp_assoc F G H).
+Program Definition unitor_l {S T: Category} (F: S ~> T): id T ∘ F <~> F :=
+  Isomorphism.Pack _ (Isomorphism.Mixin _ _ _ {|
+  transform x := id (F x);
+  naturality x y f := eq_trans (comp_id_l (fmap F f)) (eq_sym (comp_id_r (fmap F f)));
+|} {|
+  transform x := id (F x);
+  naturality x y f := eq_trans (comp_id_l (fmap F f)) (eq_sym (comp_id_r (fmap F f)));
+|} _ _).
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
+
+Program Definition unitor_r {S T: Category} (F: S ~> T): F ∘ id S <~> F :=
+  Isomorphism.Pack _ (Isomorphism.Mixin _ _ _ {|
+  transform x := id (F x);
+  naturality x y f := eq_trans (comp_id_l (fmap F f)) (eq_sym (comp_id_r (fmap F f)));
+|} {|
+  transform x := id (F x);
+  naturality x y f := eq_trans (comp_id_l (fmap F f)) (eq_sym (comp_id_r (fmap F f)));
+|} _ _).
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
+
+Program Definition associator {A B C D: Category} (F: C ~> D) (G: B ~> C) (H: A ~> B): F ∘ (G ∘ H) <~> F ∘ G ∘ H :=
+  Isomorphism.Pack _ (Isomorphism.Mixin _ _ _ {|
+  transform x := id (F (G (H x)));
+  naturality x y f := eq_trans (comp_id_l _) (eq_sym (comp_id_r _));
+|} {|
+  transform x := id (F (G (H x)));
+  naturality x y f := eq_trans (comp_id_l _) (eq_sym (comp_id_r _));
+|} _ _).
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
+Next Obligation.
+  natural_eq x.
+  apply comp_id_l.
+Qed.
 
 Notation λ := unitor_l.
 Notation ρ := unitor_r.
 Notation α := associator.
 
 Lemma unitor_l_is_eq {S T: Category} (F: S ~> T): is_eq (λ F).
-Proof. apply eq_iso_is_eq. Qed.
+Proof.
+  exists (comp_id_l F).
+  natural_eq x.
+  symmetry.
+  apply is_eq_refl.
+  apply (transform_is_eq (eq_iso (comp_id_l F))).
+  apply eq_iso_is_eq.
+Qed.
 
 Lemma unitor_r_is_eq {S T: Category} (F: S ~> T): is_eq (ρ F).
-Proof. apply eq_iso_is_eq. Qed.
+Proof.
+  exists (comp_id_r F).
+  natural_eq x.
+  symmetry.
+  apply is_eq_refl.
+  apply (transform_is_eq (eq_iso (comp_id_r F))).
+  apply eq_iso_is_eq.
+Qed.
 
 Lemma associator_is_eq {A B C D: Category} (F: C ~> D) (G: B ~> C) (H: A ~> B): is_eq (α F G H).
-Proof. apply eq_iso_is_eq. Qed.
+Proof.
+  exists (comp_assoc F G H).
+  natural_eq x.
+  symmetry.
+  apply is_eq_refl.
+  apply (transform_is_eq (eq_iso (comp_assoc F G H))).
+  apply eq_iso_is_eq.
+Qed.
 
 Lemma unitor_whisk_l {S T: Category} {F G: S ~> T} (η: F ~> G): λ G ∘ (id T <| η) = η ∘ λ F.
 Proof.
   natural_eq x.
-  rewrite (is_eq_refl (to (λ G) x)).
-  rewrite (is_eq_refl (to (λ F) x)).
   rewrite comp_id_r.
   apply comp_id_l.
-  apply (transform_is_eq (λ F)), unitor_l_is_eq.
-  apply (transform_is_eq (λ G)), unitor_l_is_eq.
 Qed.
 
 Lemma unitor_whisk_r {S T: Category} {F G: S ~> T} (η: F ~> G): ρ G ∘ (η |> id S) = η ∘ ρ F.
 Proof.
   natural_eq x.
-  rewrite (is_eq_refl (to (ρ G) x)).
-  rewrite (is_eq_refl (to (ρ F) x)).
   rewrite comp_id_r.
   apply comp_id_l.
-  apply (transform_is_eq (ρ F)), unitor_r_is_eq.
-  apply (transform_is_eq (ρ G)), unitor_r_is_eq.
 Qed.
 
 Lemma assoc_whisk_r {A B C D: Category} {H I: C ~> D} (η: H ~> I) (F: B ~> C) (G: A ~> B): α I F G ∘ (η |> (F ∘ G)) = ((η |> F) |> G) ∘ α H F G.
 Proof.
   natural_eq x.
-  rewrite (is_eq_refl (to (α I F G) x)).
-  rewrite (is_eq_refl (to (α H F G) x)).
   rewrite comp_id_r.
   apply comp_id_l.
-  apply (transform_is_eq (α H F G)), associator_is_eq.
-  apply (transform_is_eq (α I F G)), associator_is_eq.
 Qed.
 
 Lemma assoc_whisk_l {A B C D: Category} {H I: A ~> B} (F: C ~> D) (G: B ~> C) (η: H ~> I): α F G I ∘ (F <| (G <| η)) = ((F ∘ G) <| η) ∘ α F G H.
 Proof.
   natural_eq x.
-  rewrite (is_eq_refl (to (α F G I) x)).
-  rewrite (is_eq_refl (to (α F G H) x)).
   rewrite comp_id_r.
   apply comp_id_l.
-  apply (transform_is_eq (α F G H)), associator_is_eq.
-  apply (transform_is_eq (α F G I)), associator_is_eq.
 Qed.
 
 Lemma assoc_whisk {A B C D: Category} {H I: B ~> C} (F: C ~> D) (η: H ~> I) (G: A ~> B): α F I G ∘ (F <| (η |> G)) = ((F <| η) |> G) ∘ α F H G.
 Proof.
   natural_eq x.
-  rewrite (is_eq_refl (to (α F I G) x)).
-  rewrite (is_eq_refl (to (α F H G) x)).
   rewrite comp_id_r.
   apply comp_id_l.
-  apply (transform_is_eq (α F H G)), associator_is_eq.
-  apply (transform_is_eq (α F I G)), associator_is_eq.
 Qed.
 
 Lemma assoc_unitor_r {A B C: Category} (F: B ~> C) (G: A ~> B): (ρ F |> G) ∘ α F (id B) G = F <| λ G.
 Proof.
   natural_eq x.
-  apply is_eq_unique.
-  apply is_eq_comp.
-  apply (transform_is_eq (α F (id B) G)), associator_is_eq.
-  apply (transform_is_eq (ρ F)), unitor_r_is_eq.
-  apply fmap_is_eq.
-  apply (transform_is_eq (λ G)), unitor_l_is_eq.
+  rewrite fmap_id.
+  apply comp_id_l.
 Qed.
 
 Program Definition hcomp {S T U: Category} {F G: S ~> T} {J K: T ~> U} (ϵ: J ~> K) (η: F ~> G): (J ∘ F) ~> (K ∘ G) := 

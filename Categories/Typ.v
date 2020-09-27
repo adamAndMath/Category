@@ -1,24 +1,31 @@
-Require Export Cat.
+Require Export Base.
 
-Definition tid A: A -> A := fun a => a.
+Module Typ.
+Definition id A: A -> A := fun a => a.
 
-Definition tcomp {A B C} (g: B -> C) (f: A -> B): A -> C :=
+Definition comp {A B C} (g: B -> C) (f: A -> B): A -> C :=
   fun a => g (f a).
 
-Lemma tcomp_assoc {A B C D} (h: C -> D) (g: B -> C) (f: A -> B): tcomp h (tcomp g f) = tcomp (tcomp h g) f.
+Lemma comp_assoc {A B C D} (h: C -> D) (g: B -> C) (f: A -> B): comp h (comp g f) = comp (comp h g) f.
 Proof. now extensionality a. Qed.
 
-Lemma tcomp_id_l {A B} (f: A -> B): tcomp (tid B) f = f.
+Lemma comp_id_l {A B} (f: A -> B): comp (id B) f = f.
 Proof. now extensionality a. Qed.
 
-Lemma tcomp_id_r {A B} (f: A -> B): tcomp f (tid A) = f.
+Lemma comp_id_r {A B} (f: A -> B): comp f (id A) = f.
 Proof. now extensionality a. Qed.
 
-Definition Typ_mixin: Category.mixin_of Type :=
-  Category.Mixin Type (fun A B => A -> B) tid (@tcomp) (@tcomp_assoc) (@tcomp_id_l) (@tcomp_id_r).
+Definition cat_mixin: Category.mixin_of Type :=
+  Category.Mixin Type (fun A B => A -> B) id (@comp) (@comp_assoc) (@comp_id_l) (@comp_id_r).
 
-Canonical Typ: Category :=
-  Category.Pack Type Typ_mixin.
+Canonical cat: Category :=
+  Category.Pack Type cat_mixin.
+End Typ.
+
+Canonical Typ.cat.
+Notation Typ := Typ.cat.
+
+Require Import Cat.
 
 Program Definition Hom (C: Category): co C × C ~> Typ := {|
   fobj (p: co C × C) := (fst p: C) ~> snd p;
@@ -34,7 +41,7 @@ Next Obligation.
   rename o3 into A1, o4 into A2, o1 into B1, o2 into B2, o into C1, o0 into C2.
   extensionality x.
   unfold comp at 4 5; simpl.
-  unfold tcomp.
+  unfold Typ.comp.
   rewrite !comp_assoc.
   apply comp_assoc.
 Qed.
@@ -47,7 +54,7 @@ Program Definition adjoint_hom_iso_to: Hom D ∘ ⟨cof F ∘ π₁, π₂⟩ ~>
 |}.
 Next Obligation.
   unfold comp at 1 6; simpl.
-  unfold tcomp.
+  unfold Typ.comp.
   extensionality g.
   rewrite comp_assoc, <- fmap_comp.
   rewrite fmap_comp.
@@ -62,7 +69,7 @@ Program Definition adjoint_hom_iso_from: Hom C ∘ ⟨π₁, G ∘ π₂⟩ ~> H
 |}.
 Next Obligation.
   unfold comp at 1 6; simpl.
-  unfold tcomp.
+  unfold Typ.comp.
   extensionality g.
   rewrite comp_assoc, <- comp_assoc, <- comp_assoc.
   rewrite <- fmap_comp, fmap_comp.
@@ -77,7 +84,7 @@ Proof.
   natural_eq p.
   unfold comp at 1; simpl.
   unfold id; simpl.
-  unfold tcomp, tid.
+  unfold Typ.comp, Typ.id.
   extensionality f.
   rewrite fmap_comp.
   rewrite comp_assoc.
@@ -97,7 +104,7 @@ Proof.
   natural_eq p.
   unfold comp at 1; simpl.
   unfold id; simpl.
-  unfold tcomp, tid.
+  unfold Typ.comp, Typ.id.
   extensionality f.
   rewrite fmap_comp.
   rewrite <- comp_assoc.
@@ -130,7 +137,7 @@ Next Obligation.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   rewrite comp_id_r in H.
   setoid_rewrite (@fmap_id _ _ F x) in H.
   rewrite comp_id_r in H.
@@ -145,7 +152,7 @@ Next Obligation.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   rewrite comp_id_r in H.
   rewrite fmap_id, !comp_id_l in H.
   symmetry.
@@ -162,7 +169,7 @@ Next Obligation.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   rewrite comp_id_r in H.
   setoid_rewrite (comp_id_r (fmap G f)) in H.
   setoid_rewrite (@fmap_id _ _ F (G x)) in H.
@@ -174,7 +181,7 @@ Next Obligation.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   rewrite comp_id_r, comp_id_l in H.
   rewrite fmap_id, comp_id_l in H.
   symmetry.
@@ -189,7 +196,7 @@ Proof.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   setoid_rewrite (@fmap_id _ _ F x) in H.
   rewrite !comp_id_r in H.
   rewrite <- comp_assoc in H.
@@ -205,7 +212,7 @@ Proof.
   clear H; intros H.
   simpl in H.
   unfold comp at 1 12 in H; simpl in H.
-  unfold tcomp in H.
+  unfold Typ.comp in H.
   rewrite fmap_id, !comp_id_l in H.
   exact H.
 Qed.

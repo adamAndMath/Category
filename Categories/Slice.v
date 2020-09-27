@@ -1,4 +1,4 @@
-Require Export Structure.
+Require Export Base.
 
 Module Slice.
 
@@ -18,6 +18,25 @@ Structure hom (f g: obj) := Morph {
 Local Arguments arr {f g} _.
 Local Arguments comm {f g} _.
 Local Coercion arr: hom >-> Categories.hom.
+
+Lemma obj_eq {f g: obj}: f = g <-> dom f = dom g /\ (forall e: dom f = dom g, oarr f = oarr g ∘ eq_iso e).
+Proof.
+  split.
+  + intros H.
+    subst g.
+    repeat split.
+    intros e.
+    rewrite eq_iso_refl.
+    symmetry.
+    apply comp_id_r.
+  + destruct f as [x f], g as [x' g].
+    simpl.
+    intros [Hx H].
+    subst x'.
+    f_equal.
+    rewrite <- comp_id_r.
+    exact (H eq_refl).
+Qed.
 
 Lemma hom_eq {f g: obj} (a b: hom f g): a = b <-> arr a = arr b.
 Proof.
@@ -73,8 +92,16 @@ Arguments oarr {C c} _.
 Arguments arr {C c f g} _.
 Arguments comm {C c f g} _.
 
+Definition Dom (C: Category) (c: C): cat C c ~> C := {|
+  fobj := dom;
+  fmap := @arr C c;
+  fmap_id _ := eq_refl;
+  fmap_comp _ _ _ _ _ := eq_refl;
+|}.
+
 End Slice.
 
+Canonical Slice.cat.
 Notation Slice := Slice.cat.
 Infix "/" := Slice.
 

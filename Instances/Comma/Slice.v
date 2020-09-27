@@ -1,6 +1,6 @@
 Require Export Cat.
-Require Export Instances.Slice.
-Require Export Comma.
+Require Export Categories.Slice.
+Require Export Categories.Comma.
 
 Program Definition Comma2Slice {C: Category} (c: C): id C ↓ @Δ _ 1 c ~> C / c := {|
   fobj x := {|

@@ -1,4 +1,4 @@
-Require Export Structure.
+Require Export Base.
 
 Module Proset.
 

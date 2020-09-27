@@ -179,8 +179,62 @@ Proof.
   reflexivity.
 Qed.
 
-Definition is_eq {C: Category} {X Y: C} (η: X ~> Y) :=
-  exists e: X = Y, η = eq_iso e.
+Definition is_iso {C: Category} {X Y: C} (f: X ~> Y) :=
+  exists g: Y ~> X, g ∘ f = id X /\ f ∘ g = id Y.
+
+Lemma is_iso_ex {C: Category} {X Y: C} (f: X ~> Y): is_iso f -> exists i: X <~> Y, to i = f.
+Proof.
+  intros [g [Hl Hr]].
+  exists (Isomorphism.Pack f (Isomorphism.Mixin _ _ _ f g Hl Hr)).
+  reflexivity.
+Qed.
+
+Lemma is_isomorphic {C: Category} {X Y: C} (f: X ~> Y): is_iso f -> X ≃ Y.
+Proof.
+  intros H.
+  apply is_iso_ex in H.
+  destruct H as [i H].
+  constructor.
+  exact i.
+Qed.
+
+Lemma is_iso_id {C: Category} {x: C}: is_iso (id x).
+Proof.
+  exists (id x).
+  split.
+  all: apply comp_id_l.
+Qed.
+
+Lemma is_iso_comp {C: Category} {X Y Z: C} (g: Y ~> Z) (f: X ~> Y): is_iso g -> is_iso f -> is_iso (g ∘ f).
+Proof.
+  intros [g' [Hgl Hgr]] [f' [Hfl Hfr]].
+  exists (f' ∘ g'); split.
+  all: rewrite comp_assoc.
+  rewrite <- (comp_assoc f').
+  rewrite Hgl, comp_id_r.
+  apply Hfl.
+  rewrite <- (comp_assoc g).
+  rewrite Hfr, comp_id_r.
+  apply Hgr.
+Qed.
+
+Definition is_eq {C: Category} {X Y: C} (f: X ~> Y) :=
+  exists e: X = Y, f = eq_iso e.
+
+Lemma iso_is_iso {C: Category} {X Y: C} (f: X <~> Y): is_iso f.
+Proof.
+  exists (f⁻¹).
+  split.
+  apply inv_l.
+  apply inv_r.
+Qed.
+
+Lemma is_eq_is_iso {C: Category} {X Y: C} (f: X ~> Y): is_eq f -> is_iso f.
+Proof.
+  intros [e H].
+  subst f.
+  apply iso_is_iso.
+Qed.
 
 Lemma eq_iso_is_eq {C: Category} {X Y: C} (e: X = Y): is_eq (eq_iso e).
 Proof. now exists e. Qed.
@@ -244,6 +298,24 @@ Proof.
   now f_equal.
 Qed.
 
+Theorem is_iso_monic {C: Category} {x y: C} (f: x ~> y): is_iso f -> monic f.
+Proof.
+  intros [g [Hl Hr]] c h1 h2 H.
+  setoid_rewrite <- comp_id_l.
+  rewrite <- Hl.
+  rewrite <- !comp_assoc.
+  now f_equal.
+Qed.
+
+Theorem is_iso_epic {C: Category} {x y: C} (f: x ~> y): is_iso f -> epic f.
+Proof.
+  intros [g [Hl Hr]] c h1 h2 H.
+  setoid_rewrite <- comp_id_r.
+  rewrite <- Hr.
+  rewrite !comp_assoc.
+  now f_equal.
+Qed.
+
 Definition co_iso_mixin {C: Category} {x y: C} (i: x <~> y): Isomorphism.mixin_of (from i: @hom (co C) x y) :=
   Isomorphism.Mixin (co C) x y (from i) (to i) (from_to i) (to_from i).
 
@@ -266,9 +338,30 @@ Theorem iso_co {C: Category} (x y: C): (x: co C) ≃ y <-> x ≃ y.
     apply co_iso, i.
 Qed.
 
+Lemma is_iso_co {C: Category} {x y: C} (f: x ~> y): is_iso (f: (y: co C) ~> x) <-> is_iso f.
+Proof.
+  split.
+  all: intros [g [Hl Hr]].
+  all: exists g; split.
+  1, 3: exact Hr.
+  all: exact Hl.
+Qed.
+
+Lemma is_iso_co' {C: Category} {x y: C} (f: (x: co C) ~> y): is_iso (f: y ~> x) <-> is_iso f.
+Proof.
+  split.
+  all: intros [g [Hl Hr]].
+  all: exists g; split.
+  1, 3: exact Hr.
+  all: exact Hl.
+Qed.
+
 Lemma is_eq_co {C: Category} {x y: C} (f: x ~> y): is_eq f -> is_eq (f: (y: co C) ~> x).
 Proof.
   intros [e H].
   subst f y.
   exact is_eq_id.
 Qed.
+
+Lemma co_eq_iso {C: Category} {x y: C} (e: x = y): to (@eq_iso (co C) x y e) = to (eq_iso e)⁻¹.
+Proof. now destruct e. Qed.

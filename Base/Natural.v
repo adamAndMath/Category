@@ -96,6 +96,14 @@ Proof.
   exact (transform_iso I y).
 Qed.
 
+Lemma is_iso_transform {C D: Category} {F G: C ~> D} (η: F ~> G) (x: C): is_iso η -> is_iso (η x).
+Proof.
+  intros [ϵ [Hl Hr]].
+  exists (ϵ x); split.
+  apply (proj1 (natural_eq _ _) Hl).
+  apply (proj1 (natural_eq _ _) Hr).
+Qed.
+
 Lemma transform_is_eq {C D: Category} {F G: C ~> D} (η: F ~> G) (x: C): is_eq η -> is_eq (η x).
 Proof.
   intros [e H].
@@ -172,6 +180,22 @@ Proof.
   natural_eq x.
   symmetry.
   apply naturality.
+Qed.
+
+Lemma is_iso_whisk_l {A B C: Category} {G H: A ~> B} (F: B ~> C) (η: G ~> H): is_iso η -> is_iso (F <| η).
+Proof.
+  intros [ϵ [Hl Hr]].
+  exists (F <| ϵ); split.
+  all: rewrite <- whisk_comp_distr_l, <- whisk_id_l.
+  all: now f_equal.
+Qed.
+
+Lemma is_iso_whisk_r {A B C: Category} {G H: B ~> C} (F: A ~> B) (η: G ~> H): is_iso η -> is_iso (η |> F).
+Proof.
+  intros [ϵ [Hl Hr]].
+  exists (ϵ |> F); split.
+  all: rewrite <- whisk_comp_distr_r, <- whisk_id_r.
+  all: now f_equal.
 Qed.
 
 Program Definition unitor_l {S T: Category} (F: S ~> T): id T ∘ F <~> F :=

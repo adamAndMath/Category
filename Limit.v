@@ -102,7 +102,7 @@ Lemma ex_limit_alt {C D: Category} (F: D ~> C): ex_limit F <-> exists l (η: Δ 
 Proof.
   split.
   + intros [L H].
-    exists (vertex L).
+    exists (Cone.vertex L).
     exists (nat_cone L).
     intros n η.
     specialize (H (cone_nat n η)).
@@ -110,29 +110,29 @@ Proof.
     exists f.
     split.
     natural_eq x.
-    apply (mediator_comm f).
+    apply (Cone.mediator_comm f).
     intros f' H1.
-    change (vertex (cone_nat n η) ~> vertex L) in f'.
+    change (Cone.vertex (cone_nat n η) ~> Cone.vertex L) in f'.
     specialize (proj1 (natural_eq _ _) H1) as H0.
     simpl in H0.
     clear H1.
-    specialize (H {| mediator := f'; mediator_comm := H0 |}).
-    now apply conemor_eq in H.
+    specialize (H {| Cone.mediator := f'; Cone.mediator_comm := H0 |}).
+    now apply Cone.hom_eq in H.
   + intros [l [η H]].
     exists (cone_nat l η).
     intros N.
-    specialize (H (vertex N) (nat_cone N)).
+    specialize (H (Cone.vertex N) (nat_cone N)).
     destruct H as [f [H1 H]].
-    change (vertex N ~> vertex (cone_nat l η)) in f.
+    change (Cone.vertex N ~> Cone.vertex (cone_nat l η)) in f.
     specialize (proj1 (natural_eq _ _) H1) as Hf.
     simpl in Hf.
     clear H1.
-    exists {| mediator := f; mediator_comm := Hf |}.
+    exists {| Cone.mediator := f; Cone.mediator_comm := Hf |}.
     intros f'.
-    apply conemor_eq; simpl.
+    Cone.hom_eq.
     apply H.
     natural_eq x.
-    apply (mediator_comm f').
+    apply (Cone.mediator_comm f').
 Qed.
 
 Instance ex_limit_iso {C D: Category}: Proper (isomorphic (Fun C D) ==> iff) ex_limit.

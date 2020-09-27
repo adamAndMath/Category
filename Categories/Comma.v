@@ -1,4 +1,4 @@
-Require Export Structure.
+Require Export Base.
 
 Module Comma.
 
@@ -143,5 +143,6 @@ Qed.
 
 End Comma.
 
+Canonical Comma.cat.
 Notation Comma := Comma.cat.
 Infix "↓" := Comma (at level 60, no associativity).

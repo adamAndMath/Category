@@ -115,6 +115,14 @@ Isomorphism.Pack (fmap F i) imap_mixin.
 
 End fmap_iso.
 
+Lemma is_iso_fmap {C D: Category} {x y: C} (F: C ~> D) (f: x ~> y): is_iso f -> is_iso (fmap F f).
+Proof.
+  intros [g [Hl Hr]].
+  exists (fmap F g); split.
+  all: rewrite <- fmap_comp, <- fmap_id.
+  all: now f_equal.
+Qed.
+
 Lemma fmap_is_eq {C D: Category} {x y: C} (F: C ~> D) (f: x ~> y): is_eq f -> is_eq (fmap F f).
 Proof.
 intros [e H].
@@ -154,4 +162,33 @@ Proof.
   unfold inv; simpl.
   rewrite comp_id_r.
   apply comp_id_l.
+Qed.
+
+Instance co_iso: Proper (isomorphic Cat ==> isomorphic Cat) co.
+Proof.
+  intros C D [[F [G]]].
+  constructor.
+  exists (cof F), (cof G).
+  1: clear inv_r.
+  2: clear inv_l.
+  1: apply fun_eq in inv_l.
+  2: apply fun_eq in inv_r.
+  1: destruct inv_l as [Ho Hf].
+  2: destruct inv_r as [Ho Hf].
+  all: fun_eq y x f.
+  1, 3: apply Ho.
+  all: clear Ho.
+  all: change (x ~> y) in f.
+  all: unfold comp; simpl.
+  all: change (Category.comp (Category.obj ?C) _ ?f ?g) with (@comp C _ _ _ f g).
+  all: specialize (Hf x y f H0 H).
+  all: simpl in Hf.
+  all: rewrite !co_eq_iso.
+  all: apply (iso_epic (eq_iso H0)).
+  all: rewrite <- !comp_assoc.
+  all: rewrite inv_l, comp_id_r.
+  all: apply (iso_monic (eq_iso H)).
+  all: rewrite comp_assoc.
+  all: rewrite inv_r, comp_id_l.
+  all: exact Hf.
 Qed.

@@ -1,36 +1,36 @@
 Require Export Cat.
-Require Export Instances.Arrow.
-Require Export Comma.
+Require Export Categories.Arrow.
+Require Export Categories.Comma.
 
 Program Definition Comma2Arrow (C: Category): id C ↓ id C ~> Arrow C := {|
   fobj x := {|
-    dom := Comma.source x;
-    cod := Comma.target x;
-    arr := Comma.morph x;
+    Arrow.dom := Comma.source x;
+    Arrow.cod := Comma.target x;
+    Arrow.arr := Comma.morph x;
   |};
   fmap x y f := {|
-    fdom := Comma.smap f;
-    fcod := Comma.tmap f;
-    arr_comm := Comma.comm _ _ x y f;
+    Arrow.fdom := Comma.smap f;
+    Arrow.fcod := Comma.tmap f;
+    Arrow.comm := Comma.comm _ _ x y f;
   |};
 |}.
 Next Obligation.
-  now apply arrow_hom_eq.
+  now apply Arrow.hom_eq.
 Qed.
 Next Obligation.
-  now apply arrow_hom_eq.
+  now apply Arrow.hom_eq.
 Qed.
 
 Program Definition Arrow2Comma (C: Category): Arrow C ~> id C ↓ id C := {|
   fobj x := {|
-    Comma.source := dom x;
-    Comma.target := cod x;
-    Comma.morph := arr x;
+    Comma.source := Arrow.dom x;
+    Comma.target := Arrow.cod x;
+    Comma.morph := Arrow.arr x;
   |};
   fmap x y f := {|
-    Comma.smap := fdom f;
-    Comma.tmap := fcod f;
-    Comma.comm := arr_comm f;
+    Comma.smap := Arrow.fdom f;
+    Comma.tmap := Arrow.fcod f;
+    Comma.comm := Arrow.comm f;
   |};
 |}.
 Next Obligation.
@@ -50,7 +50,7 @@ Proof.
   simpl.
   clear H H0.
   rewrite comp_id_l, comp_id_r.
-  now apply arrow_hom_eq.
+  now apply Arrow.hom_eq.
 Qed.
 
 Lemma arrow_comma_inv (C: Category): Arrow2Comma C ∘ Comma2Arrow C = id (id C ↓ id C).

@@ -62,6 +62,16 @@ Proof.
   now apply merge_in.
 Qed.
 
+Lemma merge_comp {a b c d: C} (f: c ~> d) (g: a ~> c) (h: b ~> c): f ∘ [g, h] = [f ∘ g, f ∘ h].
+Proof.
+  apply merge_in.
+  split.
+  all: rewrite <- comp_assoc.
+  all: f_equal.
+  apply merge_in1.
+  apply merge_in2.
+Qed.
+
 Lemma merge_inj {a b c: C} (f f': a ~> c) (g g': b ~> c):
   [f, g] = [f', g'] <-> f = f' /\ g = g'.
 Proof.
@@ -77,7 +87,64 @@ Proof.
   apply merge_in2.
 Qed.
 
+Definition fcoprod {a b c d: C} (f: a ~> b) (g: c ~> d): a + c ~> b + d :=
+  [in1 ∘ f, in2 ∘ g ].
+
+Infix "(+)" := fcoprod (at level 50, left associativity).
+
+Lemma fcoprod_id (a b: C): id a (+) id b = id (a + b).
+Proof.
+  symmetry.
+  apply merge_in.
+  now rewrite !comp_id_l, !comp_id_r.
+Qed.
+
+Lemma fcoprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (+) f') ∘ (g (+) g') = (f ∘ g) (+) (f' ∘ g').
+Proof.
+  unfold fcoprod.
+  rewrite merge_comp.
+  f_equal.
+  all: rewrite !comp_assoc.
+  all: f_equal.
+  apply merge_in1.
+  apply merge_in2.
+Qed.
+
+Lemma fcoprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (+) g⁻¹) ∘ (f (+) g) = id (a + c).
+Proof.
+  rewrite fcoprod_comp, <- fcoprod_id.
+  f_equal.
+  all: apply inv_l.
+Qed.
+
+Lemma fcoprod_inv_r {a b c d: C} (f: a <~> b) (g: c <~> d): (f (+) g) ∘ (f⁻¹ (+) g⁻¹) = id (b + d).
+Proof.
+  rewrite fcoprod_comp, <- fcoprod_id.
+  f_equal.
+  all: apply inv_r.
+Qed.
+
+Definition icoprod {a b c d: C} (f: a <~> b) (g: c <~> d): a + c <~> b + d :=
+  Isomorphism.Pack (f (+) g) (Isomorphism.Mixin _ _ _ (f (+) g) (f⁻¹ (+) g⁻¹) (fcoprod_inv_l f g) (fcoprod_inv_r f g)).
+
+Lemma is_iso_fcoprod {a b c d: C} (f: a ~> b) (g: c ~> d): is_iso f -> is_iso g -> is_iso (f (+) g).
+Proof.
+  intros [f' [Hfl Hfr]] [g' [Hgl Hgr]].
+  exists (f' (+) g'); split.
+  all: rewrite fcoprod_comp, <- fcoprod_id.
+  all: now f_equal.
+Qed.
+
+Global Instance coprod_iso: Proper (isomorphic C ==> isomorphic C ==> isomorphic C) coprod.
+Proof.
+  intros x x' [f] y y' [g].
+  constructor.
+  exact (icoprod f g).
+Qed.
+
 End Coproduct.
 
 Infix "+" := coprod (at level 50, left associativity).
+Infix "(+)" := fcoprod (at level 50, left associativity).
 Notation "[ f , g ]" := (merge f g).
+Canonical icoprod.

@@ -90,6 +90,30 @@ Proof.
     apply comp_id_l.
 Qed.
 
+Lemma adjoint_comp_iso_l {A B C: Category} (I: B <~> C) (F: B ~> A) (G: A ~> B): F ∘ I⁻¹ -| I ∘ G <-> F -| G.
+Proof.
+  split.
+  2: apply adjoint_comp, iso_adjoint.
+  intros H.
+  rewrite <- (comp_id_r F), <- comp_id_l.
+  rewrite <- (inv_l I).
+  rewrite <- comp_assoc, comp_assoc.
+  apply adjoint_comp, H.
+  apply iso_adjoint.
+Qed.
+
+Lemma adjoint_comp_iso_r {A B C: Category} (F: C ~> B) (G: B ~> C) (I: A <~> B): I⁻¹ ∘ F -| G ∘ I <-> F -| G.
+Proof.
+  split.
+  all: intros H.
+  rewrite <- (comp_id_l F), <- comp_id_r.
+  rewrite <- (inv_r I).
+  rewrite comp_assoc, <- comp_assoc.
+  all: apply adjoint_comp.
+  1, 3: exact H.
+  all: apply iso_adjoint.
+Qed.
+
 Instance adjoint_iso (C D: Category): Proper (isomorphic (Fun D C) ==> isomorphic (Fun C D) ==> iff) adjoint.
 Proof.
   enough (Proper (isomorphic (Fun D C) ==> isomorphic (Fun C D) ==> impl) adjoint).
@@ -161,4 +185,27 @@ Proof.
       change ((I ∘ I⁻¹) x = id G' x).
       f_equal.
       apply inv_r.
+Qed.
+
+Lemma adjoint_co {C D: Category} (F: D ~> C) (G: C ~> D): F -| G <-> to (CoFun C D) G -| to (CoFun D C) F.
+Proof.
+  split.
+  intros [η [ɛ adj]].
+  exists (fmap (to (CoFun D D)) ɛ), (fmap (to (CoFun C C)) η).
+  apply adjoint_by_alt in adj.
+  apply adjoint_by_alt.
+  easy.
+  revert C D F G.
+  enough (forall C D (F: co D ~> co C) (G: co C ~> co D), F -| G -> to (CoFun C D)⁻¹ G -| to (CoFun D C)⁻¹ F).
+  all: intros C D F G.
+  intros adj.
+  apply H in adj.
+  simpl in adj.
+  rewrite !cof_inv_l in adj.
+  exact adj.
+  intros [η [ɛ adj]].
+  exists (fmap (to (CoFun D D)⁻¹) ɛ), (fmap (to (CoFun C C)⁻¹) η).
+  apply adjoint_by_alt in adj.
+  apply adjoint_by_alt.
+  easy.
 Qed.

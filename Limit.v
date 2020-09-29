@@ -297,57 +297,47 @@ Proof.
     apply comp_id_l.
 Qed.*)
 
-(*Instance ex_lim_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) ex_lim.
-Proof.
-  enough (Proper (isomorphic Cat ==> isomorphic Cat ==> impl) ex_lim).
-  now split; apply H.
-  intros C D I S T J.
-  assert (Fun C S ≃ Fun D T).
-    now f_equiv.
-  clear I.
-  destruct H as [I], J as [J].
-  intros [L HL].
-  exists (J ∘ L ∘ I⁻¹).
-  red in HL |- *.
-  rewrite <- (comp_id_l Δ), <- (inv_r I).
-  rewrite <- comp_assoc.
-  apply adjoint_comp, iso_adjoint.
-  rewrite <- (comp_id_r (I⁻¹ ∘ Δ)), <- (inv_r J).
-  rewrite comp_assoc.
-  apply adjoint_comp.
-  apply iso_adjoint.
-  assert (I⁻¹ ∘ Δ ∘ J ≃ Δ).
-    clear.
-    apply fun_iso.
-    simpl.
-    change {| fobj (_: D) := ?x |} with (@Δ _ D x).
-    change {| fobj (_: C) := ?x |} with (@Δ _ C x).
-    fun_eq F G η.
+Definition Colim {D C: Category}: co (Fun (Fun D C) C) <~> Fun (Fun (co D) (co C)) (co C) := Comp_r_iso (CoFun D C)⁻¹ · CoFun (Fun D C) C.
 
-  intros [L [ɛ [η adj]]].
-  exists (J ∘ L ∘ I⁻¹).
-  exists (ɛ).
-  red.
-  rewrite <- comp_assoc.
-  rewrite (diag_comp _ J).
-  transitivity (ex_lim D S).
-  1: clear T J; destruct I as [I].
-  2: clear C I; destruct J as [I].
-  + intros [L HL].
-    red.
-    unfold is_lim in HL |- *.
-    unshelve eexists.
-    eapply comp.
-    exact L.
-    exists (fun F => F ∘ I) (fun _ _ η => η |> I).
-    all: simpl.
-    intros F.
-    apply whisk_id_r.
-    intros F G H ϵ η.
-    apply whisk_comp_distr_r.
-    intro.
-    exact (η |> I).
-Qed.*)
+Lemma is_lim_co {D C: Category} (F: Fun D C ~> C): is_lim (to Colim F) <-> is_colim F.
+Proof.
+  change (Δ -| to (CoFun (Fun D C) C) F ∘ (CoFun D C)⁻¹ <-> F -| Δ).
+  replace (@Δ (co C) (co D)) with (to (CoFun D C) ∘ to (CoFun C (Fun D C)) (@Δ C D)).
+  rewrite (adjoint_co F Δ).
+  apply (adjoint_comp_iso_r _ _ ((CoFun D C) ⁻¹)).
+  clear.
+  fun_eq x y f.
+  unfold cof.
+  simpl.
+  fun_eq a b f.
+  now rewrite !eq_iso_refl.
+  natural_eq a.
+  rewrite (is_eq_refl (to (eq_iso H) a)).
+  rewrite (is_eq_refl (to (eq_iso H0) a)).
+  simpl.
+  rewrite comp_id_r.
+  apply comp_id_l.
+  1: apply (transform_is_eq (eq_iso H0)).
+  2: apply (transform_is_eq (eq_iso H)).
+  all: apply eq_iso_is_eq.
+Qed.
+
+Lemma ex_lim_co {D C: Category}: ex_lim (co D) (co C) <-> ex_colim D C.
+Proof.
+  split.
+  + intros [F' H].
+    assert (exists F: Fun D C ~> C, to Colim F = F').
+    exists (to Colim⁻¹ F').
+    change ((Colim ∘ Colim⁻¹) F' = F').
+    now rewrite inv_r.
+    destruct H0 as [F HF].
+    subst F'.
+    exists F.
+    apply is_lim_co, H.
+  + intros [F H].
+    exists (to Colim F).
+    apply is_lim_co, H.
+Qed.
 
 Instance has_limit_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) has_limit.
 Proof.
@@ -548,4 +538,78 @@ Proof.
     rewrite <- fmap_comp.
     f_equal.
     exact Hg.
+Qed.
+
+Instance ex_lim_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) ex_lim.
+Proof.
+  enough (Proper (isomorphic Cat ==> isomorphic Cat ==> impl) ex_lim).
+  now split; apply H.
+  intros C D I S T J.
+  transitivity (ex_lim D S).
+  1: clear J T; destruct I as [I].
+  2: clear I C; destruct J as [I].
+  all: intros [F H].
+  all: red in H.
+  + exists (F ∘ (Comp_r I)).
+    red.
+    replace (@Δ S D) with (Comp_r I⁻¹ ∘ @Δ S C).
+    apply adjoint_comp.
+    exact H.
+    apply (iso_adjoint (Comp_r_iso I⁻¹)).
+    clear.
+    fun_eq x y f.
+    apply diag_comp.
+    change (Δ x ∘ I⁻¹ = Δ x) in H.
+    change (Δ y ∘ I⁻¹ = Δ y) in H0.
+    natural_eq a.
+    etransitivity.
+    etransitivity.
+    apply (f_equal (fun f => f ∘ _)).
+    3: apply f_equal.
+    3: symmetry.
+    1, 3: apply is_eq_refl.
+    1: apply (transform_is_eq (eq_iso H0)).
+    2: apply (transform_is_eq (eq_iso H)).
+    1, 2: apply eq_iso_is_eq.
+    rewrite comp_id_r.
+    apply comp_id_l.
+  + exists (I ∘ F ∘ (Comp_l I⁻¹)).
+    red.
+    rewrite <- (comp_id_l Δ).
+    rewrite <- (inv_r (Comp_l_iso I)).
+    rewrite <- comp_assoc.
+    apply adjoint_comp, iso_adjoint.
+    rewrite <- (comp_id_r (_ ∘ _)).
+    rewrite <- (inv_r I).
+    rewrite comp_assoc.
+    apply adjoint_comp.
+    apply iso_adjoint.
+    simpl.
+    unfold Comp_l_iso, from; simpl.
+    change (from I) with (to I⁻¹).
+    replace (Comp_l I⁻¹ ∘ @Δ T D ∘ I) with (@Δ S D).
+    exact H.
+    clear.
+    fun_eq x y f.
+    change (@Δ S D x = I⁻¹ ∘ Δ (to I x)).
+    symmetry.
+    rewrite <- comp_diag.
+    rewrite comp_assoc.
+    rewrite inv_l.
+    exact (comp_id_l (Δ x)).
+    change (@Δ S D x = I⁻¹ ∘ Δ (to I x)) in H.
+    change (@Δ S D y = I⁻¹ ∘ Δ (to I y)) in H0.
+    natural_eq a.
+    change (fmap (from I) _) with (fmap (I⁻¹ ∘ I) f).
+    etransitivity.
+    etransitivity.
+    apply (f_equal (fun f => f ∘ _)).
+    3: apply f_equal.
+    apply (is_eq_unique _ (to (eq_iso (inv_l I))⁻¹ y)).
+    4: apply (is_eq_unique (to (eq_iso (inv_l I))⁻¹ x) _).
+    3: apply (naturality (to (eq_iso (inv_l I))⁻¹)).
+    1: apply (transform_is_eq (eq_iso H0)).
+    4: apply (transform_is_eq (eq_iso H)).
+    2, 3: apply transform_is_eq, is_eq_inv.
+    all: apply eq_iso_is_eq.
 Qed.

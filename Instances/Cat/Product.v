@@ -1,9 +1,11 @@
 Require Export Structure.
 
-Section ProdCategory.
+Module Prod.
+
+Section category.
 Context (C D: Category).
 
-Definition Prod_mixin: Category.mixin_of (C * D) :=
+Definition cat_mixin: Category.mixin_of (C * D) :=
   Category.Mixin (C * D) (fun p q => (fst p ~> fst q) * (snd p ~> snd q))%type
   (fun p => (id (fst p), id (snd p)))
   (fun _ _ _ f g => (fst f ∘ fst g, snd f ∘ snd g))
@@ -11,10 +13,37 @@ Definition Prod_mixin: Category.mixin_of (C * D) :=
   (fun _ _ f => eq_trans (f_equal2 pair (comp_id_l (fst f)) (comp_id_l (snd f))) (eq_sym (surjective_pairing f)))
   (fun _ _ f => eq_trans (f_equal2 pair (comp_id_r (fst f)) (comp_id_r (snd f))) (eq_sym (surjective_pairing f))).
 
-End ProdCategory.
+Canonical cat: Category :=
+  Category.Pack (C * D) cat_mixin.
 
-Canonical Prod (C D: Category): Category :=
-  Category.Pack (C * D) (Prod_mixin C D).
+Lemma obj_eq (p q: cat): p = q <-> fst p = fst q /\ snd p = snd q.
+Proof.
+  split.
+  intros.
+  now subst q.
+  destruct p as [x y], q as [x' y'].
+  simpl.
+  intros [Hx Hy].
+  now subst x' y'.
+Qed.
+
+Lemma hom_eq {p q: cat} (f g: p ~> q): f = g <-> fst f = fst g /\ snd f = snd g.
+Proof.
+  split.
+  intros.
+  now subst g.
+  destruct f as [f f'], g as [g g'].
+  simpl.
+  intros [H H'].
+  now subst g g'.
+Qed.
+
+End category.
+
+End Prod.
+
+Canonical Prod.cat.
+Notation Prod := Prod.cat.
 
 Definition Fork {C D E: Category} (F: C ~> D) (G: C ~> E): C ~> Prod D E := {|
   fobj x := (F x, G x);
@@ -105,3 +134,85 @@ Definition CatProd_Prod_mixin (C D: ProdCategory): ProdCategory.mixin_of (C × D
 
 Canonical CatProd_Prod (C D: ProdCategory): ProdCategory :=
   ProdCategory.Pack (C × D) (CatProd_Prod_mixin C D).
+
+Program Definition FProd (C D: Category): C ~> Fun D (C × D) := {|
+  fobj x := {|
+    fobj y := (x, y);
+    fmap _ _ f := (id x, f);
+  |};
+  fmap _ _ f := {|
+    transform x := (f, id x);
+  |}
+|}.
+Next Obligation.
+  apply Prod.hom_eq; simpl; split.
+  symmetry.
+  apply comp_id_l.
+  reflexivity.
+Qed.
+Next Obligation.
+  apply Prod.hom_eq; simpl; split.
+  all: rewrite comp_id_l, comp_id_r.
+  all: reflexivity.
+Qed.
+Next Obligation.
+  now natural_eq y.
+Qed.
+Next Obligation.
+  natural_eq y.
+  apply Prod.hom_eq; simpl; split.
+  reflexivity.
+  symmetry.
+  apply comp_id_l.
+Qed.
+
+Section CoProd.
+Context (C D: Category).
+
+Definition CoProd_to: co (C × D) ~> (co C) × (co D) := {|
+  fobj (p: co (C × D)) := p: ((co C) × (co D));
+  fmap _ _ f := f;
+  fmap_id _ := eq_refl;
+  fmap_comp _ _ _ _ _ := eq_refl;
+|}.
+
+Definition CoProd_from: (co C) × (co D) ~> co (C × D) := {|
+  fobj (p: ((co C) × (co D))) := p: co (C × D);
+  fmap _ _ f := f;
+  fmap_id _ := eq_refl;
+  fmap_comp _ _ _ _ _ := eq_refl;
+|}.
+
+Lemma CoProd_inv_l: CoProd_from ∘ CoProd_to = id (co (C × D)).
+Proof.
+  fun_eq p q f.
+  change (q ~> p) in f.
+  rewrite !eq_iso_refl.
+  simpl.
+  change (@comp (co ?C) _ _ _ ?f ?g) with (@comp C _ _ _ g f).
+  change (@id (co ?C) ?x) with (@id C x).
+  rewrite comp_id_l.
+  apply (comp_id_r f).
+Qed.
+
+Lemma CoProd_inv_r: CoProd_to ∘ CoProd_from = id (co C × co D).
+Proof.
+  fun_eq p q f.
+  change (q ~> p) in f.
+  rewrite !eq_iso_refl.
+  simpl.
+  change (@comp (co ?C × co ?D) _ _ _ ?f ?g) with (@comp (C × D) _ _ _ g f).
+  change (@id (co ?C × co ?D) ?x) with (@id (C × D) x).
+  rewrite comp_id_l.
+  apply (comp_id_r f).
+Qed.
+
+Definition CoProd: co (C × D) <~> (co C) × (co D) :=
+  Isomorphism.Pack CoProd_to (Isomorphism.Mixin _ _ _ CoProd_to CoProd_from CoProd_inv_l CoProd_inv_r).
+
+Lemma co_prod: co (C × D) ≃ co C × co D.
+Proof.
+  constructor.
+  exact CoProd.
+Qed.
+End CoProd.

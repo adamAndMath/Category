@@ -79,9 +79,76 @@ Proof.
   apply pi2_fork.
 Qed.
 
+Lemma fork_comp {a b c d: C} (f: b ~> c) (g: b ~> d) (h: a ~> b): ⟨f, g⟩ ∘ h = ⟨f ∘ h, g ∘ h⟩.
+Proof.
+  apply fork_pi.
+  split.
+  all: rewrite comp_assoc.
+  all: f_equal.
+  apply pi1_fork.
+  apply pi2_fork.
+Qed.
+
+Definition fprod {a b c d: C} (f: a ~> b) (g: c ~> d): a × c ~> b × d :=
+  ⟨ f ∘ π₁, g ∘ π₂⟩.
+
+Infix "(×)" := fprod (at level 40, left associativity).
+
+Lemma fprod_id (a b: C): id a (×) id b = id (a × b).
+Proof.
+  symmetry.
+  apply fork_pi.
+  now rewrite !comp_id_l, !comp_id_r.
+Qed.
+
+Lemma fprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (×) f') ∘ (g (×) g') = (f ∘ g) (×) (f' ∘ g').
+Proof.
+  unfold fprod.
+  rewrite fork_comp.
+  f_equal.
+  all: rewrite <- !comp_assoc.
+  all: f_equal.
+  apply pi1_fork.
+  apply pi2_fork.
+Qed.
+
+Lemma fprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (×) g⁻¹) ∘ (f (×) g) = id (a × c).
+Proof.
+  rewrite fprod_comp, <- fprod_id.
+  f_equal.
+  all: apply inv_l.
+Qed.
+
+Lemma fprod_inv_r {a b c d: C} (f: a <~> b) (g: c <~> d): (f (×) g) ∘ (f⁻¹ (×) g⁻¹) = id (b × d).
+Proof.
+  rewrite fprod_comp, <- fprod_id.
+  f_equal.
+  all: apply inv_r.
+Qed.
+
+Definition iprod {a b c d: C} (f: a <~> b) (g: c <~> d): a × c <~> b × d :=
+  Isomorphism.Pack (f (×) g) (Isomorphism.Mixin _ _ _ (f (×) g) (f⁻¹ (×) g⁻¹) (fprod_inv_l f g) (fprod_inv_r f g)).
+
+Lemma is_iso_fprod {a b c d: C} (f: a ~> b) (g: c ~> d): is_iso f -> is_iso g -> is_iso (f (×) g).
+Proof.
+  intros [f' [Hfl Hfr]] [g' [Hgl Hgr]].
+  exists (f' (×) g'); split.
+  all: rewrite fprod_comp, <- fprod_id.
+  all: now f_equal.
+Qed.
+
+Global Instance prod_iso: Proper (isomorphic C ==> isomorphic C ==> isomorphic C) prod.
+Proof.
+  intros x x' [f] y y' [g].
+  constructor.
+  exact (iprod f g).
+Qed.
+
 End Product.
 
 Infix "×" := prod (at level 40, left associativity).
+Infix "(×)" := fprod (at level 40, left associativity).
 Notation "⟨ f , g ⟩" := (fork f g).
+Canonical iprod.
 Notation π₁ := pi1.
 Notation π₂ := pi2.

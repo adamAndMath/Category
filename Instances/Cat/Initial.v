@@ -44,3 +44,42 @@ Definition ZERO_Coprod_mixin: CoprodCategory.mixin_of 0 :=
 
 Canonical ZERO_Coprod: CoprodCategory :=
   CoprodCategory.Pack 0 ZERO_Coprod_mixin.
+
+Definition coZero2Zero: co 0 ~> 0 := {|
+  fobj := Empty_set_rect _: co 0 -> (0: Category);
+  fmap := Empty_set_rect _;
+  fmap_id := Empty_set_ind _;
+  fmap_comp := Empty_set_ind _;
+|}.
+
+Lemma toZero_inv_l {C: Category} (F: C ~> 0): from_zero ∘ F = id C.
+Proof.
+  fun_eq x y f.
+  destruct (F x).
+  set (F x).
+  unfold o.
+  destruct o.
+Qed.
+
+Lemma toZero_inv_r {C: Category} (F: C ~> 0): F ∘ from_zero = id 0.
+Proof.
+  fun_eq x y f.
+  all: destruct x.
+Qed.
+
+Definition toZero_iso_mixin {C: Category} (F: C ~> 0): Isomorphism.mixin_of F :=
+  Isomorphism.Mixin _ _ _ F from_zero (toZero_inv_l F) (toZero_inv_r F).
+
+Canonical toZero_iso {C: Category} (F: C ~> 0): C <~> 0 :=
+  Isomorphism.Pack F (toZero_iso_mixin F).
+
+Lemma iso_0 (C: Category): C ≃ 0 <-> inhabited (C ~> 0).
+Proof.
+  split.
+  + intros [I].
+    constructor.
+    exact I.
+  + intros [F].
+    constructor.
+    apply toZero_iso, F.
+Qed.

@@ -130,3 +130,77 @@ Definition CatCoprod_mixin: CoprodCategory.mixin_of Cat :=
 
 Canonical CatCoprod: CoprodCategory :=
   CoprodCategory.Pack Cat CatCoprod_mixin.
+
+Section CoPlus.
+Context (C D: Category).
+
+Program Definition CoPlus_to: co ((C: Category) + (D: Category)) ~> (co C) + (co D) := {|
+  fobj (x: co (C + D)) := x: (co C) + (co D);
+  fmap x y :=
+    match x, y return @hom (co (C + D)) x y -> @hom (co C + co D) x y with
+    | inl x, inl y => fun f => f
+    | inr x, inr y => fun f => f
+    | inl x, inr y => fun f => f
+    | inr x, inl y => fun f => f
+    end;
+|}.
+Next Obligation.
+  now destruct a as [x | x].
+Qed.
+Next Obligation.
+  now destruct a as [x | x], b as [y | y], c as [z | z].
+Qed.
+
+Program Definition CoPlus_from: (co C) + (co D) ~> co ((C: Category) + (D: Category)) := {|
+  fobj (x: co C + co D) := x: co (C + D);
+  fmap x y :=
+    match x, y return @hom (co C + co D) x y -> @hom (co (C + D)) x y with
+    | inl x, inl y => fun f => f
+    | inr x, inr y => fun f => f
+    | inl x, inr y => fun f => f
+    | inr x, inl y => fun f => f
+    end;
+|}.
+Next Obligation.
+  now destruct a as [x | x].
+Qed.
+Next Obligation.
+  now destruct a as [x | x], b as [y | y], c as [z | z].
+Qed.
+
+Lemma CoPlus_inv_l: CoPlus_from ∘ CoPlus_to = id (co (C + D)).
+Proof.
+  fun_eq x y f.
+  change (y ~> x) in f.
+  rewrite !eq_iso_refl.
+  clear.
+  simpl.
+  change (@comp (co ?C) _ _ _ ?f ?g) with (@comp C _ _ _ g f).
+  change (@id (co ?C) ?x) with (@id C x).
+  destruct x as [x | x], y as [y | y].
+  all: rewrite comp_id_l.
+  all: apply (comp_id_r f).
+Qed.
+
+Lemma CoPlus_inv_r: CoPlus_to ∘ CoPlus_from = id (co C + co D).
+Proof.
+  fun_eq x y f.
+  destruct x as [x | x], y as [y | y].
+  2, 3: destruct f.
+  all: change (y ~> x) in f.
+  all: rewrite !eq_iso_refl.
+  all: simpl.
+  all: unfold comp, id; simpl.
+  all: rewrite comp_id_r.
+  all: apply (comp_id_r f).
+Qed.
+
+Definition CoPlus: co ((C: Category) + (D: Category)) <~> (co C) + (co D) :=
+  Isomorphism.Pack CoPlus_to (Isomorphism.Mixin _ _ _ CoPlus_to CoPlus_from CoPlus_inv_l CoPlus_inv_r).
+
+Lemma co_plus: co ((C: Category) + (D: Category)) ≃ co C + co D.
+Proof.
+  constructor.
+  exact CoPlus.
+Qed.
+End CoPlus.

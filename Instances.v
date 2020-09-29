@@ -1,4 +1,5 @@
 Require Export Instances.Cat.
+Require Export Instances.Dual.
 Require Import Categories.DArrow.
 
 Lemma fmap_monic_inj {S T: Category} {x y: S} (F: S ~> T) (f g: x ~> y): monic F -> fmap F f = fmap F g -> f = g.

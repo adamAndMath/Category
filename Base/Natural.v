@@ -662,3 +662,80 @@ Proof.
   apply Comp_r_iso, inv, I.
   apply Comp_l_iso, I.
 Qed.
+
+Section CoFun.
+Context (S T: Category).
+
+Program Definition CoFun_to: co (Fun S T) ~> Fun (co S) (co T) := {|
+  fobj F := cof F;
+  fmap F G η := {|
+    transform x := η x;
+  |};
+|}.
+Next Obligation.
+  symmetry.
+  apply (naturality η).
+Qed.
+Next Obligation.
+  now natural_eq x.
+Qed.
+Next Obligation.
+  now natural_eq x.
+Qed.
+
+Program Definition CoFun_from: Fun (co S) (co T) ~> co (Fun S T) := {|
+  fobj F := cof' F;
+  fmap F G η := {|
+    transform x := η x;
+  |};
+|}.
+Next Obligation.
+  symmetry.
+  apply (naturality η).
+Qed.
+Next Obligation.
+  now natural_eq x.
+Qed.
+Next Obligation.
+  now natural_eq x.
+Qed.
+
+Lemma CoFun_inv_l: CoFun_from ∘ CoFun_to = id (co (Fun S T)).
+Proof.
+  fun_eq F G η.
+  apply cof_inv_l.
+  natural_eq x.
+  etransitivity.
+  etransitivity.
+  apply f_equal.
+  3: apply (f_equal (fun f => f ∘ _)).
+  3: symmetry.
+  1, 3: apply is_eq_refl.
+  1: destruct H0.
+  2: destruct H.
+  1, 2: apply is_eq_id.
+  rewrite comp_id_l.
+  apply comp_id_r.
+Qed.
+
+Lemma CoFun_inv_r: CoFun_to ∘ CoFun_from = id (Fun (co S) (co T)).
+Proof.
+  fun_eq F G η.
+  apply cof_inv_r.
+  natural_eq x.
+  etransitivity.
+  etransitivity.
+  apply (f_equal (fun f => f ∘ _)).
+  3: apply f_equal.
+  3: symmetry.
+  1, 3: apply is_eq_refl.
+  1: destruct H0.
+  2: destruct H.
+  1, 2: apply is_eq_id.
+  rewrite comp_id_r.
+  apply comp_id_l.
+Qed.
+
+Definition CoFun: co (Fun S T) <~> Fun (co S) (co T) :=
+  Isomorphism.Pack CoFun_to (Isomorphism.Mixin _ _ _ CoFun_to CoFun_from CoFun_inv_l CoFun_inv_r).
+End CoFun.

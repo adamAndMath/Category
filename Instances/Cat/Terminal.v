@@ -74,3 +74,33 @@ Definition ONE_Coprod_mixin: CoprodCategory.mixin_of 1 :=
 
 Canonical ONE_Coprod: CoprodCategory :=
   CoprodCategory.Pack 1 ONE_Coprod_mixin.
+
+Definition CoOne_from: 1 ~> co 1 := {|
+  fobj x := x;
+  fmap x y f := f;
+  fmap_id _ := eq_refl;
+  fmap_comp _ _ _ _ _ := eq_refl;
+|}.
+
+Lemma CoOne_inv_l: to_one ∘ CoOne_from = id 1.
+Proof.
+  fun_eq x y f.
+  apply unit_unique.
+  apply unit_eq.
+Qed.
+
+Lemma CoOne_inv_r: CoOne_from ∘ to_one = id (co 1).
+Proof.
+  fun_eq x y f.
+  apply unit_unique.
+  apply unit_eq.
+Qed.
+
+Definition CoOne: co 1 <~> 1 :=
+  Isomorphism.Pack to_one (Isomorphism.Mixin _ _ _ to_one CoOne_from CoOne_inv_l CoOne_inv_r).
+
+Lemma co_1: co 1 ≃ 1.
+Proof.
+  constructor.
+  exact CoOne.
+Qed.

@@ -6,7 +6,9 @@ Structure mixin_of (C: Category) := Mixin {
   Eqz {x y: C} (f g: x ~> y): C;
   eqz {x y: C} (f g: x ~> y): Eqz f g ~> x;
   eqz_comm {x y: C} (f g: x ~> y): f ∘ eqz f g = g ∘ eqz f g;
-  eqz_uni {x y z: C} (f g: y ~> z) (e: x ~> y): f ∘ e = g ∘ e -> {u: x ~> Eqz f g | eqz f g ∘ u = e}
+  eqz_med {x y z: C} (f g: y ~> z) (e: x ~> y): f ∘ e = g ∘ e -> x ~> Eqz f g;
+  eqz_med_comm {x y z: C} (f g: y ~> z) (e: x ~> y) (H: f ∘ e = g ∘ e): eqz f g ∘ (eqz_med f g e H) = e;
+  eqz_med_unique {x y z: C} (f g: y ~> z) (e: x ~> y) (u: x ~> Eqz f g) (H: f ∘ e = g ∘ e): eqz f g ∘ u = e -> eqz_med f g e H = u;
 }.
 
 Notation class_of := mixin_of (only parsing).
@@ -40,9 +42,13 @@ Context {C: EqCategory}.
 
 Definition Eqz: forall {x y: C} (f g: x ~> y), C := @EqCategory.Eqz C (EqCategory.class C).
 Definition eqz: forall {x y: C} (f g: x ~> y), Eqz f g ~> x := @EqCategory.eqz C (EqCategory.class C).
-Definition eqz_uni: forall {x y z: C} (f g: y ~> z) (e: x ~> y), f ∘ e = g ∘ e -> {u: x ~> Eqz f g | eqz f g ∘ u = e} := @EqCategory.eqz_uni C (EqCategory.class C).
+Definition eqz_med: forall {x y z: C} (f g: y ~> z) (e: x ~> y), f ∘ e = g ∘ e -> x ~> Eqz f g := @EqCategory.eqz_med C (EqCategory.class C).
 
-Lemma eqz_comm: forall {x y: C} (f g: x ~> y), f ∘ eqz f g = g ∘ eqz f g.
+Lemma eqz_comm {x y: C} (f g: x ~> y): f ∘ eqz f g = g ∘ eqz f g.
 Proof. apply EqCategory.eqz_comm. Qed.
+Lemma eqz_med_comm {x y z: C} (f g: y ~> z) (e: x ~> y) (H: f ∘ e = g ∘ e): eqz f g ∘ (eqz_med f g e H) = e.
+Proof. apply EqCategory.eqz_med_comm. Qed.
+Lemma eqz_med_unique {x y z: C} (f g: y ~> z) (e: x ~> y) (u: x ~> Eqz f g) (H: f ∘ e = g ∘ e): eqz f g ∘ u = e -> eqz_med f g e H = u.
+Proof. apply EqCategory.eqz_med_unique. Qed.
 
 End Equalizer.

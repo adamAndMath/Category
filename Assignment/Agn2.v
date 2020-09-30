@@ -135,180 +135,49 @@ Definition BotSlice: BotCategory :=
 End ex3_2.
 
 Section ex3_3.
+Context (C: EqCategory) (X: C).
 
-Program Definition slice_parallel_cone {C: Category} {X: C} (F: Parallel ~> C / X) (x: Cone (Slice.Dom C X ∘ F)): Cone F := {|
-  Cone.vertex := {|
-    Slice.dom := Cone.vertex x;
-    Slice.oarr := Slice.oarr (F false) ∘ Cone.edge x false;
-  |};
-  Cone.edge i := {|
-    Slice.arr := Cone.edge x i;
-  |};
+Definition slice_Eqz {x y: C / X} (f g: x ~> y): C / X := {|
+  Slice.dom := Eqz (Slice.arr f) (Slice.arr g);
+  Slice.oarr := Slice.oarr x ∘ eqz (Slice.arr f) (Slice.arr g);
+|}.
+
+Program Definition slice_eqz {x y: C / X} (f g: x ~> y): slice_Eqz f g ~> x := {|
+  Slice.arr := eqz (Slice.arr f) (Slice.arr g);
+|}.
+
+Program Definition slice_eqz_med {x y z: C / X} (f g: y ~> z) (e: x ~> y) (He: f ∘ e = g ∘ e): x ~> slice_Eqz f g := {|
+  Slice.arr := (eqz_med (Slice.arr f) (Slice.arr g) (Slice.arr e)) (proj1 (Slice.hom_eq _ _ _ _) He);
 |}.
 Next Obligation.
-  destruct i.
-  2: reflexivity.
-  rewrite <- (Cone.edge_comm x (Parallel.arr false)).
-  simpl.
-  rewrite comp_assoc.
-  f_equal.
-  apply Slice.comm.
-Qed.
-Next Obligation.
-  apply Slice.hom_eq; simpl.
-  exact (Cone.edge_comm x f).
-Qed.
-
-Program Definition parallel_cone_slice {C: Category} {X: C} (F: Parallel ~> C / X) (x: Cone F): Cone (Slice.Dom C X ∘ F) := {|
-  Cone.vertex := Slice.dom (Cone.vertex x);
-  Cone.edge i := Slice.arr (Cone.edge x i);
-|}.
-Next Obligation.
-  change (Slice.arr (fmap F f ∘ Cone.edge x x0) = Slice.arr (Cone.edge x y)).
-  f_equal.
-  apply Cone.edge_comm.
-Qed.
-
-Program Definition parallel_conemor_slice {C: Category} {X: C} {F: Parallel ~> C / X} {x y: Cone F} (f: x ~> y): parallel_cone_slice F x ~> parallel_cone_slice F y := {|
-  Cone.mediator := Slice.arr (Cone.mediator f);
-|}.
-Next Obligation.
-  change (Slice.arr (Cone.edge y x0 ∘ f) = Slice.arr (Cone.edge x x0)).
-  f_equal.
-  apply Cone.mediator_comm.
-Qed.
-
-Lemma ex_parallel_cone_slice {C: Category} {X: C} (F: Parallel ~> C / X) (x: Cone (Slice.Dom C X ∘ F)): exists x': Cone F, parallel_cone_slice F x' = x.
-Proof.
-  exists (slice_parallel_cone F x).
-  destruct x.
-  unfold parallel_cone_slice, slice_parallel_cone;
-  simpl.
-  f_equal.
-  apply proof_irrelevance.
-Qed.
-
-Lemma ex_slice_parallel_cone {C: Category} {X: C} (F: Parallel ~> C / X) (x: Cone F): exists x': Cone (Slice.Dom C X ∘ F), slice_parallel_cone F x' = x.
-Proof.
-  exists (parallel_cone_slice F x).
-  destruct x.
-  unfold parallel_cone_slice, slice_parallel_cone;
-  simpl.
-  set (v' := {|
-    Slice.dom := Slice.dom vertex;
-    Slice.oarr := Slice.oarr (F false) ∘ Slice.arr (edge false)
-  |}).
-  set (ec := slice_parallel_cone_obligation_1 C X F {|
-    Cone.vertex := Slice.dom vertex;
-    Cone.edge := fun i0 : Parallel => Slice.arr (edge i0): Slice.dom vertex ~> (Slice.Dom C X ∘ F) i0;
-    Cone.edge_comm := parallel_cone_slice_obligation_1 C X F
-                 {|
-                 Cone.vertex := vertex;
-                 Cone.edge := edge;
-                 Cone.edge_comm := edge_comm |} |}:
-    forall i: Parallel, Slice.oarr (F i) ∘ Slice.arr (edge i) = Slice.oarr v'
-  ).
-  change (slice_parallel_cone_obligation_1 _ _ _ _ ?i) with (ec i).
-  set (e := fun i : Parallel => {| Slice.arr := Slice.arr (edge i); Slice.comm := ec i |}).
-  clearbody e.
-  simpl in e.
-  set (slice_parallel_cone_obligation_2 C X F
-  {|
-  vertex := Slice.dom vertex;
-  edge := fun i : Parallel => Slice.arr (edge i): Slice.dom vertex ~> (Slice.Dom C X ∘ F) i;
-  edge_comm := parallel_cone_slice_obligation_1 C X F
-                 {|
-                 vertex := vertex;
-                 edge := edge;
-                 edge_comm := edge_comm |} |}).
-  assert (vertex = {|
-  Slice.dom := Slice.dom vertex;
-  Slice.oarr := Slice.oarr (F false) ∘ Slice.arr (edge false) |}).
-  destruct vertex; simpl.
-  f_equal.
-  symmetry.
-  apply (Slice.comm (edge false)).
-  rewrite <- H.
-  specialize (edge_comm false true).
-  f_equal.
-  apply proof_irrelevance.
-Qed.
-
-Lemma is_slice_equalizer (C: Category) (X: C) (F: Parallel ~> C / X): ex_limit (Slice.Dom C X ∘ F) -> ex_limit F.
-Proof.
-  intros [L' H].
-  destruct (ex_parallel_cone_slice F L') as [L HL].
-  subst L'.
-  exists L.
-  intros N.
-  specialize (H (parallel_cone_slice F N)).
-  destruct H as [f Hf].
-  unshelve eexists.
-  unshelve eexists.
-  3: intros g.
-  3: conemor_eq.
-  unshelve eexists.
-  3: intros b.
-  3, 4: apply Slice.hom_eq; simpl.
-  exact f.
-  set (mediator_comm f).
-  simpl.
   rewrite <- comp_assoc.
-  etransitivity.
-  apply f_equal.
-  apply (mediator_comm f false).
+  rewrite eqz_med_comm.
   apply Slice.comm.
-  apply (mediator_comm f b).
-  assert (forall x : Parallel, edge L x ∘ Slice.arr (mediator g) = Slice.arr (edge N x)).
-  intros x.
-  set (@Slice.comm).
-  set (Build_ConeMor _ _ _ (parallel_cone_slice F N) L (Slice.arr (mediator g))).
-  simpl in c.
-  set (Slice.arr (mediator g)).
-  simpl in h.
-  set (c (mediator g)).
-  specialize (fun g => f_equal mediator (Hf g)).
-  clear Hf; intros Hf.
-  eapply Hf.
-  set (g' := {| mediator := g |}: parallel_cone_slice F N ~> L).
-  eapply Hf.
-
-Lemma slice_equalizer (C: Category) (X: C): has_limit Parallel C -> has_limit Parallel (C / X).
-Proof.
-  intros Hl F.
-  specialize (Hl (Slice.Dom C X ∘ F)).
-  apply ex_limit_alt in Hl.
-  apply ex_limit_alt.
-  destruct Hl as [l [η Hl]].
-  unshelve eexists.
-  unshelve eexists.
-  exact l.
-  exact (Slice.oarr (F false) ∘ η false).
-  unshelve eexists.
-  unshelve eexists.
-  intros [].
-  1, 2: unshelve econstructor.
-  1, 2: simpl.
-  exact (η true).
-  exact (η false).
-  1, 2: simpl.
-  2: reflexivity.
-  etransitivity.
-  2: apply (f_equal (fun f => f ∘ _)).
-  2: apply (Slice.comm (fmap F (Parallel.arr false))).
-  etransitivity.
-  2: apply comp_assoc.
-  f_equal.
-  etransitivity.
-  symmetry.
-  apply comp_id_r.
-  apply (naturality η (Parallel.arr false)).
-  intros [] [] [].
-  1, 2, 3, 4: apply Slice.hom_eq; simpl.
-  1, 2, 3, 4: apply (naturality η).
-  intros n ϵ.
-  specialize ()
-  all: simpl.
-  simpl in h.
 Qed.
+
+Lemma slice_eqz_comm {x y: C / X} (f g: x ~> y): f ∘ slice_eqz f g = g ∘ slice_eqz f g.
+Proof.
+  apply Slice.hom_eq; simpl.
+  apply eqz_comm.
+Qed.
+
+Lemma slice_eqz_med_comm {x y z: C / X} (f g: y ~> z) (e: x ~> y) (H: f ∘ e = g ∘ e): slice_eqz f g ∘ (slice_eqz_med f g e H) = e.
+Proof.
+  apply Slice.hom_eq; simpl.
+  apply eqz_med_comm.
+Qed.
+
+Lemma slice_eqz_med_unique {x y z: C / X} (f g: y ~> z) (e: x ~> y) (u: x ~> slice_Eqz f g) (H: f ∘ e = g ∘ e): slice_eqz f g ∘ u = e -> slice_eqz_med f g e H = u.
+Proof.
+  intros H'.
+  subst e.
+  apply Slice.hom_eq; simpl.
+  now apply eqz_med_unique.
+Qed.
+
+Definition EqSlice_mixin: EqCategory.mixin_of (C / X) :=
+  EqCategory.Mixin (C / X) (@slice_Eqz) (@slice_eqz) (@slice_eqz_comm) (@slice_eqz_med) (@slice_eqz_med_comm) (@slice_eqz_med_unique).
+
+Definition EqSlice: EqCategory :=
+  EqCategory.Pack (C / X) EqSlice_mixin.
 End ex3_3.

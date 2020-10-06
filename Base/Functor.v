@@ -192,3 +192,179 @@ Proof.
   all: rewrite inv_r, comp_id_l.
   all: exact Hf.
 Qed.
+
+Definition full {S T: Category} (F: S ~> T) :=
+  forall (x y: S) (f: F x ~> F y), exists f': x ~> y, fmap F f' = f.
+
+Definition faithful {S T: Category} (F: S ~> T) :=
+  forall (x y: S) (f g: x ~> y), fmap F f = fmap F g -> f = g.
+
+Definition fully_faithful {S T: Category} (F: S ~> T) :=
+  full F /\ faithful F.
+
+Lemma fully_faithful_maps_iso {S T: Category} {x y: S} (F: S ~> T) (f: x ~> y): fully_faithful F -> is_iso f <-> is_iso (fmap F f).
+Proof.
+  intros [H0 H1].
+  split.
+  apply is_iso_fmap.
+  intros [g' H].
+  specialize (H0 y x g').
+  destruct H0 as [g H0].
+  subst g'.
+  rewrite <- !fmap_comp in H.
+  rewrite <- !fmap_id in H.
+  exists g.
+  split; [apply proj1 in H | apply proj2 in H].
+  all: apply H1, H.
+Qed.
+
+Lemma fully_faithful_iso {S T: Category} (F: S ~> T) (x y: S): fully_faithful F -> x ≃ y <-> F x ≃ F y.
+Proof.
+  intros [H0 H1].
+  split.
+  all: intros [i].
+  constructor.
+  apply imap, i.
+  destruct (H0 x y i) as [f Hf].
+  destruct (H0 y x i⁻¹) as [g Hg].
+  constructor.
+  exists f, g.
+  all: apply H1.
+  all: rewrite fmap_id, fmap_comp.
+  all: rewrite Hf, Hg.
+  apply inv_l.
+  apply inv_r.
+Qed.
+
+Lemma full_id (C: Category): full (id C).
+Proof.
+  intros x y f.
+  now exists f.
+Qed.
+
+Lemma faithful_id (C: Category): faithful (id C).
+Proof. easy. Qed.
+
+Lemma fully_faithful_id (C: Category): fully_faithful (id C).
+Proof.
+  split.
+  apply full_id.
+  apply faithful_id.
+Qed.
+
+Lemma full_comp {A B C: Category} (F: B ~> C) (G: A ~> B): full F -> full G -> full (F ∘ G).
+Proof.
+  intros HF HG x y f.
+  simpl in f |- *.
+  specialize (HF (G x) (G y) f).
+  destruct HF as [f' H].
+  subst f.
+  specialize (HG x y f').
+  destruct HG as [f H].
+  subst f'.
+  now exists f.
+Qed.
+
+Lemma faithful_comp {A B C: Category} (F: B ~> C) (G: A ~> B): faithful F -> faithful G -> faithful (F ∘ G).
+Proof.
+  intros HF HG x y f g H.
+  apply HG, HF, H.
+Qed.
+
+Lemma fully_faithful_comp {A B C: Category} (F: B ~> C) (G: A ~> B): fully_faithful F -> fully_faithful G -> fully_faithful (F ∘ G).
+Proof.
+  intros [HF1 HF2] [HG1 HG2].
+  split.
+  now apply full_comp.
+  now apply faithful_comp.
+Qed.
+
+Lemma full_cof {S T: Category} (F: S ~> T): full F -> full (cof F).
+Proof.
+  intros H x y f.
+  apply H.
+Qed.
+
+Lemma faithful_cof {S T: Category} (F: S ~> T): faithful F -> faithful (cof F).
+Proof.
+  intros H x y f g.
+  apply H.
+Qed.
+
+Lemma fully_faithful_cof {S T: Category} (F: S ~> T): fully_faithful F -> fully_faithful (cof F).
+Proof.
+  intros [H0 H1].
+  split.
+  now apply full_cof.
+  now apply faithful_cof.
+Qed.
+
+Lemma full_cof' {S T: Category} (F: co S ~> co T): full F -> full (cof' F).
+Proof.
+  intros H x y f.
+  apply H.
+Qed.
+
+Lemma faithful_cof' {S T: Category} (F: co S ~> co T): faithful F -> faithful (cof' F).
+Proof.
+  intros H x y f g.
+  apply H.
+Qed.
+
+Lemma fully_faithful_cof' {S T: Category} (F: co S ~> co T): fully_faithful F -> fully_faithful (cof' F).
+Proof.
+  intros [H0 H1].
+  split.
+  now apply full_cof'.
+  now apply faithful_cof'.
+Qed.
+
+Definition esurj {S T: Category} (F: S ~> T) :=
+  forall y: T, exists x: S, F x ≃ y.
+
+Lemma esurj_id (C: Category): esurj (id C).
+Proof.
+  intros x.
+  now exists x.
+Qed.
+
+Lemma esurj_comp {A B C: Category} (F: B ~> C) (G: A ~> B): esurj F -> esurj G -> esurj (F ∘ G).
+Proof.
+  intros HF HG z.
+  specialize (HF z).
+  destruct HF as [y HF].
+  specialize (HG y).
+  destruct HG as [x HG].
+  exists x.
+  simpl.
+  rewrite <- HF; clear HF.
+  destruct HG as [i].
+  constructor.
+  exact (imap F i).
+Qed.
+
+Lemma esurj_cof {S T: Category} (F: S ~> T): esurj F <-> esurj (cof F).
+Proof.
+  split.
+  all: intros H y.
+  all: specialize (H y).
+  all: destruct H as [x H].
+  all: exists x.
+  all: simpl in H |- *.
+  1: rewrite iso_co.
+  2: rewrite <- iso_co.
+  all: exact H.
+Qed.
+
+Lemma esurj_cof' {S T: Category} (F: co S ~> co T): esurj F <-> esurj (cof' F).
+Proof.
+  split.
+  all: intros H y.
+  all: specialize (H y).
+  all: destruct H as [x H].
+  all: exists x.
+  all: simpl in H |- *.
+  1: rewrite <- iso_co.
+  2: rewrite iso_co.
+  all: exact H.
+Qed.

@@ -79,6 +79,14 @@ Proof.
   apply pi2_fork.
 Qed.
 
+Lemma fork_id {a b: C}: ⟨π₁, π₂⟩ = id (a × b).
+Proof.
+  symmetry.
+  apply fork_pi.
+  split.
+  all: apply comp_id_r.
+Qed.
+
 Lemma fork_comp {a b c d: C} (f: b ~> c) (g: b ~> d) (h: a ~> b): ⟨f, g⟩ ∘ h = ⟨f ∘ h, g ∘ h⟩.
 Proof.
   apply fork_pi.
@@ -101,7 +109,7 @@ Proof.
   now rewrite !comp_id_l, !comp_id_r.
 Qed.
 
-Lemma fprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (×) f') ∘ (g (×) g') = (f ∘ g) (×) (f' ∘ g').
+Lemma fprod_fork {a b b' c c'} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a ~> b'): (f (×) f') ∘ ⟨g, g'⟩ = ⟨f ∘ g, f' ∘ g'⟩.
 Proof.
   unfold fprod.
   rewrite fork_comp.
@@ -110,6 +118,13 @@ Proof.
   all: f_equal.
   apply pi1_fork.
   apply pi2_fork.
+Qed.
+
+Lemma fprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (×) f') ∘ (g (×) g') = (f ∘ g) (×) (f' ∘ g').
+Proof.
+  unfold fprod at 2 3.
+  rewrite <- !comp_assoc.
+  apply fprod_fork.
 Qed.
 
 Lemma fprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (×) g⁻¹) ∘ (f (×) g) = id (a × c).
@@ -142,6 +157,101 @@ Proof.
   intros x x' [f] y y' [g].
   constructor.
   exact (iprod f g).
+Qed.
+
+Definition flip (x y: C): x × y ~> y × x := ⟨π₂, π₁⟩.
+
+Lemma flip_invol (x y: C): flip y x ∘ flip x y = id (x × y).
+Proof.
+  unfold flip.
+  rewrite fork_comp, <- fork_id.
+  f_equal.
+  apply pi2_fork.
+  apply pi1_fork.
+Qed.
+
+Canonical flip_iso (x y: C): x × y <~> y × x :=
+  Isomorphism.Pack (flip x y) (Isomorphism.Mixin C _ _ (flip x y) (flip y x) (flip_invol x y) (flip_invol y x)).
+
+Lemma prod_comm (x y: C): x × y ≃ y × x.
+Proof.
+  constructor.
+  exact (flip_iso x y).
+Qed.
+
+Section prod_associator.
+Context (x y z: C).
+
+Definition prod_associator_to: x × (y × z) ~> (x × y) × z :=
+  ⟨⟨π₁, π₁ ∘ π₂⟩, π₂ ∘ π₂⟩.
+
+Definition prod_associator_from: (x × y) × z ~> x × (y × z) :=
+  ⟨π₁ ∘ π₁, ⟨π₂ ∘ π₁, π₂⟩⟩.
+
+Lemma prod_associator_inv_l: prod_associator_from ∘ prod_associator_to = id (x × (y × z)).
+Proof.
+  unfold prod_associator_to, prod_associator_from.
+  rewrite fork_comp, <- fork_id.
+  f_equal.
+  rewrite <- comp_assoc.
+  rewrite pi1_fork.
+  apply pi1_fork.
+  rewrite <- comp_id_l, <- fork_id.
+  rewrite !fork_comp.
+  f_equal.
+  rewrite <- comp_assoc.
+  rewrite pi1_fork.
+  apply pi2_fork.
+  apply pi2_fork.
+Qed.
+
+Lemma prod_associator_inv_r: prod_associator_to ∘ prod_associator_from = id (x × y × z).
+Proof.
+  unfold prod_associator_to, prod_associator_from.
+  rewrite fork_comp, <- fork_id.
+  f_equal.
+  rewrite <- comp_id_l, <- fork_id.
+  rewrite !fork_comp.
+  f_equal.
+  apply pi1_fork.
+  rewrite <- comp_assoc.
+  rewrite pi2_fork.
+  apply pi1_fork.
+  rewrite <- comp_assoc.
+  rewrite pi2_fork.
+  apply pi2_fork.
+Qed.
+
+Definition prod_associator: x × (y × z) <~> (x × y) × z :=
+  Isomorphism.Pack prod_associator_to (Isomorphism.Mixin _ _ _ prod_associator_to prod_associator_from prod_associator_inv_l prod_associator_inv_r).
+
+Lemma prod_assoc: x × (y × z) ≃ (x × y) × z.
+Proof.
+  constructor.
+  exact prod_associator.
+Qed.
+
+End prod_associator.
+
+Lemma prod_assoc_fork {a x y z: C} (f: a ~> x) (g: a ~> y) (h: a ~> z): prod_associator x y z ∘ ⟨f, ⟨g, h⟩⟩ = ⟨⟨f, g⟩, h⟩.
+Proof.
+  simpl.
+  unfold prod_associator_to.
+  rewrite !fork_comp.
+  repeat f_equal.
+  apply pi1_fork.
+  all: rewrite <- comp_assoc.
+  all: rewrite pi2_fork.
+  apply pi1_fork.
+  apply pi2_fork.
+Qed.
+
+Lemma prod_assoc_inv_fork {a x y z: C} (f: a ~> x) (g: a ~> y) (h: a ~> z): (prod_associator x y z)⁻¹ ∘ ⟨⟨f, g⟩, h⟩ = ⟨f, ⟨g, h⟩⟩.
+Proof.
+  rewrite <- prod_assoc_fork.
+  rewrite comp_assoc.
+  rewrite inv_l.
+  apply comp_id_l.
 Qed.
 
 End Product.

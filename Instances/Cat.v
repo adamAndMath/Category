@@ -2,6 +2,13 @@ Require Export Cat.Terminal.
 Require Export Cat.Initial.
 Require Export Cat.Product.
 Require Export Cat.Coproduct.
+Require Export Cat.Exponential.
+
+Canonical CatCart: CartCategory :=
+  CartCategory.Pack Cat (CartCategory.Class Cat CatTop_mixin CatProd_mixin).
+
+Canonical CatCCC: CCC :=
+  CCC.Pack Cat (CCC.Class Cat (CartCategory.class CatCart) CatExp_mixin).
 
 Section Fun_0_l.
 Lemma Fun0C_inv_l (C: Category): Δ (from_zero: 0 ~> C) ∘ to_one = id (Fun 0 C).
@@ -67,54 +74,11 @@ Qed.
 End Fun_1_r.
 
 Section Fun_1_l.
-Context (C: Category).
+Definition Fun1C (C: Category): Fun 1 C <~> C := expc1 (C: Cat).
 
-Definition Fun1C_to: Fun 1 C ~> C := {|
-  fobj (F: Fun 1 C) := F tt;
-  fmap F G η := η tt;
-  fmap_id _ := eq_refl;
-  fmap_comp _ _ _ _ _ := eq_refl;
-|}.
-
-Definition Fun1C_from: C ~> Fun 1 C := Δ.
-
-Lemma Fun1C_inv_l: Fun1C_from ∘ Fun1C_to = id (Fun 1 C).
+Lemma Fun_1_l (C: Category): Fun 1 C ≃ C.
 Proof.
-  fun_eq F G η.
-  rename x into F.
-  fun_eq x y f.
-  f_equal.
-  apply unit_unique.
-  destruct x, y, f.
-  rewrite !eq_iso_refl.
-  clear H H0.
-  simpl.
-  rewrite !comp_id_r.
-  symmetry.
-  apply (@fmap_id _ _ F).
-  natural_eq x.
-  destruct x.
-  rewrite (is_eq_refl (to (eq_iso H) tt)).
-  rewrite (is_eq_refl (to (eq_iso H0) tt)).
-  simpl.
-  rewrite comp_id_r.
-  apply comp_id_l.
-  1: destruct H0.
-  2: destruct H.
-  all: simpl.
-  all: apply is_eq_id.
-Qed.
-
-Lemma Fun1C_inv_r: Fun1C_to ∘ Fun1C_from = id C.
-Proof. now fun_eq x y f. Qed.
-
-Definition Fun1C: Fun 1 C <~> C :=
-  Isomorphism.Pack Fun1C_to (Isomorphism.Mixin Cat (Fun 1 C) C Fun1C_to Fun1C_from Fun1C_inv_l Fun1C_inv_r).
-
-Lemma Fun_1_l: Fun 1 C ≃ C.
-Proof.
-  constructor.
-  exact Fun1C.
+  exact (exp_1_r C).
 Qed.
 End Fun_1_l.
 
@@ -279,38 +243,22 @@ End Fun_prod_r.
 Section Curry.
 
 Program Definition Curry_to (C D T: Category): Fun C (Fun D T) ~> Fun (C × D) T := {|
-  fobj F := {|
+  fobj := transpose_inv; (*{|
     fobj p := F (fst p) (snd p);
     fmap p q f := fmap (F (fst q)) (snd f) ∘ fmap F (fst f) (snd p);
-  |};
+  |};*)
   fmap F G η := {|
     transform p := η (fst p) (snd p);
   |};
 |}.
 Next Obligation.
   simpl.
-  rewrite !fmap_id.
-  apply comp_id_l.
-Qed.
-Next Obligation.
-  simpl.
-  rewrite !fmap_comp.
-  simpl.
-  rewrite !comp_assoc.
-  f_equal.
-  rewrite <- !comp_assoc.
-  f_equal.
-  symmetry.
-  apply naturality.
-Qed.
-Next Obligation.
-  rename o1 into x, o into x', o2 into y, o0 into y'.
-  simpl.
+  rewrite !naturality.
   rewrite comp_assoc.
   rewrite naturality.
   rewrite <- !comp_assoc.
   f_equal.
-  change ((η x' ∘ fmap F (fst f)) y = (fmap G (fst f) ∘ η x) y).
+  change ((η o ∘ fmap F (fst f)) o2 = (fmap G (fst f) ∘ η o1) o2).
   f_equal.
   apply naturality.
 Qed.
@@ -322,7 +270,7 @@ Next Obligation.
 Qed.
 
 Program Definition Curry_from (C D T: Category): Fun (C × D) T ~> Fun C (Fun D T) := {|
-  fobj F := Comp_l F ∘ FProd C D;
+  fobj := transpose;
   fmap F G η := {|
     transform x := {|
       transform y := η (x, y);
@@ -350,21 +298,7 @@ Qed.
 Lemma Curry_inv_l (C D T: Category): Curry_from C D T ∘ Curry_to C D T = id (Fun C (Fun D T)).
 Proof.
   fun_eq F G η.
-  rename x into F.
-  fun_eq x x' f.
-  fun_eq y y' g.
-  rewrite fmap_id.
-  apply comp_id_r.
-  natural_eq y.
-  rewrite fmap_id, comp_id_l.
-  rewrite (is_eq_refl (to (eq_iso H) y)).
-  rewrite (is_eq_refl (to (eq_iso H0) y)).
-  simpl.
-  rewrite comp_id_r.
-  apply comp_id_l.
-  1: apply (transform_is_eq (eq_iso H0)).
-  2: apply (transform_is_eq (eq_iso H)).
-  1, 2: apply eq_iso_is_eq.
+  apply (transpose_inv_r x).
   natural_eq x.
   natural_eq y.
   etransitivity.
@@ -385,19 +319,7 @@ Qed.
 Lemma Curry_inv_r (C D T: Category): Curry_to C D T ∘ Curry_from C D T = id (Fun (C × D) T).
 Proof.
   fun_eq F G η.
-  rename x into F.
-  fun_eq p q f.
-  now destruct x.
-  destruct p as [x y], q as [x' y'].
-  simpl in *.
-  rewrite !eq_iso_refl.
-  simpl.
-  rewrite comp_id_l, comp_id_r.
-  rewrite <- fmap_comp.
-  f_equal.
-  apply Prod.hom_eq; simpl; split.
-  apply comp_id_l.
-  apply comp_id_r.
+  apply (transpose_inv_l x).
   natural_eq p.
   destruct p as [x y].
   simpl.

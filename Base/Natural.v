@@ -96,12 +96,40 @@ Proof.
   exact (transform_iso I y).
 Qed.
 
-Lemma is_iso_transform {C D: Category} {F G: C ~> D} (η: F ~> G) (x: C): is_iso η -> is_iso (η x).
+Lemma is_iso_transform {C D: Category} {F G: C ~> D} (η: F ~> G): is_iso η <-> forall x: C, is_iso (η x).
 Proof.
-  intros [ϵ [Hl Hr]].
-  exists (ϵ x); split.
-  apply (proj1 (natural_eq _ _) Hl).
-  apply (proj1 (natural_eq _ _) Hr).
+  split.
+  + intros [ϵ [Hl Hr]] x.
+    exists (ϵ x); split.
+    apply (proj1 (natural_eq _ _) Hl).
+    apply (proj1 (natural_eq _ _) Hr).
+  + intros H.
+    assert (forall x: C, { f | f ∘ η x = id (F x) /\ η x ∘ f = id (G x) }).
+    intros x.
+    specialize (H x).
+    assert (Hi: inhabited (G x ~> F x)).
+    destruct H as [f _].
+    now constructor.
+    exists (epsilon Hi (fun f => f ∘ η x = id (F x) /\ η x ∘ f = id (G x))).
+    apply epsilon_spec, H.
+    clear H.
+    unshelve eexists.
+    exists (fun x => proj1_sig (X x)).
+    2: split; natural_eq x.
+    intros x y f.
+    rewrite <- (comp_id_r (fmap G f)).
+    etransitivity.
+    apply (f_equal (fun f => _ ∘ (_ ∘ f))).
+    symmetry.
+    exact (proj2 (proj2_sig (X x))).
+    rewrite (comp_assoc (fmap G f)).
+    rewrite <- naturality.
+    rewrite <- comp_id_l.
+    rewrite !comp_assoc.
+    do 2 f_equal.
+    exact (proj1 (proj2_sig (X y))).
+    exact (proj1 (proj2_sig (X x))).
+    exact (proj2 (proj2_sig (X x))).
 Qed.
 
 Lemma transform_is_eq {C D: Category} {F G: C ~> D} (η: F ~> G) (x: C): is_eq η -> is_eq (η x).
@@ -427,7 +455,19 @@ Proof.
   apply fmap_id.
 Qed.
 
-Arguments diagonal: simpl never.
+Lemma cof_diag_c {S T: Category} (c: T): cof (@Δ T S c) ≃ Δ (c: co T).
+Proof.
+  apply fun_iso; simpl.
+  exists (fun _ => id_iso (c: co T)).
+  now intros _ _ _.
+Qed.
+
+Lemma cof'_diag_c {S T: Category} (c: T): cof' (@Δ (co T) (co S) c) ≃ Δ c.
+Proof.
+  apply fun_iso; simpl.
+  exists (fun _ => id_iso c).
+  now intros _ _ _.
+Qed.
 
 Program Definition Hom: co Cat ~> Fun Cat Cat := {|
   fobj S := {|
@@ -663,6 +703,17 @@ Proof.
   apply Comp_l_iso, I.
 Qed.
 
+Instance Comp_iso (A B C: Category): Proper (isomorphic (Fun B C) ==> isomorphic (Fun A B) ==> isomorphic (Fun A C)) comp.
+Proof.
+  intros F F' HF G G' HG.
+  transitivity (F' ∘ G).
+  1: clear G' HG; destruct HF as [η].
+  2: clear F HF; rename F' into F; destruct HG as [η].
+  all: constructor.
+  exact (imap (Comp_r G) η).
+  exact (imap (Comp_l F) η).
+Qed.
+
 Section CoFun.
 Context (S T: Category).
 
@@ -738,4 +789,176 @@ Qed.
 
 Definition CoFun: co (Fun S T) <~> Fun (co S) (co T) :=
   Isomorphism.Pack CoFun_to (Isomorphism.Mixin _ _ _ CoFun_to CoFun_from CoFun_inv_l CoFun_inv_r).
+
+Lemma coFun: co (Fun S T) ≃ Fun (co S) (co T).
+Proof.
+  constructor.
+  exact CoFun.
+Qed.
 End CoFun.
+
+Lemma cof_diag (S T: Category): cof (@Δ T S) ≃ (CoFun S T)⁻¹ ∘ @Δ (co T) (co S).
+Proof.
+  apply fun_iso.
+  unshelve eexists.
+  intros x.
+  simpl in x.
+  unfold comp, Category.comp, Cat, Category.class, Cat_mixin, fun_comp.
+  unfold fobj at 2.
+  simpl to.
+  unfold CoFun, from, Isomorphism.inv, Isomorphism.class.
+  unfold CoFun_from.
+  unfold fobj at 2.
+  unshelve eexists.
+  eexists (fun _ => id x).
+  easy.
+  unshelve eexists.
+  eexists (fun _ => id x).
+  easy.
+  1, 2: natural_eq y.
+  1, 2: apply comp_id_l.
+  intros x y f.
+  natural_eq a.
+  rewrite comp_id_l.
+  apply comp_id_r.
+Qed.
+
+Lemma iso_full {S T: Category} (F: S <~> T): full F.
+Proof.
+  intros x y f.
+  exists (to (eq_iso (inv_l F)) y ∘ fmap (to F⁻¹) f ∘ to (eq_iso (inv_l F))⁻¹ x).
+  rewrite !fmap_comp.
+  etransitivity.
+  etransitivity.
+  1: apply (f_equal (fun f => f ∘ _ ∘ _)).
+  2: apply f_equal.
+  1: apply (is_eq_unique _ (to (eq_iso (inv_r F)) (to F y))).
+  3: apply (is_eq_unique _ (to (eq_iso (inv_r F))⁻¹ (to F x))).
+  1, 3: apply (fmap_is_eq F).
+  1: apply (transform_is_eq (eq_iso (inv_l F))).
+  2: apply (transform_is_eq (eq_iso (inv_l F))⁻¹).
+  3, 4: apply transform_is_eq.
+  2, 4: apply is_eq_inv.
+  1, 2, 3, 4: apply eq_iso_is_eq.
+  etransitivity.
+  apply (f_equal (fun f => f ∘ _)).
+  apply (naturality (to (eq_iso (inv_r F)))).
+  rewrite <- comp_assoc, <- comp_id_r.
+  f_equal.
+  apply (inv_r (transform_iso (eq_iso (inv_r F)) (to F x))).
+Qed.
+
+Lemma iso_faithful {S T: Category} (F: S <~> T): faithful F.
+Proof.
+  intros x y f g H.
+  change (fmap (id S) f = fmap (id S) g).
+  apply (iso_epic (transform_iso (eq_iso (inv_l F)) x)).
+  simpl to.
+  rewrite <- !naturality.
+  simpl.
+  now do 2 f_equal.
+Qed.
+
+Lemma iso_fully_faithful {S T: Category} (F: S <~> T): fully_faithful F.
+Proof.
+  split.
+  apply iso_full.
+  apply iso_faithful.
+Qed.
+
+Lemma iso_esurj {S T: Category} (F: S <~> T): esurj F.
+Proof.
+  intros x.
+  exists (to F⁻¹ x).
+  constructor.
+  exact (transform_iso (eq_iso (inv_r F)) x).
+Qed.
+
+Instance full_natural_iso (S T: Category): Proper (isomorphic (Fun S T) ==> iff) full.
+Proof.
+  enough (Proper (isomorphic (Fun S T) ==> impl) full).
+  now split; apply H.
+  intros F F' [I] HF x y f.
+  specialize (HF x y (to I⁻¹ y ∘ f ∘ to I x)).
+  destruct HF as [f' H].
+  apply (f_equal (fun f => transform_iso I y ∘ f ∘ transform_iso I⁻¹ x)) in H.
+  rewrite !comp_assoc in H.
+  rewrite inv_r, comp_id_l in H.
+  rewrite <- (comp_assoc f) in H.
+  setoid_rewrite (inv_r (transform_iso I x)) in H.
+  rewrite comp_id_r in H.
+  subst f.
+  exists f'.
+  simpl.
+  rewrite naturality.
+  rewrite <- comp_assoc.
+  setoid_rewrite (inv_r (transform_iso I x)).
+  symmetry.
+  apply comp_id_r.
+Qed.
+
+Instance faithful_natural_iso (S T: Category): Proper (isomorphic (Fun S T) ==> iff) faithful.
+Proof.
+  enough (Proper (isomorphic (Fun S T) ==> impl) faithful).
+  now split; apply H.
+  intros F F' [I] HF x y f g H.
+  apply HF; clear HF.
+  apply (iso_monic (transform_iso I y)).
+  simpl.
+  rewrite !naturality.
+  now f_equal.
+Qed.
+
+Instance fully_faithful_natural_iso (S T: Category): Proper (isomorphic (Fun S T) ==> iff) fully_faithful.
+Proof.
+  intros F G H.
+  unfold fully_faithful.
+  now do 2 f_equiv.
+Qed.
+
+Instance esurj_natural_iso (S T: Category): Proper (isomorphic (Fun S T) ==> iff) esurj.
+Proof.
+  enough (Proper (isomorphic (Fun S T) ==> impl) esurj).
+  now split; apply H.
+  intros F G H HF y.
+  specialize (HF y).
+  destruct HF as [x HF].
+  exists x.
+  now rewrite <- H.
+Qed.
+
+Lemma natural_monic {S T: Category} {F G: S ~> T} (η: F ~> G): (forall x, monic (η x)) -> monic η.
+Proof.
+  intros Hη X α β H.
+  generalize (proj1 (natural_eq _ _) H).
+  clear H; intros H.
+  natural_eq x.
+  apply Hη, H.
+Qed.
+
+Lemma natural_epic {S T: Category} {F G: S ~> T} (η: F ~> G): (forall x, epic (η x)) -> epic η.
+Proof.
+  intros Hη X α β H.
+  generalize (proj1 (natural_eq _ _) H).
+  clear H; intros H.
+  natural_eq x.
+  apply Hη, H.
+Qed.
+
+Lemma transform_splitmonic {S T: Category} {F G: S ~> T} (η: F ~> G): splitmonic η -> (forall x, splitmonic (η x)).
+Proof.
+  intros [η' Hη] x.
+  generalize (proj1 (natural_eq _ _) Hη).
+  clear Hη; intros Hη.
+  exists (η' x).
+  apply Hη.
+Qed.
+
+Lemma transform_splitepic {S T: Category} {F G: S ~> T} (η: F ~> G): splitepic η -> (forall x, splitepic (η x)).
+Proof.
+  intros [η' Hη] x.
+  generalize (proj1 (natural_eq _ _) Hη).
+  clear Hη; intros Hη.
+  exists (η' x).
+  apply Hη.
+Qed.

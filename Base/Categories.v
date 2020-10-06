@@ -119,8 +119,27 @@ Proof.
   all: apply proof_irrelevance.
 Qed.
 
-Definition monic {C: Category} {a b: C} (f: a ~> b) :=
-  forall c (g1 g2: c ~> a), f ∘ g1 = f ∘ g2 -> g1 = g2.
+Lemma gen_eq_l {C: Category} {x y: C} (f g: x ~> y): f = g <-> forall (z: C) (a: y ~> z), a ∘ f = a ∘ g.
+Proof.
+  split; intros H.
+  now subst g.
+  setoid_rewrite <- comp_id_l.
+  apply H.
+Qed.
 
-Definition epic {C: Category} {a b: C} (f: a ~> b) :=
-  forall c (g1 g2: b ~> c), g1 ∘ f = g2 ∘ f -> g1 = g2.
+Lemma gen_eq_r {C: Category} {x y: C} (f g: x ~> y): f = g <-> forall (z: C) (a: z ~> x), f ∘ a = g ∘ a.
+Proof.
+  split; intros H.
+  now subst g.
+  setoid_rewrite <- comp_id_r.
+  apply H.
+Qed.
+
+Lemma gen_eq {C: Category} {x y: C} (f g: x ~> y): f = g <-> forall (x' y': C) (a: x' ~> x) (b: y ~> y'), b ∘ f ∘ a = b ∘ g ∘ a.
+Proof.
+  split; intros H.
+  now subst g.
+  setoid_rewrite <- comp_id_l.
+  setoid_rewrite <- comp_id_r.
+  apply H.
+Qed.

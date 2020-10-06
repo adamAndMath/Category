@@ -507,17 +507,15 @@ Proof.
     rewrite (is_eq_refl e2) in Hf.
     rewrite !comp_id_r in Hf.
     setoid_rewrite <- (fmap_comp (η x)) in Hf.
-    apply fmap_monic_inj in Hf.
+    apply iso_faithful in Hf.
     exact Hf.
-    apply iso_monic.
     1, 2: unfold e1, e2; clear.
     1: apply (transform_is_eq (eq_iso (comp_diag I⁻¹ l))⁻¹).
     2: apply (transform_is_eq (eq_iso (comp_diag I⁻¹ n))⁻¹).
     1, 2: apply is_eq_inv, eq_iso_is_eq.
     intros g Hg.
     specialize (Hf (fmap (to I⁻¹) g)).
-    eapply fmap_monic_inj, Hf.
-    apply iso_monic.
+    eapply iso_faithful, Hf.
     clear Hf.
     generalize (proj1 (natural_eq _ _) Hg).
     clear Hg; intros Hg.

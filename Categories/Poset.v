@@ -1,5 +1,41 @@
 Require Export Base.
 
+Definition is_proset (C: Category) :=
+  forall (x y: C) (f g: x ~> y), f = g.
+
+Definition is_directed (C: Category) :=
+  forall x y: C, x ~> y -> y ~> x -> x = y.
+
+Definition is_poset (C: Category) :=
+  is_proset C /\ is_directed C.
+
+Definition connected {C: Category} (x y: C) := inhabited (x ~> y).
+
+Instance connected_preorder (C: Category): PreOrder (@connected C).
+Proof.
+  split; red; intros.
+  + constructor.
+    exact (id x).
+  + destruct H as [f], H0 as [g].
+    constructor.
+    exact (g ∘ f).
+Qed.
+
+Definition connected_partialorder (C: Category): is_directed C <-> PartialOrder eq (@connected C).
+Proof.
+  split.
+  + intros H x y.
+    split.
+    intros Hx.
+    now subst y.
+    intros [[f] [g]].
+    now apply H.
+  + intros H x y f g.
+    apply H.
+    split.
+    all: now constructor.
+Qed.
+
 Module Proset.
 
 Section category.
@@ -31,6 +67,42 @@ End Proset.
 Notation Proset := Proset.cat.
 
 Definition Poset {T} (R: T -> T -> Prop) {pre: PreOrder R} {po: PartialOrder eq R} := Proset R.
+
+Lemma Proset_correct {T} (R: T -> T -> Prop) {pre: PreOrder R}: is_proset (Proset R).
+Proof.
+  intros x y f g.
+  red in f, g.
+  simpl in f, g.
+  now assert (f = g) by apply proof_irrelevance.
+Qed.
+
+Lemma Poset_correct {T} (R: T -> T -> Prop) {pre: PreOrder R} {po: PartialOrder eq R}: is_poset (Poset R).
+Proof.
+  split.
+  apply Proset_correct.
+  intros x y f g.
+  now apply po.
+Qed.
+
+Lemma proset_ex (C: Category): is_proset C -> Proset (@connected C) ≃ C.
+Proof.
+  intros H.
+  constructor.
+  1: unshelve eexists.
+  2: unshelve eexists.
+  1, 2: unshelve eexists.
+  1, 3: exact (fun x => x).
+  7, 8: fun_eq x y f.
+  1, 2: intros x y f.
+  all: simpl.
+  exact (epsilon f (fun _ => True)).
+  easy.
+  all: intros.
+  1, 2: apply H.
+  1, 2: apply Proset_correct.
+  apply Proset_correct.
+  apply H.
+Qed.
 
 Lemma dual_proset {T} (R: T -> T -> Prop) {pre: PreOrder R}: co (Proset R) = Proset (flip R).
 Proof.

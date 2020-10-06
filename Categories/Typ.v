@@ -25,7 +25,7 @@ End Typ.
 Canonical Typ.cat.
 Notation Typ := Typ.cat.
 
-Require Import Cat.
+Require Import Instances.Cat.Product.
 
 Program Definition Hom (C: Category): co C × C ~> Typ := {|
   fobj (p: co C × C) := (fst p: C) ~> snd p;

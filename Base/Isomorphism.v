@@ -1,5 +1,126 @@
 Require Export Categories.
 
+Section monoepi.
+Context {C: Category}.
+
+Definition monic {a b: C} (f: a ~> b) :=
+  forall c (g1 g2: c ~> a), f ∘ g1 = f ∘ g2 -> g1 = g2.
+
+Definition epic {a b: C} (f: a ~> b) :=
+  forall c (g1 g2: b ~> c), g1 ∘ f = g2 ∘ f -> g1 = g2.
+
+Definition splitmonic {a b: C} (f: a ~> b) :=
+  exists f': b ~> a, f' ∘ f = id a.
+
+Definition splitepic {a b: C} (f: a ~> b) :=
+  exists f': b ~> a, f ∘ f' = id b.
+
+Lemma splitmonic_is_monic {a b: C} (f: a ~> b): splitmonic f -> monic f.
+Proof.
+  intros [f' Hf] c g1 g2 H.
+  setoid_rewrite <- comp_id_l.
+  rewrite <- Hf.
+  rewrite <- !comp_assoc.
+  now f_equal.
+Qed.
+
+Lemma splitepic_is_epic {a b: C} (f: a ~> b): splitepic f -> epic f.
+Proof.
+  intros [f' Hf] c g1 g2 H.
+  setoid_rewrite <- comp_id_r.
+  rewrite <- Hf.
+  rewrite !comp_assoc.
+  now f_equal.
+Qed.
+
+Lemma monic_id (a: C): monic (id a).
+Proof.
+  intros x f g H.
+  now setoid_rewrite <- comp_id_l.
+Qed.
+
+Lemma epic_id (a: C): epic (id a).
+Proof.
+  intros x f g H.
+  now setoid_rewrite <- comp_id_r.
+Qed.
+
+Lemma splitmonic_id (a: C): splitmonic (id a).
+Proof.
+  exists (id a).
+  apply comp_id_l.
+Qed.
+
+Lemma splitepic_id (a: C): splitepic (id a).
+Proof.
+  exists (id a).
+  apply comp_id_l.
+Qed.
+
+Lemma monic_comp {a b c: C} (f: b ~> c) (g: a ~> b): monic f -> monic g -> monic (f ∘ g).
+Proof.
+  intros Hf Hg x h1 h2 H.
+  apply Hg, Hf.
+  now rewrite !comp_assoc.
+Qed.
+
+Lemma epic_comp {a b c: C} (f: b ~> c) (g: a ~> b): epic f -> epic g -> epic (f ∘ g).
+Proof.
+  intros Hf Hg x h1 h2 H.
+  apply Hf, Hg.
+  now rewrite <- !comp_assoc.
+Qed.
+
+Lemma splitmonic_comp {a b c: C} (f: b ~> c) (g: a ~> b): splitmonic f -> splitmonic g -> splitmonic (f ∘ g).
+Proof.
+  intros [f' Hf] [g' Hg].
+  exists (g' ∘ f').
+  rewrite comp_assoc, <- (comp_assoc g').
+  rewrite Hf, comp_id_r.
+  apply Hg.
+Qed.
+
+Lemma splitepic_comp {a b c: C} (f: b ~> c) (g: a ~> b): splitepic f -> splitepic g -> splitepic (f ∘ g).
+Proof.
+  intros [f' Hf] [g' Hg].
+  exists (g' ∘ f').
+  rewrite comp_assoc, <- (comp_assoc f).
+  rewrite Hg, comp_id_r.
+  apply Hf.
+Qed.
+
+Lemma monic_comp_r {a b c: C} (f: b ~> c) (g: a ~> b): monic (f ∘ g) -> monic g.
+Proof.
+  intros Hc x h1 h2 H.
+  apply Hc.
+  rewrite <- !comp_assoc.
+  now f_equal.
+Qed.
+
+Lemma epic_comp_l {a b c: C} (f: b ~> c) (g: a ~> b): epic (f ∘ g) -> epic f.
+Proof.
+  intros Hc x h1 h2 H.
+  apply Hc.
+  rewrite !comp_assoc.
+  now f_equal.
+Qed.
+
+Lemma splitmonic_comp_r {a b c: C} (f: b ~> c) (g: a ~> b): splitmonic (f ∘ g) -> splitmonic g.
+Proof.
+  intros [h H].
+  exists (h ∘ f).
+  now rewrite <- comp_assoc.
+Qed.
+
+Lemma splitepic_comp_l {a b c: C} (f: b ~> c) (g: a ~> b): splitepic (f ∘ g) -> splitepic f.
+Proof.
+  intros [h H].
+  exists (g ∘ h).
+  now rewrite comp_assoc.
+Qed.
+
+End monoepi.
+
 Module Isomorphism.
 
 Structure mixin_of {C: Category} {x y: C} (f: x ~> y) := Mixin {
@@ -280,40 +401,102 @@ Proof.
   apply is_eq_id.
 Qed.
 
+Theorem iso_is_splitmonic {C: Category} {x y: C} (i: x <~> y): splitmonic i.
+Proof.
+  exists (i⁻¹).
+  apply inv_l.
+Qed.
+
+Theorem iso_is_splitepic {C: Category} {x y: C} (i: x <~> y): splitepic i.
+Proof.
+  exists (i⁻¹).
+  apply inv_r.
+Qed.
+
 Theorem iso_monic {C: Category} {x y: C} (i: x <~> y): monic i.
 Proof.
-  intros z f g H.
-  rewrite <- (comp_id_l f), <- (comp_id_l g).
-  rewrite <- (inv_l i).
-  rewrite <- !comp_assoc.
-  now f_equal.
+  apply splitmonic_is_monic.
+  apply iso_is_splitmonic.
 Qed.
 
 Theorem iso_epic {C: Category} {x y: C} (i: x <~> y): epic i.
 Proof.
-  intros z f g H.
-  rewrite <- (comp_id_r f), <- (comp_id_r g).
-  rewrite <- (inv_r i).
-  rewrite !comp_assoc.
-  now f_equal.
+  apply splitepic_is_epic.
+  apply iso_is_splitepic.
+Qed.
+
+Theorem is_iso_is_splitmonic {C: Category} {x y: C} (f: x ~> y): is_iso f -> splitmonic f.
+Proof.
+  intros [f' [H _]].
+  now exists (f').
+Qed.
+
+Theorem is_iso_is_splitepic {C: Category} {x y: C} (f: x ~> y): is_iso f -> splitepic f.
+Proof.
+  intros [f' [_ H]].
+  now exists (f').
 Qed.
 
 Theorem is_iso_monic {C: Category} {x y: C} (f: x ~> y): is_iso f -> monic f.
 Proof.
-  intros [g [Hl Hr]] c h1 h2 H.
-  setoid_rewrite <- comp_id_l.
-  rewrite <- Hl.
-  rewrite <- !comp_assoc.
-  now f_equal.
+  intros H.
+  apply splitmonic_is_monic, is_iso_is_splitmonic, H.
 Qed.
 
 Theorem is_iso_epic {C: Category} {x y: C} (f: x ~> y): is_iso f -> epic f.
 Proof.
-  intros [g [Hl Hr]] c h1 h2 H.
-  setoid_rewrite <- comp_id_r.
-  rewrite <- Hr.
+  intros H.
+  apply splitepic_is_epic, is_iso_is_splitepic, H.
+Qed.
+
+Theorem splitmonic_epic {C: Category} {x y: C} (f: x ~> y): splitmonic f -> epic f -> is_iso f.
+Proof.
+  intros [g inv_l] H.
+  exists g; split.
+  exact inv_l.
+  apply H.
+  rewrite <- comp_assoc, comp_id_l.
+  rewrite inv_l.
+  apply comp_id_r.
+Qed.
+
+Theorem splitepic_monic {C: Category} {x y: C} (f: x ~> y): splitepic f -> monic f -> is_iso f.
+Proof.
+  intros [g inv_r] H.
+  exists g; split.
+  apply H.
+  rewrite comp_assoc, comp_id_r.
+  rewrite inv_r.
+  apply comp_id_l.
+  exact inv_r.
+Qed.
+
+Theorem is_iso_comp_l {C: Category} {x y z: C} (f: y ~> z) (g: x ~> y): is_iso (f ∘ g) -> is_iso g -> is_iso f.
+Proof.
+  intros [c Hc] [g' Hg].
+  exists (g ∘ c); split.
+  rewrite <- (comp_id_r _).
+  rewrite <- (proj2 Hg).
+  rewrite <- !(comp_assoc g).
+  f_equal.
+  rewrite comp_assoc, <- (comp_assoc c).
+  rewrite (proj1 Hc).
+  apply comp_id_l.
+  now rewrite comp_assoc.
+Qed.
+
+Theorem is_iso_comp_r {C: Category} {x y z: C} (f: y ~> z) (g: x ~> y): is_iso (f ∘ g) -> is_iso f -> is_iso g.
+Proof.
+  intros [c Hc] [f' Hf].
+  exists (c ∘ f); split.
+  now rewrite <- comp_assoc.
+  rewrite <- (comp_id_l _).
+  rewrite <- (proj1 Hf).
+  rewrite <- comp_assoc.
+  f_equal.
   rewrite !comp_assoc.
-  now f_equal.
+  rewrite (proj2 Hc).
+  apply comp_id_l.
 Qed.
 
 Definition co_iso_mixin {C: Category} {x y: C} (i: x <~> y): Isomorphism.mixin_of (from i: @hom (co C) x y) :=
@@ -355,6 +538,30 @@ Proof.
   1, 3: exact Hr.
   all: exact Hl.
 Qed.
+
+Lemma monic_co {C: Category} {x y: C} (f: x ~> y): monic f <-> epic (f: (y: co C) ~> x).
+Proof. reflexivity. Qed.
+
+Lemma epic_co {C: Category} {x y: C} (f: x ~> y): epic f <-> monic (f: (y: co C) ~> x).
+Proof. reflexivity. Qed.
+
+Lemma monic_co' {C: Category} {x y: C} (f: (x: co C) ~> y): monic (f: y ~> x) <-> epic f.
+Proof. reflexivity. Qed.
+
+Lemma epic_co' {C: Category} {x y: C} (f: (x: co C) ~> y): epic (f: y ~> x) <-> monic f.
+Proof. reflexivity. Qed.
+
+Lemma splitmonic_co {C: Category} {x y: C} (f: x ~> y): splitmonic f <-> splitepic (f: (y: co C) ~> x).
+Proof. reflexivity. Qed.
+
+Lemma splitepic_co {C: Category} {x y: C} (f: x ~> y): splitepic f <-> splitmonic (f: (y: co C) ~> x).
+Proof. reflexivity. Qed.
+
+Lemma splitmonic_co' {C: Category} {x y: C} (f: (x: co C) ~> y): splitmonic (f: y ~> x) <-> splitepic f.
+Proof. reflexivity. Qed.
+
+Lemma splitepic_co' {C: Category} {x y: C} (f: (x: co C) ~> y): splitepic (f: y ~> x) <-> splitmonic f.
+Proof. reflexivity. Qed.
 
 Lemma is_eq_co {C: Category} {x y: C} (f: x ~> y): is_eq f -> is_eq (f: (y: co C) ~> x).
 Proof.

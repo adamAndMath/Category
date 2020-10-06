@@ -6,7 +6,7 @@ Context (C: EqCategory).
 
 Program Definition EqLim: Fun Parallel C ~> C := {|
   fobj F := Eqz (fmap F (Parallel.arr false)) (fmap F (Parallel.arr true));
-  fmap F G η := proj1_sig (eqz_uni (fmap G (Parallel.arr false)) (fmap G (Parallel.arr true)) (η false ∘ eqz (fmap F (Parallel.arr false)) (fmap F (Parallel.arr true))) _);
+  fmap F G η := eqz_med (fmap G (Parallel.arr false)) (fmap G (Parallel.arr true)) (η false ∘ eqz (fmap F (Parallel.arr false)) (fmap F (Parallel.arr true))) _;
 |}.
 Next Obligation.
   rewrite !comp_assoc.
@@ -16,14 +16,24 @@ Next Obligation.
   apply eqz_comm.
 Qed.
 Next Obligation.
-  symmetry.
-  apply fprod_comp.
+  apply eqz_med_unique.
+  rewrite comp_id_l.
+  apply comp_id_r.
+Qed.
+Next Obligation.
+  apply eqz_med_unique.
+  rewrite comp_assoc.
+  rewrite eqz_med_comm.
+  rewrite <- !comp_assoc.
+  f_equal.
+  apply eqz_med_comm.
 Qed.
 
-Program Definition ProdUnit: id C ~> ProdLim ∘ FreeProd := {|
-  transform x := ⟨id x, id x⟩;
+Program Definition EqUnit: id C ~> EqLim ∘ Δ := {|
+  transform x := eqz_med (id x) (id x) (id x) _;
 |}.
 Next Obligation.
+  set @eqz_med_comm.
   unfold fprod.
   rewrite !fork_comp.
   f_equal.

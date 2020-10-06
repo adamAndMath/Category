@@ -19,12 +19,17 @@ Structure/Initial.v
 Structure/Product.v
 Structure/Coproduct.v
 Structure/Equalizer.v
+Structure/Exponential.v
+Structure/Cartisian.v
+Structure/CartisianClosed.v
 Structure.v
 Instances/Cat/Terminal.v
 Instances/Cat/Initial.v
 Instances/Cat/Product.v
 Instances/Cat/Coproduct.v
+Instances/Cat/Exponential.v
 Instances/Cat.v
+Instances/Typ.v
 Instances/Dual.v
 Instances/Comma/Slice.v
 Instances/Comma/Arrow.v

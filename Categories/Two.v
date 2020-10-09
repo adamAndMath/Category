@@ -1,6 +1,6 @@
 Require Export Base.
 
-Module DArrow.
+Module Two.
 
 Definition obj := bool.
 Definition hom (x y: obj) :=
@@ -78,6 +78,7 @@ Proof.
   reflexivity.
 Qed.
 
-End DArrow.
+End Two.
 
-Notation DArrow := DArrow.cat.
+Notation Two := Two.cat.
+Notation "2" := Two.

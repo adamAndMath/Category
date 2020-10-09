@@ -245,3 +245,19 @@ Definition settop_mixin :=
   TopCategory.Mixin SET set_one (@set_to_one) (@set_to_one_unique).
 
 Canonical settop := TopCategory.Pack SET settop_mixin.
+
+Definition set_from_zero {A: set}: Ø ~> A :=
+  fun x => False_rect _ (in_empty _ (proj2_sig x)).
+
+Lemma set_from_zero_unique {A: set} (f: Ø ~> A): set_from_zero = f.
+Proof.
+  apply setf_eq.
+  intros x Hx.
+  contradict Hx.
+  apply in_empty.
+Qed.
+
+Definition setbot_mixin :=
+  BotCategory.Mixin SET Ø (@set_from_zero) (@set_from_zero_unique).
+
+Canonical setbot := BotCategory.Pack SET setbot_mixin.

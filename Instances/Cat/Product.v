@@ -98,7 +98,7 @@ Canonical CatProd: ProdCategory :=
   ProdCategory.Pack Cat CatProd_mixin.
 
 Definition CatProd_Top_mixin (C D: TopCategory): TopCategory.mixin_of (C × D) :=
-  TopCategory.Mixin _ (1, 1) (fun p => (to_one, to_one))
+  TopCategory.Mixin _ (1, 1) (fun p => (!, !))
   (fun _ f => eq_trans (f_equal2 pair (to_one_unique _) (to_one_unique _)) (eq_sym (surjective_pairing f))).
 
 Canonical CatProd_Top (C D: TopCategory): TopCategory :=

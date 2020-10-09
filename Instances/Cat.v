@@ -11,7 +11,7 @@ Canonical CatCCC: CCC :=
   CCC.Pack Cat (CCC.Class Cat (CartCategory.class CatCart) CatExp_mixin).
 
 Section Fun_0_l.
-Lemma Fun0C_inv_l (C: Category): Δ (from_zero: 0 ~> C) ∘ to_one = id (Fun 0 C).
+Lemma Fun0C_inv_l (C: Category): Δ (¡: 0 ~> C) ∘ ! = id (Fun 0 C).
 Proof.
   fun_eq F G η.
   apply (@from_zero_unique _ C).
@@ -22,7 +22,7 @@ Proof.
   destruct x.
 Qed.
 
-Lemma Fun0C_inv_r (C: Category): to_one ∘ Δ (from_zero: 0 ~> C) = id 1.
+Lemma Fun0C_inv_r (C: Category): ! ∘ Δ (¡: 0 ~> C) = id 1.
 Proof.
   fun_eq x y f.
   apply unit_unique.
@@ -30,7 +30,7 @@ Proof.
 Qed.
 
 Canonical Fun0C (C: Category): Fun 0 C <~> 1 :=
-  Isomorphism.Pack to_one (Isomorphism.Mixin Cat (Fun 0 C) 1 to_one (Δ (from_zero: 0 ~> C)) (Fun0C_inv_l C) (Fun0C_inv_r C)).
+  Isomorphism.Pack ! (Isomorphism.Mixin Cat (Fun 0 C) 1 ! (Δ (¡: 0 ~> C)) (Fun0C_inv_l C) (Fun0C_inv_r C)).
 
 Lemma Fun_0_l (C: Category): Fun 0 C ≃ 1.
 Proof.

@@ -11,10 +11,10 @@ Definition comm :=
   op ∘ Product.flip S S = op.
 
 Definition left_unit (u: 1 ~> S) :=
-  op ∘ ⟨u ∘ to_one, id S⟩ = id S.
+  op ∘ ⟨u ∘ !, id S⟩ = id S.
 
 Definition right_unit (u: 1 ~> S) :=
-  op ∘ ⟨id S, u ∘ to_one⟩ = id S.
+  op ∘ ⟨id S, u ∘ !⟩ = id S.
 
 Lemma gen_assoc: assoc <-> forall (Z: C) (f g h: Z ~> S), op ∘ ⟨f, op ∘ ⟨g, h⟩⟩ = op ∘ ⟨op ∘ ⟨f, g⟩, h⟩.
 Proof.
@@ -78,11 +78,11 @@ Proof.
     exact H.
 Qed.
 
-Lemma gen_unit_l (u: 1 ~> S): left_unit u <-> forall (Z: C) (f: Z ~> S), op ∘ ⟨u ∘ to_one, f⟩ = f.
+Lemma gen_unit_l (u: 1 ~> S): left_unit u <-> forall (Z: C) (f: Z ~> S), op ∘ ⟨u ∘ !, f⟩ = f.
 Proof.
   unfold left_unit.
   rewrite gen_eq_r.
-  enough (forall (Z: C) (f: Z ~> S), op ∘ ⟨u ∘ to_one, id S⟩ ∘ f = id S ∘ f <-> op ∘ ⟨u ∘ to_one, f⟩ = f).
+  enough (forall (Z: C) (f: Z ~> S), op ∘ ⟨u ∘ !, id S⟩ ∘ f = id S ∘ f <-> op ∘ ⟨u ∘ !, f⟩ = f).
   split; intros H0 Z f.
   1, 2: apply H, H0.
   intros Z f.
@@ -90,7 +90,7 @@ Proof.
   rewrite fork_comp.
   rewrite <- comp_assoc.
   rewrite !comp_id_l.
-  setoid_rewrite <- (to_one_unique (to_one ∘ f)).
+  setoid_rewrite <- (to_one_unique (! ∘ f)).
   reflexivity.
 Qed.
 
@@ -106,7 +106,7 @@ Proof.
   rewrite fork_comp.
   rewrite <- comp_assoc.
   rewrite !comp_id_l.
-  setoid_rewrite <- (to_one_unique (to_one ∘ f)).
+  setoid_rewrite to_one_comp.
   reflexivity.
 Qed.
 
@@ -261,40 +261,31 @@ Qed.
 
 Program Definition one: obj C := {|
   base := 1;
-  law := to_one;
-  unit := to_one;
+  law := !;
+  unit := !;
 |}.
 Next Obligation.
   apply gen_assoc.
   intros Z f g h.
-  transitivity (@to_one C Z).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 Next Obligation.
   red.
-  transitivity (@to_one C 1).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 Next Obligation.
   red.
-  transitivity (@to_one C 1).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 
 Program Definition to_one {G: obj C}: hom G one := {|
-  arr := to_one;
+  arr := !;
 |}.
 Next Obligation.
-  transitivity (@to_one C (base G × base G)).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 Next Obligation.
-  symmetry.
-  apply to_one_unique.
+  apply to_one_comp.
 Qed.
 
 Lemma to_one_unique {G: obj C} (f: hom G one): to_one = f.
@@ -506,7 +497,7 @@ Proof.
     reflexivity.
   + rewrite <- (comp_id_r (unit (Flatten G))).
     rewrite <- (comp_id_r (unit (base G))).
-    rewrite <- (to_one_unique (id 1)).
+    rewrite <- one_to_one.
     rewrite <- (proj1 (gen_unit_l _ _) (law_unit_l (Flatten G)) _ (unit (Flatten G) ∘ _)).
     rewrite <- (proj1 (gen_unit_l _ _) (law_unit_l (base G)) _ (unit (Flatten G) ∘ _)) at 1.
     rewrite <- (proj1 (gen_unit_r _ _) (law_unit_r (base G)) _ (unit (Flatten G) ∘ _)) at 2.
@@ -595,7 +586,7 @@ Proof.
     rewrite <- (my_uy_l _ ux).
     rewrite gen_unit_l in mx_ux_l.
     rewrite <- mx_ux_l.
-    rewrite (to_one_unique (id 1)).
+    rewrite one_to_one.
     rewrite !comp_id_r.
     rewrite gen_comm in mx_comm.
     apply mx_comm.
@@ -760,7 +751,7 @@ Next Obligation.
   rewrite gen_eq_r in H.
   apply gen_comm.
   intros Z f g.
-  specialize (H Z ⟨⟨Monoid.unit G ∘ to_one, g⟩, ⟨f, Monoid.unit G ∘ to_one⟩⟩).
+  specialize (H Z ⟨⟨Monoid.unit G ∘ !, g⟩, ⟨f, Monoid.unit G ∘ !⟩⟩).
   rewrite <- !comp_assoc in H.
   rewrite !fork_comp in H.
   rewrite <- !comp_assoc in H.
@@ -812,7 +803,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   rewrite <- (comp_id_r (AbMonoid.unit G)).
-  rewrite <- (to_one_unique (id 1)).
+  rewrite <- one_to_one.
   apply gen_unit_l, AbMonoid.law_unit_l.
 Qed.
 Next Obligation.
@@ -822,12 +813,10 @@ Next Obligation.
   unfold fprod.
   rewrite fork_comp, <- comp_assoc.
   do 2 f_equal.
-  etransitivity.
-  symmetry.
-  all: apply to_one_unique.
+  all: apply to_one_eq.
 Qed.
 Next Obligation.
-  rewrite (to_one_unique (id 1)).
+  rewrite one_to_one.
   apply comp_id_r.
 Qed.
 Next Obligation.

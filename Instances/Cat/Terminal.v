@@ -82,14 +82,14 @@ Definition CoOne_from: 1 ~> co 1 := {|
   fmap_comp _ _ _ _ _ := eq_refl;
 |}.
 
-Lemma CoOne_inv_l: to_one ∘ CoOne_from = id 1.
+Lemma CoOne_inv_l: ! ∘ CoOne_from = id 1.
 Proof.
   fun_eq x y f.
   apply unit_unique.
   apply unit_eq.
 Qed.
 
-Lemma CoOne_inv_r: CoOne_from ∘ to_one = id (co 1).
+Lemma CoOne_inv_r: CoOne_from ∘ ! = id (co 1).
 Proof.
   fun_eq x y f.
   apply unit_unique.
@@ -97,7 +97,7 @@ Proof.
 Qed.
 
 Definition CoOne: co 1 <~> 1 :=
-  Isomorphism.Pack to_one (Isomorphism.Mixin _ _ _ to_one CoOne_from CoOne_inv_l CoOne_inv_r).
+  Isomorphism.Pack ! (Isomorphism.Mixin _ _ _ ! CoOne_from CoOne_inv_l CoOne_inv_r).
 
 Lemma co_1: co 1 ≃ 1.
 Proof.

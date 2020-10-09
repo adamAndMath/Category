@@ -148,3 +148,108 @@ Qed.
 
 Lemma cone_nat_inv {S T: Category} {F: S ~> T} (c: T) (η: Δ c ~> F): nat_cone (cone_nat c η) = η.
 Proof. now natural_eq x. Qed.
+
+Lemma cone_iso_ex {S T: Category} {F: S ~> T} (X: Cone F) (y: T): Cone.vertex X ≃ y -> exists Y, Cone.vertex Y = y /\ X ≃ Y.
+Proof.
+  intros [i].
+  unshelve eexists.
+  exists y (fun x => Cone.edge X x ∘ i⁻¹).
+  2: split.
+  2: reflexivity.
+  2: constructor.
+  2: unshelve eexists.
+  3: unshelve eexists.
+  2: exists (to i).
+  3: exists (to i⁻¹).
+  4, 5: Cone.hom_eq.
+  all: simpl.
+  all: change (from i) with (to i⁻¹).
+  + intros a b f.
+    rewrite comp_assoc.
+    f_equal.
+    apply Cone.edge_comm.
+  + intros a.
+    rewrite <- comp_assoc, inv_l.
+    apply comp_id_r.
+  + now intros a.
+  + apply inv_l.
+  + apply inv_r.
+Qed.
+
+Program Definition cone_lift {S T: Category} (F G: S ~> T) (η: F ~> G): Cone F ~> Cone G := {|
+  fobj C := {|
+    Cone.vertex := Cone.vertex C;
+    Cone.edge i := η i ∘ Cone.edge C i;
+  |};
+  fmap A B f := {|
+    Cone.mediator := Cone.mediator f;
+  |}
+|}.
+Next Obligation.
+  rewrite comp_assoc.
+  rewrite <- naturality.
+  rewrite <- comp_assoc.
+  f_equal.
+  apply Cone.edge_comm.
+Qed.
+Next Obligation.
+  rewrite <- comp_assoc.
+  f_equal.
+  apply Cone.mediator_comm.
+Qed.
+Next Obligation.
+  now Cone.hom_eq.
+Qed.
+Next Obligation.
+  now Cone.hom_eq.
+Qed.
+
+Program Definition cone_whisk_l {A B C: Category} (F: B ~> C) (G: A ~> B): Cone G ~> Cone (F ∘ G) := {|
+  fobj X := {|
+    Cone.vertex := F (Cone.vertex X);
+    Cone.edge i := fmap F (Cone.edge X i);
+  |};
+  fmap X Y f := {|
+    Cone.mediator := fmap F f;
+  |}
+|}.
+Next Obligation.
+  rewrite <- fmap_comp.
+  f_equal.
+  apply Cone.edge_comm.
+Qed.
+Next Obligation.
+  rewrite <- fmap_comp.
+  f_equal.
+  apply Cone.mediator_comm.
+Qed.
+Next Obligation.
+  Cone.hom_eq.
+  apply fmap_id.
+Qed.
+Next Obligation.
+  Cone.hom_eq.
+  apply fmap_comp.
+Qed.
+
+Program Definition cone_whisk_r {A B C: Category} (F: B ~> C) (G: A ~> B): Cone F ~> Cone (F ∘ G) := {|
+  fobj X := {|
+    Cone.vertex := Cone.vertex X;
+    Cone.edge i := Cone.edge X (G i);
+  |};
+  fmap X Y f := {|
+    Cone.mediator := f;
+  |}
+|}.
+Next Obligation.
+  apply Cone.edge_comm.
+Qed.
+Next Obligation.
+  apply Cone.mediator_comm.
+Qed.
+Next Obligation.
+  now Cone.hom_eq.
+Qed.
+Next Obligation.
+  now Cone.hom_eq.
+Qed.

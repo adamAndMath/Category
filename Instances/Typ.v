@@ -112,3 +112,120 @@ Canonical TypCCC: CCC :=
   CCC.Pack Typ (CCC.Class Typ (CartCategory.class TypCart) TypExp_mixin).
 
 End Typ.
+
+Lemma typ_iso_0 A: A ≃ 0 <-> ~inhabited A.
+Proof.
+  split.
+  intros [i] [x].
+  destruct (to i x).
+  intros H.
+  constructor.
+  unshelve eexists.
+  intros x.
+  absurd (inhabited A).
+  exact H.
+  now constructor.
+  exists ¡.
+  all: extensionality x.
+  destruct H.
+  now constructor.
+  destruct x.
+Qed.
+
+Lemma Typ_monic {A B: Typ} (f: A ~> B): monic f <-> forall x y: A, f x = f y -> x = y.
+Proof.
+  split.
+  + intros Hf x y H.
+    specialize (Hf 1 (fun _ => x) (fun _ => y)).
+    specialize (fun H => f_equal (fun f => f tt) (Hf H)) as Hf'.
+    clear Hf; rename Hf' into Hf.
+    apply Hf; clear Hf.
+    extensionality z.
+    exact H.
+  + intros Hf Z a b H.
+    extensionality x.
+    apply (f_equal (fun f => f x)) in H.
+    apply Hf, H.
+Qed.
+
+Lemma Typ_epic {A B: Typ} (f: A ~> B): epic f <-> forall y: B, exists x: A, f x = y.
+Proof.
+  split.
+  + intros Hf y.
+    destruct (classic (exists x, f x = y)).
+    assumption.
+    assert (forall x: A, f x <> y) as H'.
+      intros x Hx.
+      destruct H.
+      now exists x.
+    specialize (Hf bool
+      (fun y' => if dec (y' = y) then true else false)
+      (fun _ => false)
+    ).
+    clear H; rename H' into H.
+    assert (
+      @comp Typ _ _ _ (fun y' : B => if dec (y' = y) then true else false) f =
+      @comp Typ _ _ _ (fun _ : B => false) f
+    ).
+    extensionality x.
+    specialize (H x).
+    change ((if dec (f x = y) then true else false) = false).
+    now destruct (dec (f x = y)).
+    specialize (Hf H0).
+    clear H H0.
+    apply (f_equal (fun f => f y)) in Hf.
+    now destruct (dec (y = y)).
+  + intros Hf.
+    apply splitepic_is_epic.
+    destruct (classic (inhabited B)) as [Hb | Hb].
+    assert (inhabited A) as Ha.
+    destruct Hb as [b].
+    now destruct (Hf b) as [a _].
+    exists (fun y => epsilon Ha (fun x => f x = y)).
+    extensionality y.
+    unfold comp, id; simpl.
+    unfold Typ.comp, Typ.id.
+    apply epsilon_spec, Hf.
+    unshelve eexists.
+    intros b.
+    now absurd (inhabited B).
+    extensionality b.
+    now destruct Hb.
+Qed.
+
+Lemma Typ_splitepic {A B: Typ} (f: A ~> B): epic f -> splitepic f.
+Proof.
+  intros Hf.
+  rewrite Typ_epic in Hf.
+  destruct (classic (inhabited B)) as [Hb | Hb].
+  2: {
+    unshelve eexists.
+    intros b.
+    now absurd (inhabited B).
+    extensionality b.
+    now destruct Hb.
+  }
+  assert (inhabited A) as Ha.
+  destruct Hb as [b].
+  now destruct (Hf b) as [a _].
+  exists (fun y => epsilon Ha (fun x => f x = y)).
+  extensionality y.
+  apply (epsilon_spec Ha (fun x => f x = y)).
+  apply Hf.
+Qed.
+
+Lemma fobj_splitmonic {S T: Category} (F: S ~> T): splitmonic F -> @splitmonic Typ S T (fobj F).
+Proof.
+  intros [G H].
+  exists (fobj G).
+  change (fobj (G ∘ F) = fobj (id S)).
+  now f_equal.
+Qed.
+
+Lemma fobj_splitepic {S T: Category} (F: S ~> T): splitepic F -> @splitepic Typ S T (fobj F).
+Proof.
+  intros [G H].
+  exists (fobj G).
+  change (fobj (F ∘ G) = fobj (id T)).
+  now f_equal.
+Qed.

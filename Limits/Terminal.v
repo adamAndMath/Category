@@ -5,8 +5,8 @@ Context (C: TopCategory).
 
 Definition TopLim: 1 ~> C := Δ 1.
 
-Program Definition TopUnit: id C ~> TopLim ∘ to_one := {|
-  transform _ := to_one;
+Program Definition TopUnit: id C ~> TopLim ∘ ! := {|
+  transform _ := !;
 |}.
 Next Obligation.
   rewrite comp_id_l.
@@ -14,12 +14,12 @@ Next Obligation.
   apply to_one_unique.
 Qed.
 
-Program Definition TopCounit: to_one ∘ TopLim ~> id (1: Cat) := {|
+Program Definition TopCounit: ! ∘ TopLim ~> id (1: Cat) := {|
   transform _ := tt;
   naturality _ _ _ := eq_refl;
 |}.
 
-Lemma top_adjoint_by: adjoint_by to_one TopLim TopCounit TopUnit.
+Lemma top_adjoint_by: adjoint_by ! TopLim TopCounit TopUnit.
 Proof.
   apply adjoint_by_alt; simpl; split.
   all: intros _.
@@ -28,7 +28,7 @@ Proof.
   apply to_one_unique.
 Qed.
 
-Lemma top_adjoint: to_one -| TopLim.
+Lemma top_adjoint: ! -| TopLim.
 Proof.
   exists TopCounit, TopUnit.
   exact top_adjoint_by.
@@ -50,7 +50,7 @@ Qed.
 End Top2Limit.
 
 Section Limit2Top.
-Context (C: Category) (Lim: 1 ~> C) (η: to_one ∘ Lim ~> id (1: Cat)) (ɛ: id C ~> Lim ∘ to_one) (adj: adjoint_by to_one Lim η ɛ).
+Context (C: Category) (Lim: 1 ~> C) (η: ! ∘ Lim ~> id (1: Cat)) (ɛ: id C ~> Lim ∘ !) (adj: adjoint_by ! Lim η ɛ).
 
 Program Definition Limit2Top_mixin: TopCategory.mixin_of C :=
   TopCategory.Mixin C (Lim tt) (transform ɛ) _.
@@ -92,14 +92,10 @@ Proof.
     clear adj; intros adj.
     rewrite <- comp_assoc in adj.
     rewrite inv_r, comp_id_r in adj.
-    replace (Fun0C C ∘ @Δ C 0) with (@to_one _ C) in adj.
+    rewrite <- (to_one_unique (Fun0C C ∘ @Δ C 0)) in adj.
     destruct adj as [η [ɛ adj]].
     constructor.
     exact (Limit2Top_mixin C Lim η ɛ adj).
-    clear.
-    fun_eq x y f.
-    rewrite !eq_iso_refl.
-    reflexivity.
   + intros [m].
     exact (top_ex_lim (TopCategory.Pack C m)).
 Qed.

@@ -1,86 +1,10 @@
 Require Export Instances Comma.Cone.
+Require Export Finite.
 
-Definition is_limit {C D: Category} (F: D ~> C) (L: Cone F) :=
+Definition is_limit {D C: Category} (F: D ~> C) (L: Cone F) :=
   forall N: Cone F, exists f: N ~> L, forall f', f = f'.
 
-(*Definition is_limit' {C D: Category} (F: D ~> C) (L: Δ ↓ @Δ _ 1 F) :=
-  forall N: Δ ↓ @Δ _ 1 F, exists f: N ~> L, forall f', f = f'.
-
-Lemma is_limit_alt {C D: Category} (F: D ~> C) (L: Cone F): is_limit F L <-> is_limit' F (to (CommaCone F)⁻¹ L).
-Proof.
-  split.
-  + intros Hl N'.
-    assert (exists N: Cones F, to (CommaCone F)⁻¹ N = N').
-    exists (to (CommaCone F) N').
-    specialize (inv_l (CommaCone F)) as H.
-    apply fun_eq, proj1 in H.
-    exact (H N').
-    destruct H as [N H].
-    subst N'.
-    specialize (Hl N).
-    destruct Hl as [f Hf].
-    exists (fmap (to (CommaCone F)⁻¹) f).
-    intros g'.
-    assert (exists g: N ~> L, fmap (to (CommaCone F)⁻¹) g = g').
-    exists (to (eq_iso (inv_r (CommaCone F))) L ∘ fmap (to (CommaCone F)) g' ∘ to (eq_iso (inv_r (CommaCone F)))⁻¹ N).
-    rewrite !fmap_comp.
-    transitivity (
-      to (eq_iso (inv_l (CommaCone F))) (to (CommaCone F)⁻¹ L) ∘
-      fmap ((CommaCone F) ⁻¹ ∘ (CommaCone F)) g' ∘
-      to (eq_iso (inv_l (CommaCone F)))⁻¹ (to (CommaCone F)⁻¹ N)
-    ).
-    f_equal.
-    f_equal.
-    1, 2: apply is_eq_unique.
-    1, 3: apply fmap_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_r (CommaCone F))))), eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_r (CommaCone F)))⁻¹)), is_eq_inv, eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_l (CommaCone F))))), eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_l (CommaCone F)))⁻¹)), is_eq_inv, eq_iso_is_eq.
-    generalize (inv_l (CommaCone F)).
-    intros e.
-    rewrite e; clear e.
-    simpl.
-    etransitivity.
-    apply comp_id_r.
-    apply comp_id_l.
-    destruct H as [g H].
-    subst g'.
-    f_equal.
-    apply Hf.
-  + intros Hl N.
-    specialize (Hl (to (CommaCone F)⁻¹ N)).
-    destruct Hl as [f' Hf].
-    assert (exists f: N ~> L, fmap (to (CommaCone F)⁻¹) f = f').
-    exists (to (eq_iso (inv_r (CommaCone F))) L ∘ fmap (to (CommaCone F)) f' ∘ to (eq_iso (inv_r (CommaCone F)))⁻¹ N).
-    rewrite !fmap_comp.
-    transitivity (
-      to (eq_iso (inv_l (CommaCone F))) (to (CommaCone F)⁻¹ L) ∘
-      fmap ((CommaCone F) ⁻¹ ∘ (CommaCone F)) f' ∘
-      to (eq_iso (inv_l (CommaCone F)))⁻¹ (to (CommaCone F)⁻¹ N)
-    ).
-    f_equal.
-    f_equal.
-    1, 2: apply is_eq_unique.
-    1, 3: apply fmap_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_r (CommaCone F))))), eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_r (CommaCone F)))⁻¹)), is_eq_inv, eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_l (CommaCone F))))), eq_iso_is_eq.
-    apply (transform_is_eq (to (eq_iso (inv_l (CommaCone F)))⁻¹)), is_eq_inv, eq_iso_is_eq.
-    generalize (inv_l (CommaCone F)).
-    intros e.
-    rewrite e; clear e.
-    simpl.
-    etransitivity.
-    apply comp_id_r.
-    apply comp_id_l.
-    destruct H as [f H].
-    subst f'.
-    exists f.
-    intros g.
-    specialize (Hf (fmap (to (CommaCone F)⁻¹) g)).*)
-
-Instance is_limit_iso {C D: Category} (F: D ~> C): Proper (isomorphic _ ==> iff) (is_limit F).
+Instance is_limit_iso {D C: Category} (F: D ~> C): Proper (isomorphic _ ==> iff) (is_limit F).
 Proof.
   enough (Proper (isomorphic _ ==> impl) (is_limit F)).
   now split; apply H.
@@ -95,49 +19,108 @@ Proof.
   apply comp_id_l.
 Qed.
 
-Definition ex_limit {C D: Category} (F: D ~> C) :=
+Definition is_limit' {D C: Category} (F: D ~> C) (l: C) (η: Δ l ~> F) :=
+  forall n (ϵ: Δ n ~> F), exists! f: n ~> l, η ∘ fmap Δ f = ϵ.
+
+Lemma is_limit_alt {D C: Category} (F: D ~> C) (L: Cone F): is_limit F L <-> is_limit' F (Cone.vertex L) (nat_cone L).
+Proof.
+  split.
+  + intros H n ϵ.
+    specialize (H (cone_nat n ϵ)).
+    destruct H as [u Hu].
+    exists u.
+    split.
+    natural_eq x.
+    apply (Cone.mediator_comm u).
+    intros u' H.
+    generalize (fun u' H => proj1 (Cone.hom_eq _ _ _) (Hu {| Cone.mediator := u'; Cone.mediator_comm := H |})).
+    clear Hu; intros Hu.
+    simpl in Hu.
+    apply Hu; clear Hu.
+    exact (proj1 (natural_eq (nat_cone L ∘ fmap Δ u') ϵ) H).
+  + intros H N.
+    specialize (H (Cone.vertex N) (nat_cone N)).
+    destruct H as [u Hu].
+    unshelve eexists.
+    exists u.
+    2: intros u'.
+    2: Cone.hom_eq.
+    exact (proj1 (natural_eq (nat_cone L ∘ fmap Δ u) (nat_cone N)) (proj1 Hu)).
+    apply Hu.
+    natural_eq x.
+    apply Cone.mediator_comm.
+Qed.
+
+Lemma is_limit_alt' {D C: Category} (F: D ~> C) (l: C) (η: Δ l ~> F): is_limit' F l η <-> is_limit F (cone_nat l η).
+Proof.
+  split.
+  + intros H N.
+    specialize (H (Cone.vertex N) (nat_cone N)).
+    destruct H as [u Hu].
+    unshelve eexists.
+    exists u.
+    2: intros u'.
+    2: Cone.hom_eq.
+    simpl.
+    exact (proj1 (natural_eq (η ∘ fmap Δ u) (nat_cone N)) (proj1 Hu)).
+    apply Hu.
+    natural_eq x.
+    apply (Cone.mediator_comm u').
+  + intros H n ϵ.
+    specialize (H (cone_nat n ϵ)).
+    destruct H as [u Hu].
+    exists u.
+    split.
+    natural_eq x.
+    apply (Cone.mediator_comm u).
+    intros u' H.
+    generalize (fun u' H => proj1 (Cone.hom_eq _ _ _) (Hu {| Cone.mediator := u'; Cone.mediator_comm := H |})).
+    clear Hu; intros Hu.
+    simpl in Hu.
+    apply Hu; clear Hu.
+    exact (proj1 (natural_eq (η ∘ fmap Δ u') ϵ) H).
+Qed.
+
+Definition is_limit_obj {D C: Category} (F: D ~> C) (l: C) :=
+  exists L, Cone.vertex L = l /\ is_limit F L.
+
+Definition ex_limit {D C: Category} (F: D ~> C) :=
   exists L, is_limit F L.
 
-Lemma ex_limit_alt {C D: Category} (F: D ~> C): ex_limit F <-> exists l (η: Δ l ~> F), forall n (ϵ: Δ n ~> F), exists! f: n ~> l, η ∘ fmap Δ f = ϵ.
+Lemma limit_obj_ex {D C: Category} (F: D ~> C) (l: C): is_limit_obj F l -> ex_limit F.
+Proof.
+  intros [L [_ H]].
+  now exists L.
+Qed.
+
+Lemma is_limit_obj_alt {D C: Category} (F: D ~> C) (l: C): is_limit_obj F l <-> exists η: Δ l ~> F, is_limit' F l η.
+Proof.
+  split.
+  + intros [L [Hl H]].
+    subst l.
+    exists (nat_cone L).
+    apply is_limit_alt, H.
+  + intros [η H].
+    exists (cone_nat l η).
+    split.
+    reflexivity.
+    apply is_limit_alt', H.
+Qed.
+
+Lemma ex_limit_alt {D C: Category} (F: D ~> C): ex_limit F <-> exists l (η: Δ l ~> F), is_limit' F l η.
 Proof.
   split.
   + intros [L H].
-    exists (Cone.vertex L).
-    exists (nat_cone L).
-    intros n η.
-    specialize (H (cone_nat n η)).
-    destruct H as [f H].
-    exists f.
-    split.
-    natural_eq x.
-    apply (Cone.mediator_comm f).
-    intros f' H1.
-    change (Cone.vertex (cone_nat n η) ~> Cone.vertex L) in f'.
-    specialize (proj1 (natural_eq _ _) H1) as H0.
-    simpl in H0.
-    clear H1.
-    specialize (H {| Cone.mediator := f'; Cone.mediator_comm := H0 |}).
-    now apply Cone.hom_eq in H.
+    exists (Cone.vertex L), (nat_cone L).
+    apply is_limit_alt, H.
   + intros [l [η H]].
     exists (cone_nat l η).
-    intros N.
-    specialize (H (Cone.vertex N) (nat_cone N)).
-    destruct H as [f [H1 H]].
-    change (Cone.vertex N ~> Cone.vertex (cone_nat l η)) in f.
-    specialize (proj1 (natural_eq _ _) H1) as Hf.
-    simpl in Hf.
-    clear H1.
-    exists {| Cone.mediator := f; Cone.mediator_comm := Hf |}.
-    intros f'.
-    Cone.hom_eq.
-    apply H.
-    natural_eq x.
-    apply (Cone.mediator_comm f').
+    apply is_limit_alt', H.
 Qed.
 
-Instance ex_limit_iso {C D: Category}: Proper (isomorphic (Fun C D) ==> iff) ex_limit.
+Instance ex_limit_iso {D C: Category}: Proper (isomorphic (Fun D C) ==> iff) ex_limit.
 Proof.
-  enough (Proper (isomorphic (Fun C D) ==> impl) ex_limit).
+  enough (Proper (isomorphic (Fun D C) ==> impl) ex_limit).
   now split; apply H.
   intros F G [I].
   rewrite !ex_limit_alt.
@@ -165,18 +148,114 @@ Proof.
     apply comp_id_l.
 Qed.
 
+Instance limit_obj_iso {D C: Category}: Proper (isomorphic (Fun D C) ==> isomorphic C ==> iff) is_limit_obj.
+Proof.
+  enough (Proper (isomorphic (Fun D C) ==> isomorphic C ==> impl) is_limit_obj).
+  now split; apply H.
+  intros F G H l1 l2 H0.
+  transitivity (is_limit_obj F l2).
+  1: clear G H; rename H0 into H.
+  2: clear l1 H0; rename l2 into l.
+  + intros [L [Hl HL]].
+    subst l1.
+    destruct (cone_iso_ex L l2 H) as [L2 [Hl H0]].
+    clear H; rename H0 into H.
+    exists L2.
+    split.
+    assumption.
+    now rewrite <- H.
+  + intros [L [Hl HL]].
+    destruct H as [I].
+    subst l.
+    exists (cone_lift F G (to I) L).
+    split.
+    reflexivity.
+    intros N'.
+    assert (exists N, cone_lift F G I N = N').
+    exists (cone_lift G F (to I⁻¹) N').
+    apply Cone.obj_eq; simpl; split.
+    reflexivity.
+    intros x e.
+    rewrite eq_iso_refl; clear e.
+    simpl.
+    rewrite comp_id_r.
+    rewrite comp_assoc.
+    change (to I x ∘ from I x) with ((I ∘ I⁻¹) x).
+    rewrite inv_r.
+    apply comp_id_l.
+    destruct H as [N].
+    subst N'.
+    specialize (HL N).
+    destruct HL as [f Hf].
+    exists (fmap (cone_lift F G I) f).
+    intros g'.
+    assert (exists g, fmap (cone_lift F G I) g = g').
+    destruct g' as [g Hg].
+    simpl in g, Hg.
+    unshelve eexists.
+    exists g.
+    2: Cone.hom_eq.
+    intros x.
+    apply (is_iso_monic (to I x)).
+    apply is_iso_transform, iso_is_iso.
+    rewrite comp_assoc.
+    apply Hg.
+    reflexivity.
+    destruct H as [g].
+    subst g'.
+    f_equal.
+    apply Hf.
+Qed.
+
+Lemma iso_limit {D C: Category} (F: D ~> C) (L1 L2: Cone F): is_limit F L1 -> is_limit F L2 -> L1 ≃ L2.
+Proof.
+  intros H1 H2.
+  destruct (H2 L1) as [f _].
+  destruct (H1 L2) as [g _].
+  specialize (H1 L1).
+  destruct H1 as [i1 H1].
+  specialize (H2 L2).
+  destruct H2 as [i2 H2].
+  constructor.
+  exists f, g.
+  1: transitivity i1.
+  3: transitivity i2.
+  all: easy.
+Qed.
+
 Definition has_limit (D C: Category) :=
   forall F: D ~> C, ex_limit F.
 
-Definition is_colimit {C D: Category} (F: D ~> C) := is_limit (cof F).
+Definition is_colimit {D C: Category} (F: D ~> C) := is_limit (cof F).
 
-Instance is_colimit_iso {C D: Category} (F: D ~> C): Proper (isomorphic _ ==> iff) (is_limit F).
+Instance is_colimit_iso {D C: Category} (F: D ~> C): Proper (isomorphic _ ==> iff) (is_limit F).
 Proof. apply is_limit_iso. Qed.
 
+Definition is_colimit' {D C: Category} (F: D ~> C) (l: C) (η: F ~> Δ l) :=
+  forall (n: C) (ϵ: F ~> Δ n), exists! f: l ~> n, fmap Δ f ∘ η = ϵ.
+
+Definition is_colimit_obj {D C: Category} (F: D ~> C) (l: C) :=
+  exists L, Cone.vertex L = (l: co C) /\ is_colimit F L.
+
+Instance colimit_obj_iso {D C: Category}: Proper (isomorphic (Fun D C) ==> isomorphic C ==> iff) is_limit_obj.
+Proof. apply limit_obj_iso. Qed.
+
+Definition ex_colimit {D C: Category} (F: D ~> C) :=
+  exists L, is_colimit F L.
+
+Instance ex_colimit_iso {D C: Category}: Proper (isomorphic (Fun D C) ==> iff) ex_limit.
+Proof. apply ex_limit_iso. Qed.
+
 Definition has_colimit (D C: Category) :=
-  forall F: D ~> C, exists L: Cone (cof F), is_colimit F L.
+  forall F: D ~> C, ex_colimit F.
 
 Lemma is_limit_co {D C: Category} (F: D ~> C) (L: Cone (cof F)): is_limit (cof F) L <-> is_colimit F L.
+Proof. reflexivity. Qed.
+
+Lemma limit_obj_co {D C: Category} (F: D ~> C) (l: C): is_limit_obj (cof F) l <-> is_colimit_obj F l.
+Proof. reflexivity. Qed.
+
+Lemma ex_limit_co {D C: Category} (F: D ~> C): ex_limit (cof F) <-> ex_colimit F.
 Proof. reflexivity. Qed.
 
 Lemma has_limit_co (D C: Category): has_limit (co D) (co C) <-> has_colimit D C.
@@ -184,51 +263,14 @@ Proof.
   split.
   all: intros H F.
   apply H.
-  specialize (H (cof' F)).
-  unfold is_colimit in H.
-  rewrite cof_inv_r in H.
-  exact H.
+  assert (exists F', cof F' = F).
+  exists (cof' F).
+  apply cof_inv_r.
+  destruct H0 as [F'].
+  subst F.
+  apply ex_limit_co, H.
 Qed.
-(*
-Lemma parallel_limit_ex_co {C: Category} (F: co Parallel ~> C): limit_ex F <-> limit_ex (F ∘ Parallel.dual).
-Proof.
-  rewrite !limit_ex_alt.
-  split.
-  + intros [l [η H]].
-    exists l, ((η |> Parallel.dual) ∘ (eq_iso (diag_comp l _))⁻¹).
-    intros n ϵ.
-    specialize (H n (ρ F ∘ (F <| eq_iso (inv_r Parallel.dual)) ∘ (α F _ _)⁻¹ ∘ ((ϵ ∘ (eq_iso (diag_comp n Parallel.dual))) |> Parallel.dual⁻¹) ∘ α (Δ n) _ _ ∘ (Δ n <| (eq_iso (inv_r Parallel.dual))⁻¹) ∘ (ρ (Δ n))⁻¹)).
-    destruct H as [u Hu].
-    exists u.
-    split; [apply proj1 in Hu | apply proj2 in Hu].
-    - natural_eq b.
-      specialize (proj1 (natural_eq _ _) Hu (negb b)).
-      clear Hu; intro Hu.
-      unfold comp in Hu; simpl in Hu.
-      repeat change (from ?i) with (to i⁻¹) in Hu.
-      rewrite (is_eq_refl (to (ρ F) _)) in Hu.
-      change (@ρ (co Parallel) C _) with (@ρ (co Parallel) C (Δ n)) in Hu.
-      rewrite (is_eq_refl (to (ρ (@Δ C (co Parallel) n))⁻¹ _)) in Hu.
-      rewrite (is_eq_refl (to (α (Δ n) Parallel.dual_to Parallel.dual⁻¹) _)) in Hu.
-      rewrite (is_eq_refl (to (α F Parallel.dual_to Parallel.dual⁻¹)⁻¹ _)) in Hu.
-      destruct b; simpl in Hu |- *.
-      rewrite !comp_id_r in Hu.  
-      setoid_rewrite comp_id_l in Hu.
-      rewrite (Bool.negb_involutive b) in Hu.
-      destruct b; simpl in *.
-      all: change (Δ l ~> F) in η.
-      all: change (Δ n ~> F ∘ Parallel.dual) in ϵ.
-      all: change (from ?i) with (to i⁻¹) in *.
-      rewrite (is_eq_refl (to (ρ F) false)) in Hu.
-      rewrite (is_eq_refl (fmap F (to (eq_iso (inv_r Parallel.dual)) false))) in Hu.
-      rewrite comp_id_l in Hu.
-      simpl in Hu.
-      simpl.
 
-      simpl in Hu.
-
-Lemma parallel_limit_co {C: Category} (F: co Parallel ~> C) (l: C) (η: Δ l ~> F): is_limit F (cone_nat l η) <-> is_limit (F ∘ Parallel.dual) (cone_nat l (eq__)).
-*)
 Definition is_lim {D C: Category} (F: Fun D C ~> C) := Δ -| F.
 Definition ex_lim (D C: Category) := exists F: Fun D C ~> C, is_lim F.
 
@@ -262,40 +304,6 @@ Proof.
     rewrite adj2.
     apply comp_id_l.
 Qed.
-
-(*Lemma ex_colim_correct (D C: Category): ex_colim D C -> has_colimit D C.
-Proof.
-  intros [L [ɛ [η adj]]] F.
-  apply adjoint_by_alt in adj.
-  destruct adj as [adj1 adj2].
-  apply ex_limit_alt.
-  exists (L F).
-  unshelve eexists.
-  unshelve eexists.
-  exact (transform (η F)).
-  intros x y f.
-  symmetry.
-  exact (naturality (η F) f).
-  intros n ϵ.
-  exists (ɛ n ∘ fmap L ϵ).
-  split.
-  + rewrite fmap_comp, comp_assoc.
-    change (ɛ F ∘ fmap (Δ ∘ L) ϵ ∘ fmap Δ (η n) = ϵ).
-    rewrite naturality.
-    simpl fmap at 1.
-    rewrite <- comp_assoc.
-    rewrite adj1.
-    apply comp_id_r.
-  + intros f Hf.
-    subst ϵ.
-    rewrite fmap_comp.
-    change (fmap L (ɛ F) ∘ fmap (L ∘ Δ) f ∘ η n = f).
-    rewrite <- comp_assoc.
-    setoid_rewrite <- (naturality η f).
-    rewrite comp_assoc.
-    rewrite adj2.
-    apply comp_id_l.
-Qed.*)
 
 Definition Colim {D C: Category}: co (Fun (Fun D C) C) <~> Fun (Fun (co D) (co C)) (co C) := Comp_r_iso (CoFun D C)⁻¹ · CoFun (Fun D C) C.
 
@@ -337,6 +345,12 @@ Proof.
   + intros [F H].
     exists (to Colim F).
     apply is_lim_co, H.
+Qed.
+
+Lemma ex_colim_correct (D C: Category): ex_colim D C -> has_colimit D C.
+Proof.
+  rewrite <- ex_lim_co, <- has_limit_co.
+  apply ex_lim_correct.
 Qed.
 
 Instance has_limit_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) has_limit.
@@ -611,3 +625,59 @@ Proof.
     2, 3: apply transform_is_eq, is_eq_inv.
     all: apply eq_iso_is_eq.
 Qed.
+
+Section preservation.
+Context {S T: Category} (F: S ~> T) (D: Category).
+
+Definition preserve :=
+  forall (G: D ~> S) L, is_limit G L -> is_limit (F ∘ G) (cone_whisk_l F G L).
+
+Lemma preserve_alt: preserve <-> forall (G: D ~> S) (l: S) (η: Δ l ~> G), is_limit' G l η -> is_limit' (F ∘ G) (F l) ((F <| η) ∘ (eq_iso (comp_diag F l))⁻¹).
+Proof.
+  split.
+  + intros HF G l η HL.
+    apply is_limit_alt' in HL.
+    apply is_limit_alt'.
+    apply HF in HL.
+    revert HL.
+    change (?P -> ?Q) with (impl P Q).
+    f_equiv.
+    apply Cone.obj_eq; simpl.
+    repeat split.
+    intros x e.
+    rewrite eq_iso_refl; clear e.
+    simpl.
+    rewrite comp_id_r.
+    rewrite <- (comp_id_r (fmap _ _)) at 1.
+    f_equal.
+    symmetry.
+    apply is_eq_refl.
+    apply (transform_is_eq (eq_iso (comp_diag F l))⁻¹).
+    apply is_eq_inv, eq_iso_is_eq.
+  + intros HF G L HL.
+    apply is_limit_alt in HL.
+    apply is_limit_alt.
+    apply HF in HL.
+    revert HL.
+    change (?P -> ?Q) with (impl P Q).
+    f_equiv.
+    natural_eq x.
+    rewrite <- comp_id_r.
+    f_equal.
+    apply is_eq_refl.
+    apply (transform_is_eq (eq_iso (comp_diag F (Cone.vertex L)))⁻¹).
+    apply is_eq_inv, eq_iso_is_eq.
+Qed.
+
+Definition create :=
+  forall (G: D ~> S) L, is_limit (F ∘ G) L -> exists L', unique (fun L' => cone_whisk_l F G L' = L) L' /\ is_limit G L'.
+
+Definition copreserve :=
+  forall (G: D ~> S) L, is_colimit G L -> is_colimit (F ∘ G) (cone_whisk_l (cof F) (cof G) L).
+End preservation.
+
+Definition fin_continue {S T: Category} (F: S ~> T) :=
+  forall D, fin D -> preserve F D.
+
+Definition fin_cocontinue {S T: Category} (F: S ~> T) :=
+  forall D, fin D -> copreserve F D.

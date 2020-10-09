@@ -1,5 +1,91 @@
 Require Export Base.
 
+Definition is_product {C: Category} (a b p: C) (p1: p ~> a) (p2: p ~> b) :=
+  forall (z: C) (f: z ~> a) (g: z ~> b), exists! h: z ~> p, p1 ∘ h = f /\ p2 ∘ h = g.
+
+Definition is_prod_obj {C: Category} (a b p: C) :=
+  exists (p1: p ~> a) (p2: p ~> b), is_product a b p p1 p2.
+
+Definition ex_product {C: Category} (a b: C) :=
+  exists (p: C), is_prod_obj a b p.
+
+Instance is_prod_obj_iso (C: Category): Proper (isomorphic C ==> isomorphic C ==> isomorphic C ==> iff) is_prod_obj.
+Proof.
+  enough (Proper (isomorphic C ==> isomorphic C ==> isomorphic C ==> impl) is_prod_obj).
+  now split; apply H.
+  intros a x [i] b y [j] p q [k] [p1 [p2 H]].
+  exists (i ∘ p1 ∘ k⁻¹), (j ∘ p2 ∘ k⁻¹).
+  intros z f' g'.
+  assert (exists f: z ~> a, i ∘ f = f').
+    exists (i⁻¹ ∘ f').
+    rewrite comp_assoc, inv_r.
+    apply comp_id_l.
+  destruct H0 as [f].
+  subst f'.
+  assert (exists g: z ~> b, j ∘ g = g').
+    exists (j⁻¹ ∘ g').
+    rewrite comp_assoc, inv_r.
+    apply comp_id_l.
+  destruct H0 as [g].
+  subst g'.
+  specialize (H z f g).
+  destruct H as [h [[H1 H2] Hh]].
+  subst f g.
+  exists (k ∘ h).
+  repeat split.
+  1, 2: rewrite !comp_assoc.
+  1, 2: f_equal.
+  1, 2: rewrite <- comp_assoc, inv_l.
+  1, 2: apply comp_id_r.
+  intros h' [H1 H2].
+  rewrite <- !comp_assoc in H1.
+  rewrite <- !comp_assoc in H2.
+  apply iso_monic in H1.
+  apply iso_monic in H2.
+  apply (iso_monic k⁻¹).
+  rewrite comp_assoc, inv_l, comp_id_l.
+  now apply Hh.
+Qed.
+
+Instance ex_product_iso (C: Category): Proper (isomorphic C ==> isomorphic C ==> iff) ex_product.
+Proof.
+  intros a x H1 b y H2.
+  unfold ex_product.
+  f_equiv.
+  intros p.
+  now f_equiv.
+Qed.
+
+Lemma iso_prod_obj {C: Category} (a b p q: C): is_prod_obj a b p -> is_prod_obj a b q -> p ≃ q.
+Proof.
+  intros [p1 [p2 Hp]] [q1 [q2 Hq]].
+  destruct (Hq p p1 p2) as [f [Hf _]].
+  destruct (Hp q q1 q2) as [g [Hg _]].
+  constructor.
+  exists f, g.
+  all: symmetry.
+  + specialize (Hp p p1 p2).
+    destruct Hp as [p' [Hp H]].
+    transitivity p'.
+    symmetry.
+    all: apply H.
+    all: split.
+    1, 2: apply comp_id_r.
+    all: rewrite comp_assoc.
+    now rewrite (proj1 Hg).
+    now rewrite (proj2 Hg).
+  + specialize (Hq q q1 q2).
+    destruct Hq as [q' [Hq H]].
+    transitivity q'.
+    symmetry.
+    all: apply H.
+    all: split.
+    1, 2: apply comp_id_r.
+    all: rewrite comp_assoc.
+    now rewrite (proj1 Hf).
+    now rewrite (proj2 Hf).
+Qed.
+
 Module ProdCategory.
 
 Structure mixin_of (C: Category) := Mixin {
@@ -252,6 +338,24 @@ Proof.
   rewrite comp_assoc.
   rewrite inv_l.
   apply comp_id_l.
+Qed.
+
+Lemma pi_is_product (a b: C): is_product a b (a × b) π₁ π₂.
+Proof.
+  intros z f g.
+  exists ⟨f, g⟩.
+  repeat split.
+  apply pi1_fork.
+  apply pi2_fork.
+  intros h H.
+  symmetry.
+  now apply fork_pi.
+Qed.
+
+Lemma prod_is_prod_obj (a b: C): is_prod_obj a b (a × b).
+Proof.
+  exists π₁, π₂.
+  apply pi_is_product.
 Qed.
 
 End Product.

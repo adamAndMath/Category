@@ -171,6 +171,37 @@ Proof.
     apply H.
 Qed.
 
+Lemma ex_fobj_iso {S T: Category} (I: S <~> T) (x: T): exists x': S, to I x' = x.
+Proof.
+  exists (to I⁻¹ x).
+  change ((I ∘ I⁻¹) x = id T x).
+  f_equal.
+  apply inv_r.
+Qed.
+
+Lemma ex_fmap_iso {S T: Category} {x y: S} (I: S <~> T) (f: (to I x) ~> (to I y)): exists f': x ~> y, fmap (to I) f' = f.
+Proof.
+  exists (to (eq_iso (inv_l I)) y ∘ fmap (to I⁻¹) f ∘ to (eq_iso (inv_l I))⁻¹ x).
+  rewrite !fmap_comp.
+  etransitivity.
+  etransitivity.
+  apply (f_equal (fun f => f ∘ _ ∘ _)).
+  2: apply f_equal.
+  1: apply (is_eq_unique _ (to (eq_iso (inv_r I)) (to I y))).
+  3: apply (is_eq_unique _ (to (eq_iso (inv_r I))⁻¹ (to I x))).
+  1, 3: apply (fmap_is_eq I).
+  1: apply (transform_is_eq (eq_iso (inv_l I))).
+  2: apply (transform_is_eq (eq_iso (inv_l I))⁻¹).
+  3, 4: apply transform_is_eq.
+  2, 4: apply is_eq_inv.
+  1, 2, 3, 4: apply eq_iso_is_eq.
+  setoid_rewrite (naturality (to (eq_iso (inv_r I)))).
+  rewrite <- comp_assoc.
+  change (f ∘ (eq_iso (inv_r I) ∘ (eq_iso (inv_r I))⁻¹) (to I x) = f).
+  rewrite inv_r.
+  apply comp_id_r.
+Qed.
+
 Definition whisk_l {S T U: Category} {G H: S ~> T} (F: T ~> U) (η: G ~> H): F ∘ G ~> F ∘ H := {|
   transform x := fmap F (η x): (F ∘ G) x ~> (F ∘ H) x;
   naturality x y f := eq_trans (eq_sym (fmap_comp _ _)) (eq_trans (f_equal _ (naturality _ _)) (fmap_comp _ _));

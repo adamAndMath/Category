@@ -52,7 +52,7 @@ Definition coZero2Zero: co 0 ~> 0 := {|
   fmap_comp := Empty_set_ind _;
 |}.
 
-Lemma toZero_inv_l {C: Category} (F: C ~> 0): from_zero ∘ F = id C.
+Lemma toZero_inv_l {C: Category} (F: C ~> 0): ¡ ∘ F = id C.
 Proof.
   fun_eq x y f.
   destruct (F x).
@@ -61,14 +61,14 @@ Proof.
   destruct o.
 Qed.
 
-Lemma toZero_inv_r {C: Category} (F: C ~> 0): F ∘ from_zero = id 0.
+Lemma toZero_inv_r {C: Category} (F: C ~> 0): F ∘ ¡ = id 0.
 Proof.
   fun_eq x y f.
   all: destruct x.
 Qed.
 
 Definition toZero_iso_mixin {C: Category} (F: C ~> 0): Isomorphism.mixin_of F :=
-  Isomorphism.Mixin _ _ _ F from_zero (toZero_inv_l F) (toZero_inv_r F).
+  Isomorphism.Mixin _ _ _ F ¡ (toZero_inv_l F) (toZero_inv_r F).
 
 Canonical toZero_iso {C: Category} (F: C ~> 0): C <~> 0 :=
   Isomorphism.Pack F (toZero_iso_mixin F).

@@ -76,7 +76,7 @@ Qed.
 
 Lemma prod_ex_lim: ex_lim ((1: Cat) + 1) C.
 Proof.
-  exists (ProdLim ∘ (Fun1C C (×) Fun1C C) ∘ FunPlusC 1 1 (C: Category)).
+  exists (ProdLim ∘ (Fun1C (C: Category) (×) Fun1C C) ∘ FunPlusC 1 1 (C: Category)).
   red.
   rewrite <- comp_assoc.
   replace (@Δ C ((1: Category) + 1)) with ((FunPlusC 1 1 (C: Category))⁻¹ ∘ ((Fun1C C)⁻¹ (×) (Fun1C C)⁻¹) ∘ FreeProd).

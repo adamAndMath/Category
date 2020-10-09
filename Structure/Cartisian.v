@@ -50,7 +50,7 @@ Section prod_unitor_l.
 Context (x: C).
 
 Definition prod_unitor_l_to: x × 1 ~> x := π₁.
-Definition prod_unitor_l_from: x ~> x × 1 := ⟨id x, to_one⟩.
+Definition prod_unitor_l_from: x ~> x × 1 := ⟨id x, !⟩.
 
 Lemma prod_unitor_l_inv_l: prod_unitor_l_from ∘ prod_unitor_l_to = id (x × 1).
 Proof.
@@ -58,9 +58,7 @@ Proof.
   rewrite fork_comp, <- fork_id.
   f_equal.
   apply comp_id_l.
-  transitivity (@to_one C (x × 1)).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 
 Lemma prod_unitor_l_inv_r: prod_unitor_l_to ∘ prod_unitor_l_from = id x.
@@ -90,9 +88,7 @@ Proof.
   unfold prod_unitor_r_to, prod_unitor_r_from.
   rewrite fork_comp, <- fork_id.
   f_equal.
-  transitivity (@to_one C ((1: C) × x)).
-  symmetry.
-  1, 2: apply to_one_unique.
+  apply to_one_eq.
   apply comp_id_l.
 Qed.
 

@@ -112,11 +112,11 @@ Context (C: BotCategory) (X: C).
 
 Definition slice_zero: C / X := {|
   Slice.dom := 0;
-  Slice.oarr := from_zero;
+  Slice.oarr := ¡;
 |}.
 
 Definition slice_from_zero (a: C / X): slice_zero ~> a := {|
-  Slice.arr := from_zero: Slice.dom slice_zero ~> Slice.dom a;
+  Slice.arr := ¡: Slice.dom slice_zero ~> Slice.dom a;
   Slice.comm := eq_sym (from_zero_unique _);
 |}.
 

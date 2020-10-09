@@ -52,7 +52,14 @@ Qed.
 Lemma zero_to_zero: @from_zero zero = id zero.
 Proof. apply from_zero_unique. Qed.
 
+Lemma from_zero_eq {a: C} (f g: zero ~> a): f = g.
+Proof.
+  transitivity (@from_zero a).
+  symmetry.
+  all: apply from_zero_unique.
+Qed.
+
 End Initial.
 
 Notation "0" := zero.
-
+Notation "¡" := from_zero.

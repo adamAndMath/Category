@@ -56,7 +56,7 @@ Section exp_1.
 Context (c: C).
 
 Definition expc1_to: c ^ 1 ~> c :=
-  eval c 1 ∘ ⟨id (c ^ 1), to_one⟩.
+  eval c 1 ∘ ⟨id (c ^ 1), !⟩.
 
 Definition expc1_from: c ~> c ^ 1 :=
   transpose π₁.
@@ -78,10 +78,7 @@ Proof.
   rewrite !comp_id_l.
   rewrite pi1_fork.
   do 2 f_equal.
-  Set Printing All.
-  transitivity (@to_one C (c ^ 1 × 1)).
-  symmetry.
-  all: apply to_one_unique.
+  apply to_one_eq.
 Qed.
 
 Lemma expc1_inv_r: expc1_to ∘ expc1_from = id c.
@@ -95,12 +92,7 @@ Proof.
   simpl.
   unfold prod_unitor_l_to.
   rewrite <- comp_assoc, fork_comp.
-  etransitivity.
-  do 2 apply f_equal.
-  etransitivity.
-  symmetry.
-  apply to_one_unique.
-  apply (to_one_unique (id 1 ∘ @π₂ _ c 1)).
+  rewrite (to_one_eq _ (id 1 ∘ @π₂ _ c 1)).
   apply (eval_transpose (@π₁ _ c 1)).
 Qed.
 

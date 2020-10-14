@@ -87,21 +87,23 @@ Qed.
 Lemma proset_ex (C: Category): is_proset C -> Proset (@connected C) ≃ C.
 Proof.
   intros H.
+  assert (inhabited (forall (x y: C) (f: @hom (Proset connected) x y), x ~> y)).
+    apply inhabit_forall.
+    intros x.
+    apply inhabit_forall.
+    intros y.
+    apply inhabit_forall.
+    intros f.
+    exact f.
+  destruct H0 as [F].
   constructor.
   1: unshelve eexists.
   2: unshelve eexists.
-  1, 2: unshelve eexists.
-  1, 3: exact (fun x => x).
-  7, 8: fun_eq x y f.
-  1, 2: intros x y f.
-  all: simpl.
-  exact (epsilon f (fun _ => True)).
-  easy.
+  1: exists (fun x: Proset connected => x: C) F.
+  3: exists (fun x: C => x: Proset connected) (fun x y => @inhabits (x ~> y)).
+  5, 6: fun_eq x y f.
   all: intros.
-  1, 2: apply H.
-  1, 2: apply Proset_correct.
-  apply Proset_correct.
-  apply H.
+  all: first[apply H | apply Proset.hom_eq].
 Qed.
 
 Lemma dual_proset {T} (R: T -> T -> Prop) {pre: PreOrder R}: co (Proset R) = Proset (flip R).

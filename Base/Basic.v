@@ -29,3 +29,22 @@ Proof.
   apply proof_irrelevance.
   exact H.
 Qed.
+
+Lemma ex_forall {T} {F: T -> Type} (P: forall x, F x -> Prop): (forall x, exists y, P x y) -> exists (f: forall x, F x), forall x, P x (f x).
+Proof.
+  intros H.
+  assert (forall x, inhabited (F x)) as i.
+    intros x.
+    now destruct (H x).
+  exists (fun x => epsilon (i x) (P x)).
+  intros x.
+  apply epsilon_spec, H.
+Qed.
+
+Lemma inhabit_forall {T} (F: T -> Type): (forall x, inhabited (F x)) -> inhabited (forall x, F x).
+Proof.
+  intros H.
+  constructor.
+  intros x.
+  exact (epsilon (H x) (fun _ => True)).
+Qed.

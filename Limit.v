@@ -353,203 +353,215 @@ Proof.
   apply ex_lim_correct.
 Qed.
 
-Instance has_limit_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) has_limit.
+Instance has_limit_iso2: Proper (cequiv ==> cequiv ==> iff) has_limit.
 Proof.
-  enough (Proper (isomorphic Cat ==> isomorphic Cat ==> impl) has_limit).
+  enough (Proper (cequiv ==> cequiv ==> impl) has_limit).
   now split; apply H.
-  intros C D I S T J.
-  transitivity (has_limit D S).
-  1: clear T J; destruct I as [I].
-  2: clear C I; destruct J as [I].
+  intros A B H1 C D H2.
+  rewrite cequiv_ex in H1, H2.
+  transitivity (has_limit B C).
+  1: clear D H2; destruct H1 as [I].
+  2: clear A H1; destruct H2 as [I].
   + intros H F.
     specialize (H (F ∘ I)).
     apply ex_limit_alt in H.
     apply ex_limit_alt.
-    destruct H as [l [η H]].
-    assert (exists η': Δ l ∘ I ~> F ∘ I, η' ∘ (eq_iso (diag_comp l I))⁻¹ = η).
-      exists (η ∘ (eq_iso (diag_comp l I))).
-      rewrite <- comp_assoc.
-      rewrite inv_r.
+    destruct H as [l [ι H]].
+    assert (exists ι': Δ l ∘ I ~> F ∘ I, ι' ∘ (eq_iso (diag_comp l I))⁻¹ = ι).
+      exists (ι ∘ (eq_iso (diag_comp l I))).
+      rewrite <- comp_assoc, inv_r.
       apply comp_id_r.
-    destruct H0 as [η' Hη].
-    subst η.
-    assert (exists η: Δ l ~> F, η |> I = η').
-      exists (ρ F ∘ (F <| eq_iso (inv_r I)) ∘ (α F I I⁻¹)⁻¹ ∘ (η' |> I⁻¹) ∘ (α (Δ l) I I⁻¹) ∘ (Δ l <| (eq_iso (inv_r I))⁻¹) ∘ (ρ (Δ l))⁻¹).
+    destruct H0 as [ι'].
+    subst ι.
+    assert (exists ι: Δ l ~> F, ι |> I = ι').
+      exists (ρ F ∘ (F <| iunit I⁻) ∘ (α F I I⁻)⁻¹ ∘ (ι' |> I⁻) ∘ α (Δ l) I I⁻ ∘ (Δ l <| (iunit I⁻)⁻¹) ∘ (ρ (Δ l))⁻¹).
       natural_eq x.
-      rewrite !comp_id_l, !comp_id_r.
-      etransitivity.
-      apply (f_equal (fun f => fmap F f ∘ _)).
-      apply (is_eq_unique (to (eq_iso (inv_r I)) (to I x)) (fmap (to I) (to (eq_iso (inv_l I)) x))).
-      apply transform_is_eq, eq_iso_is_eq.
-      apply (fmap_is_eq I), (transform_is_eq (to (eq_iso (inv_l I)))), eq_iso_is_eq.
-      change ((((F ∘ I) <| eq_iso (inv_l I)) ∘ (η' |> (I⁻¹ ∘ I))) x = η' x).
-      rewrite eq_iso_whisk_l.
+      rewrite comp_id_l, !comp_id_r.
+      rewrite <- iunit_to.
+      change (fmap (F ∘ I) (to (iunit I) x) ∘ ι' (I⁻ (I x)) = ι' x).
+      rewrite <- naturality.
       apply comp_id_r.
-      apply eq_iso_is_eq.
-    destruct H0 as [η Hη].
-    subst η'.
-    exists l, η.
-    intros n ϵ.
-    specialize (H n ((ϵ |> I) ∘ (eq_iso (diag_comp n I))⁻¹)).
+    destruct H0 as [ι].
+    subst ι'.
+    exists l, ι.
+    intros n δ.
+    specialize (H n (δ |> I ∘ (eq_iso (diag_comp n I))⁻¹)).
     destruct H as [f Hf].
-    exists f; split; [apply proj1 in Hf | apply proj2 in Hf].
-    generalize (proj1 (natural_eq _ _ ) Hf).
-    clear Hf; intros Hf.
-    natural_eq x.
-    specialize (Hf (to I⁻¹ x)).
-    simpl in Hf.
-    set (e1 := to (eq_iso (diag_comp n I))⁻¹ (to I⁻¹ x)).
-    set (e2 := to (eq_iso (diag_comp l I))⁻¹ (to I⁻¹ x)).
-    change (η (to I (to I⁻¹ x)) ∘ e2 ∘ f = ϵ (to I (to I⁻¹ x)) ∘ e1) in Hf.
-    rewrite (is_eq_refl e1) in Hf.
-    rewrite (is_eq_refl e2) in Hf.
-    clear e1 e2.
-    rewrite !comp_id_r in Hf.
-    specialize (inv_r I) as H.
-    apply fun_eq, proj1 in H.
-    specialize (H x).
-    change (to I (to I⁻¹ x) = x) in H.
-    rewrite H in Hf.
-    exact Hf.
-    1, 2: unfold e1, e2; clear.
-    1: apply (transform_is_eq (to (eq_iso (diag_comp l I))⁻¹)).
-    2: apply (transform_is_eq (to (eq_iso (diag_comp n I))⁻¹)).
-    1, 2: apply is_eq_inv, eq_iso_is_eq.
-    intros g Hg.
-    specialize (Hf g).
-    apply Hf.
-    natural_eq x.
-    change (from ?i) with (to i⁻¹).
-    etransitivity.
-    2: etransitivity.
-    apply (f_equal (fun f => _ ∘ f ∘ _)).
-    3: apply f_equal.
-    3: symmetry.
-    1, 3: apply is_eq_refl.
-    1: apply (transform_is_eq (to (eq_iso (diag_comp l I))⁻¹)).
-    2: apply (transform_is_eq (to (eq_iso (diag_comp n I))⁻¹)).
-    1, 2: apply is_eq_inv, eq_iso_is_eq.
-    rewrite !comp_id_r.
-    apply (proj1 (natural_eq _ _ ) Hg).
-  + intros H F.
-    specialize (H (I⁻¹ ∘ F)).
-    apply ex_limit_alt in H.
-    apply ex_limit_alt.
-    destruct H as [l [η H]].
-    assert (exists l': T, to I⁻¹ l' = l).
-      exists (to I l).
-      specialize (inv_l I) as Hi.
-      apply fun_eq, proj1 in Hi.
-      apply Hi.
-    destruct H0 as [l' Hl].
-    subst l.
-    rename l' into l.
-    assert (exists η': I⁻¹ ∘ Δ l ~> I⁻¹ ∘ F, η' ∘ (eq_iso (comp_diag I⁻¹ l))⁻¹ = η).
-      exists (η ∘ eq_iso (comp_diag I⁻¹ l)).
-      rewrite <- comp_assoc.
-      rewrite inv_r.
-      apply comp_id_r.
-    destruct H0 as [η' Hη].
-    subst η.
-    assert (exists η: Δ l ~> F, I⁻¹ <| η = η').
-      exists (λ F ∘ (eq_iso (inv_r I) |> F) ∘ (α I I⁻¹ F) ∘ (I <| η') ∘ (α I I⁻¹ (Δ l))⁻¹ ∘ ((eq_iso (inv_r I))⁻¹ |> Δ l) ∘ (λ (Δ l))⁻¹).
-      natural_eq x.
-      rewrite !comp_id_l, !comp_id_r.
-      rewrite !fmap_comp.
-      etransitivity.
-      2: etransitivity.
-      apply (f_equal (fun f => f ∘ _ ∘ _)).
-      2: apply f_equal.
-      1: apply (is_eq_unique _ (to (eq_iso (inv_l I)) (to I⁻¹ (F x)))).
-      3: apply (is_eq_unique _ (to (eq_iso (inv_l I))⁻¹ (to I⁻¹ l))).
-      1, 3: apply (fmap_is_eq (I⁻¹)).
-      1: apply (transform_is_eq (to (eq_iso (inv_r I)))).
-      2: apply (transform_is_eq (to (eq_iso (inv_r I))⁻¹)).
-      3, 4: apply transform_is_eq.
-      2, 4: apply is_eq_inv.
-      1, 2, 3, 4: apply eq_iso_is_eq.
-      change (((eq_iso (inv_l I) |> (I⁻¹ ∘ F)) ∘ ((I⁻¹ ∘ I) <| η') ∘ ((eq_iso (inv_l I))⁻¹ |> (I⁻¹ ∘ Δ l))) x = η' x).
-      rewrite eq_iso_whisk_r.
-      rewrite <- comp_assoc.
-      rewrite <- whisk_comp_distr_r.
-      rewrite inv_r.
-      simpl.
-      apply comp_id_r.
-      apply eq_iso_is_eq.
-    destruct H0 as [η Hη].
-    subst η'.
-    exists l, η.
-    intros n ϵ.
-    specialize (H (to I⁻¹ n) ((I⁻¹ <| ϵ) ∘ (eq_iso (comp_diag I⁻¹ n))⁻¹)).
-    destruct H as [f' Hf].
-    assert (exists f: n ~> l, fmap (to I⁻¹) f = f').
-      exists (to (eq_iso (inv_r I)) l ∘ fmap (to I) f' ∘ to (eq_iso (inv_r I))⁻¹ n).
-      rewrite !fmap_comp.
-      etransitivity.
-      etransitivity.
-      apply (f_equal (fun f => f ∘ _ ∘ _)).
-      2: apply f_equal.
-      1: apply (is_eq_unique _ (to (eq_iso (inv_l I)) (to I⁻¹ l))).
-      3: apply (is_eq_unique _ (to (eq_iso (inv_l I))⁻¹ (to I⁻¹ n))).
-      1, 3: apply (fmap_is_eq (to I⁻¹)).
-      1: apply (transform_is_eq (to (eq_iso (inv_r I)))).
-      2: apply (transform_is_eq (to (eq_iso (inv_r I))⁻¹)).
-      3, 4: apply transform_is_eq.
-      2, 4: apply is_eq_inv.
-      1, 2, 3, 4: apply eq_iso_is_eq.
-      etransitivity.
-      apply (f_equal (fun f => f ∘ _)).
-      apply (naturality (to (eq_iso (inv_l I)))).
-      rewrite <- comp_id_r.
-      rewrite <- comp_assoc.
-      f_equal.
-      change ((eq_iso (inv_l I) ∘ (eq_iso (inv_l I))⁻¹) (to I⁻¹ n) = id (to I⁻¹ n)).
-      now rewrite inv_r.
-    destruct H as [f H].
-    subst f'.
-    exists f; split; [apply proj1 in Hf | apply proj2 in Hf].
+    exists f.
+    split; [apply proj1 in Hf | apply proj2 in Hf].
     generalize (proj1 (natural_eq _ _) Hf).
     clear Hf; intros Hf.
     simpl in Hf.
-    repeat change (from ?i) with (to i⁻¹) in Hf.
-    natural_eq x.
-    specialize (Hf x).
-    set (e1 := to (eq_iso (comp_diag (I⁻¹) n))⁻¹ x).
-    set (e2 := to (eq_iso (comp_diag (I⁻¹) l))⁻¹ x).
-    change (fmap (to I⁻¹) (η x) ∘ e2 ∘ fmap (to I⁻¹) f = fmap (to I⁻¹) (ϵ x) ∘ e1) in Hf.
-    rewrite (is_eq_refl e1) in Hf.
-    rewrite (is_eq_refl e2) in Hf.
+    natural_eq y.
+    specialize (Hf (I⁻ y)).
+    setoid_rewrite (is_eq_refl (from (eq_iso (diag_comp l I)) (I ⁻ y))) in Hf.
+    setoid_rewrite (is_eq_refl (from (eq_iso (diag_comp n I)) (I ⁻ y))) in Hf.
+    simpl in Hf.
     rewrite !comp_id_r in Hf.
-    setoid_rewrite <- (fmap_comp (η x)) in Hf.
-    apply iso_faithful in Hf.
-    exact Hf.
-    1, 2: unfold e1, e2; clear.
-    1: apply (transform_is_eq (eq_iso (comp_diag I⁻¹ l))⁻¹).
-    2: apply (transform_is_eq (eq_iso (comp_diag I⁻¹ n))⁻¹).
+    setoid_rewrite <- (comp_id_r (ι y)).
+    setoid_rewrite <- (comp_id_r (δ y)).
+    simpl.
+    change (id l) with (fmap (Δ l) (to (iunit I⁻) y)).
+    change (id n) with (fmap (Δ n) (to (iunit I⁻) y)).
+    setoid_rewrite (@naturality _ _ _ _ ι).
+    setoid_rewrite (@naturality _ _ _ _ δ).
+    rewrite <- comp_assoc.
+    now f_equal.
+    1: apply (transform_is_eq (eq_iso (diag_comp n I))⁻¹).
+    2: apply (transform_is_eq (eq_iso (diag_comp l I))⁻¹).
     1, 2: apply is_eq_inv, eq_iso_is_eq.
     intros g Hg.
-    specialize (Hf (fmap (to I⁻¹) g)).
-    eapply iso_faithful, Hf.
-    clear Hf.
+    apply Hf; clear Hf.
     generalize (proj1 (natural_eq _ _) Hg).
     clear Hg; intros Hg.
-    natural_eq x.
-    specialize (Hg x).
-    simpl in Hg.
-    change (from ?i) with (to i⁻¹).
-    etransitivity.
-    etransitivity.
-    apply (f_equal (fun f => _ ∘ f ∘ _)).
-    3: apply f_equal.
-    3: symmetry.
-    1, 3: apply is_eq_refl.
-    1: apply (transform_is_eq (eq_iso (comp_diag (from I) l))⁻¹).
-    2: apply (transform_is_eq (eq_iso (comp_diag (from I) n))⁻¹).
-    1, 2: apply is_eq_inv, eq_iso_is_eq.
+    natural_eq y.
+    setoid_rewrite (is_eq_refl (from (eq_iso (diag_comp l I)) y)).
+    setoid_rewrite (is_eq_refl (from (eq_iso (diag_comp n I)) y)).
     rewrite !comp_id_r.
-    rewrite <- fmap_comp.
+    apply Hg.
+    1: apply (transform_is_eq (eq_iso (diag_comp n I))⁻¹).
+    2: apply (transform_is_eq (eq_iso (diag_comp l I))⁻¹).
+    all: apply is_eq_inv, eq_iso_is_eq.
+  + intros H F'.
+    assert (exists F, I ∘ F ≃ F').
+      exists (I⁻ ∘ F').
+      rewrite comp_assoc.
+      rewrite (inv2_r I).
+      rewrite comp_id_l.
+      reflexivity.
+    destruct H0 as [F].
+    rewrite <- H0; clear H0.
+    specialize (H F).
+    apply ex_limit_alt in H.
+    apply ex_limit_alt.
+    destruct H as [l [ι H]].
+    exists (I l).
+    exists (I <| ι ∘ (eq_iso (comp_diag I l))⁻¹).
+    intros n δ.
+    assert (exists δ', δ' ∘ fmap Δ (to (icounit I)⁻¹ n) = δ).
+      exists (δ ∘ fmap Δ (to (icounit I) n)).
+      rewrite <- comp_assoc, <- fmap_comp.
+      change (to (icounit I) n ∘ _) with ((icounit I ∘ (icounit I)⁻¹) n).
+      rewrite inv_r.
+      simpl transform.
+      rewrite fmap_id.
+      apply comp_id_r.
+    destruct H0 as [δ'].
+    subst δ.
+    assert (exists δ, δ ∘ (eq_iso (comp_diag I (I⁻ n))) ⁻¹ = δ').
+      exists (δ' ∘ eq_iso (comp_diag I (I⁻ n))).
+      rewrite <- comp_assoc, inv_r.
+      apply comp_id_r.
+    destruct H0 as [δ''].
+    subst δ'.
+    assert (exists δ, I <| δ = δ'').
+      exists (λ F ∘ (iunit I |> F) ∘ α I⁻ I F ∘ (I⁻ <| δ'') ∘ (α I⁻ I (Δ (I⁻ n)))⁻¹ ∘ ((iunit I)⁻¹ |> Δ (I⁻ n)) ∘ (λ (Δ (I⁻ n)))⁻¹).
+      natural_eq x.
+      rewrite !comp_id_l, !comp_id_r.
+      rewrite !fmap_comp.
+      setoid_rewrite (iunit_to I (F x)).
+      setoid_rewrite (@naturality _ _ _ _ (to (icounit I))).
+      rewrite <- iunit_to.
+      rewrite <- comp_assoc, <- comp_id_r.
+      apply f_equal.
+      etransitivity.
+      symmetry.
+      apply (@fmap_comp _ _ I).
+      rewrite <- fmap_id.
+      f_equal.
+      change ((iunit I ∘ (iunit I)⁻¹) (I⁻ n) = id (id C) (I⁻ n)).
+      f_equal.
+      apply inv_r.
+    destruct H0 as [δ].
+    subst δ''.
+    specialize (H (I⁻ n) δ).
+    destruct H as [f Hf].
+    exists (fmap I f ∘ to (icounit I)⁻¹ n).
+    split; [apply proj1 in Hf | apply proj2 in Hf].
+    rewrite fmap_comp, comp_assoc.
     f_equal.
-    exact Hg.
+    generalize (proj1 (natural_eq _ _) Hf).
+    clear Hf; intros Hf.
+    simpl in Hf.
+    natural_eq y.
+    setoid_rewrite (is_eq_refl (from (eq_iso (comp_diag I l)) y)).
+    setoid_rewrite (is_eq_refl (from (eq_iso (comp_diag I (I⁻ n))) y)).
+    rewrite !comp_id_r.
+    setoid_rewrite <- (@fmap_comp _ _ I).
+    f_equal.
+    apply Hf.
+    1: apply (transform_is_eq (eq_iso (comp_diag I (I⁻ n)))⁻¹).
+    2: apply (transform_is_eq (eq_iso (comp_diag I l))⁻¹).
+    1, 2: apply is_eq_inv, eq_iso_is_eq.
+    intros g Hg.
+    apply (iso2_faithful I⁻).
+    rewrite fmap_comp.
+    apply (is_iso_monic (to (iunit I) l)).
+    apply is_iso_transform, iso_is_iso.
+    rewrite comp_assoc.
+    etransitivity.
+    apply (f_equal (fun f => f ∘ _)).
+    apply (@naturality _ _ _ _ (to (iunit I))).
+    setoid_rewrite <- (iunit_co' I n).
+    rewrite <- comp_assoc.
+    etransitivity.
+    apply f_equal.
+    symmetry.
+    apply (@fmap_comp _ _ I⁻).
+    change (to (iunit I⁻) n ∘ _) with ((iunit I⁻ ∘ (iunit I⁻)⁻¹) n).
+    rewrite inv_r.
+    simpl.
+    rewrite fmap_id, comp_id_r.
+    change (from2 I) with (to2 I⁻).
+    apply Hf; clear f Hf.
+    generalize (proj1 (natural_eq _ _) Hg).
+    clear Hg; intros Hg.
+    simpl in Hg.
+    natural_eq y.
+    specialize (Hg y).
+    setoid_rewrite (is_eq_refl (from (eq_iso (comp_diag I l)) y)) in Hg.
+    setoid_rewrite (is_eq_refl (from (eq_iso (comp_diag I (I⁻ n))) y)) in Hg.
+    setoid_rewrite comp_id_r in Hg.
+    destruct (iso2_full I _ _ (g ∘ to (icounit I) n)) as [f H].
+    apply (f_equal (fun f => f ∘ to (icounit I)⁻¹ n)) in H.
+    rewrite <- comp_assoc in H.
+    change (to (icounit I) n ∘ to (icounit I)⁻¹ n) with (((icounit I) ∘ (icounit I)⁻¹) n) in H.
+    rewrite inv_r in H.
+    simpl transform in H at 2.
+    rewrite comp_id_r in H.
+    subst g.
+    rewrite comp_assoc in Hg.
+    apply is_iso_epic in Hg.
+    setoid_rewrite <- (@fmap_comp _ _ I) in Hg.
+    apply iso2_faithful in Hg.
+    rewrite <- Hg.
+    f_equal.
+    clear ι δ Hg.
+    rewrite fmap_comp, comp_assoc.
+    etransitivity.
+    apply (f_equal (fun f => f ∘ _)).
+    apply (@naturality _ _ _ _ (to (iunit I))).
+    rewrite <- comp_assoc, <- comp_id_r.
+    f_equal.
+    rewrite <- iunit_from, <- fmap_id.
+    etransitivity.
+    symmetry.
+    apply (@fmap_comp _ _ I⁻).
+    f_equal.
+    change ((icounit I ∘ (icounit I)⁻¹) n = id (id D) n).
+    f_equal.
+    apply inv_r.
+    apply (is_iso_transform (icounit I)⁻¹), iso_is_iso.
+    1: apply (transform_is_eq (eq_iso (comp_diag I (I⁻ n)))⁻¹).
+    2: apply (transform_is_eq (eq_iso (comp_diag I l))⁻¹).
+    all: apply is_eq_inv, eq_iso_is_eq.
+Qed.
+
+Instance has_limit_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) has_limit | 10.
+Proof.
+  intros C D I S T J.
+  f_equiv.
+  all: now apply iso_cequiv.
 Qed.
 
 Instance ex_lim_iso: Proper (isomorphic Cat ==> isomorphic Cat ==> iff) ex_lim.

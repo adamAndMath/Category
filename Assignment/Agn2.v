@@ -64,7 +64,8 @@ Qed.
 Lemma iso_equalizer (C D: Category): C ≃ D -> has_limit Parallel C <-> has_limit Parallel D.
 Proof.
   intros H.
-  now f_equiv.
+  f_equiv.
+  apply iso_cequiv, H.
 Qed.
 
 Lemma iso_coequalizer (C D: Category): C ≃ D -> has_colimit Parallel C <-> has_colimit Parallel D.
@@ -72,7 +73,9 @@ Proof.
   intros H.
   rewrite <- !has_limit_co.
   rewrite <- Parallel.dual_iso.
-  now do 2 f_equiv.
+  f_equiv.
+  apply iso_cequiv.
+  now f_equiv.
 Qed.
 
 End ex2.

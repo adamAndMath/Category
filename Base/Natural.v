@@ -104,32 +104,19 @@ Proof.
     apply (proj1 (natural_eq _ _) Hl).
     apply (proj1 (natural_eq _ _) Hr).
   + intros H.
-    assert (forall x: C, { f | f ∘ η x = id (F x) /\ η x ∘ f = id (G x) }).
-    intros x.
-    specialize (H x).
-    assert (Hi: inhabited (G x ~> F x)).
-    destruct H as [f _].
-    now constructor.
-    exists (epsilon Hi (fun f => f ∘ η x = id (F x) /\ η x ∘ f = id (G x))).
-    apply epsilon_spec, H.
-    clear H.
+    apply ex_forall in H.
+    destruct H as [ɛ H].
     unshelve eexists.
-    exists (fun x => proj1_sig (X x)).
-    2: split; natural_eq x.
+    exists ɛ.
+    2: split; natural_eq x; apply H.
     intros x y f.
     rewrite <- (comp_id_r (fmap G f)).
-    etransitivity.
-    apply (f_equal (fun f => _ ∘ (_ ∘ f))).
-    symmetry.
-    exact (proj2 (proj2_sig (X x))).
+    rewrite <- (proj2 (H x)).
     rewrite (comp_assoc (fmap G f)).
     rewrite <- naturality.
-    rewrite <- comp_id_l.
-    rewrite !comp_assoc.
-    do 2 f_equal.
-    exact (proj1 (proj2_sig (X y))).
-    exact (proj1 (proj2_sig (X x))).
-    exact (proj2 (proj2_sig (X x))).
+    rewrite <- comp_assoc, comp_assoc.
+    rewrite (proj1 (H y)).
+    apply comp_id_l.
 Qed.
 
 Lemma transform_is_eq {C D: Category} {F G: C ~> D} (η: F ~> G) (x: C): is_eq η -> is_eq (η x).
@@ -256,6 +243,51 @@ Proof.
   all: rewrite <- whisk_comp_distr_r, <- whisk_id_r.
   all: now f_equal.
 Qed.
+
+Section whisk_iso_l.
+Context {S T U: Category} {G H: S ~> T} (F: T ~> U) (η: G <~> H).
+
+Lemma whisk_l_inv_l: F <| η⁻¹ ∘ (F <| η) = id (F ∘ G).
+Proof.
+  rewrite <- whisk_comp_distr_l.
+  rewrite inv_l.
+  apply whisk_id_l.
+Qed.
+
+Lemma whisk_l_inv_r: F <| η ∘ (F <| η⁻¹) = id (F ∘ H).
+Proof.
+  rewrite <- whisk_comp_distr_l.
+  rewrite inv_r.
+  apply whisk_id_l.
+Qed.
+
+Definition whisk_iso_l: F ∘ G <~> F ∘ H :=
+  Isomorphism.Pack (F <| η) (Isomorphism.Mixin _ _ _ (F <| η) (F <| η⁻¹) whisk_l_inv_l whisk_l_inv_r).
+End whisk_iso_l.
+
+Section whisk_iso_r.
+Context {S T U: Category} {G H: T ~> U} (η: G <~> H) (F: S ~> T).
+
+Lemma whisk_r_inv_l: η⁻¹ |> F ∘ (η |> F) = id (G ∘ F).
+Proof.
+  rewrite <- whisk_comp_distr_r.
+  rewrite inv_l.
+  apply whisk_id_r.
+Qed.
+
+Lemma whisk_r_inv_r: η |> F ∘ (η⁻¹ |> F) = id (H ∘ F).
+Proof.
+  rewrite <- whisk_comp_distr_r.
+  rewrite inv_r.
+  apply whisk_id_r.
+Qed.
+
+Definition whisk_iso_r: G ∘ F <~> H ∘ F :=
+  Isomorphism.Pack (η |> F) (Isomorphism.Mixin _ _ _ (η |> F) (η⁻¹ |> F) whisk_r_inv_l whisk_r_inv_r).
+End whisk_iso_r.
+
+Infix "<||" := whisk_iso_l (at level 40, no associativity).
+Infix "||>" := whisk_iso_r (at level 40, no associativity).
 
 Program Definition unitor_l {S T: Category} (F: S ~> T): id T ∘ F <~> F :=
   Isomorphism.Pack _ (Isomorphism.Mixin _ _ _ {|
@@ -892,6 +924,7 @@ Qed.
 
 Lemma iso_fully_faithful {S T: Category} (F: S <~> T): fully_faithful F.
 Proof.
+  apply full_and_faithful.
   split.
   apply iso_full.
   apply iso_faithful.
@@ -943,7 +976,7 @@ Qed.
 Instance fully_faithful_natural_iso (S T: Category): Proper (isomorphic (Fun S T) ==> iff) fully_faithful.
 Proof.
   intros F G H.
-  unfold fully_faithful.
+  rewrite !full_and_faithful.
   now do 2 f_equiv.
 Qed.
 

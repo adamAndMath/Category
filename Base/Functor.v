@@ -200,27 +200,59 @@ Definition faithful {S T: Category} (F: S ~> T) :=
   forall (x y: S) (f g: x ~> y), fmap F f = fmap F g -> f = g.
 
 Definition fully_faithful {S T: Category} (F: S ~> T) :=
-  full F /\ faithful F.
+  forall (x y: S) (f: F x ~> F y), exists! f': x ~> y, fmap F f' = f.
+
+Lemma full_and_faithful {S T: Category} (F: S ~> T): fully_faithful F <-> full F /\ faithful F.
+Proof.
+  split.
+  1: intros H.
+  2: intros [fu fa].
+  split.
+  + intros x y f.
+    specialize (H x y f).
+    destruct H as [f' [Hf _]].
+    now exists f'.
+  + intros x y f g fg.
+    specialize (H x y (fmap F g)).
+    destruct H as [h [_ H]].
+    transitivity h.
+    symmetry.
+    all: now apply H.
+  + intros x y f.
+    specialize (fu x y f).
+    destruct fu as [f' H].
+    exists f'; split.
+    exact H.
+    subst f.
+    intros g H.
+    symmetry.
+    apply fa, H.
+Qed.
 
 Lemma fully_faithful_maps_iso {S T: Category} {x y: S} (F: S ~> T) (f: x ~> y): fully_faithful F -> is_iso f <-> is_iso (fmap F f).
 Proof.
-  intros [H0 H1].
+  intros Hf.
+  apply full_and_faithful in Hf.
+  destruct Hf as [fu fa].
   split.
   apply is_iso_fmap.
   intros [g' H].
-  specialize (H0 y x g').
-  destruct H0 as [g H0].
+  specialize (fu y x g').
+  destruct fu as [g Hg].
   subst g'.
   rewrite <- !fmap_comp in H.
   rewrite <- !fmap_id in H.
-  exists g.
-  split; [apply proj1 in H | apply proj2 in H].
-  all: apply H1, H.
+  destruct H as [Hl Hr].
+  apply fa in Hl.
+  apply fa in Hr.
+  now exists g.
 Qed.
 
 Lemma fully_faithful_iso {S T: Category} (F: S ~> T) (x y: S): fully_faithful F -> x ≃ y <-> F x ≃ F y.
 Proof.
-  intros [H0 H1].
+  intros Hf.
+  apply full_and_faithful in Hf.
+  destruct Hf as [H0 H1].
   split.
   all: intros [i].
   constructor.
@@ -247,6 +279,7 @@ Proof. easy. Qed.
 
 Lemma fully_faithful_id (C: Category): fully_faithful (id C).
 Proof.
+  apply full_and_faithful.
   split.
   apply full_id.
   apply faithful_id.
@@ -273,7 +306,10 @@ Qed.
 
 Lemma fully_faithful_comp {A B C: Category} (F: B ~> C) (G: A ~> B): fully_faithful F -> fully_faithful G -> fully_faithful (F ∘ G).
 Proof.
-  intros [HF1 HF2] [HG1 HG2].
+  intros HF HG.
+  apply full_and_faithful in HF.
+  apply full_and_faithful in HG.
+  apply full_and_faithful.
   split.
   now apply full_comp.
   now apply faithful_comp.
@@ -293,7 +329,9 @@ Qed.
 
 Lemma fully_faithful_cof {S T: Category} (F: S ~> T): fully_faithful F -> fully_faithful (cof F).
 Proof.
-  intros [H0 H1].
+  intros H.
+  apply full_and_faithful in H.
+  apply full_and_faithful.
   split.
   now apply full_cof.
   now apply faithful_cof.
@@ -313,7 +351,9 @@ Qed.
 
 Lemma fully_faithful_cof' {S T: Category} (F: co S ~> co T): fully_faithful F -> fully_faithful (cof' F).
 Proof.
-  intros [H0 H1].
+  intros H.
+  apply full_and_faithful in H.
+  apply full_and_faithful.
   split.
   now apply full_cof'.
   now apply faithful_cof'.

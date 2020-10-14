@@ -176,42 +176,23 @@ Proof.
     apply (f_equal (fun f => f y)) in Hf.
     now destruct (dec (y = y)).
   + intros Hf.
+    apply ex_forall in Hf.
+    destruct Hf as [g H].
     apply splitepic_is_epic.
-    destruct (classic (inhabited B)) as [Hb | Hb].
-    assert (inhabited A) as Ha.
-    destruct Hb as [b].
-    now destruct (Hf b) as [a _].
-    exists (fun y => epsilon Ha (fun x => f x = y)).
-    extensionality y.
-    unfold comp, id; simpl.
-    unfold Typ.comp, Typ.id.
-    apply epsilon_spec, Hf.
-    unshelve eexists.
-    intros b.
-    now absurd (inhabited B).
-    extensionality b.
-    now destruct Hb.
+    exists g.
+    extensionality x.
+    apply H.
 Qed.
 
 Lemma Typ_splitepic {A B: Typ} (f: A ~> B): epic f -> splitepic f.
 Proof.
   intros Hf.
   rewrite Typ_epic in Hf.
-  destruct (classic (inhabited B)) as [Hb | Hb].
-  2: {
-    unshelve eexists.
-    intros b.
-    now absurd (inhabited B).
-    extensionality b.
-    now destruct Hb.
-  }
-  assert (inhabited A) as Ha.
-  destruct Hb as [b].
-  now destruct (Hf b) as [a _].
-  exists (fun y => epsilon Ha (fun x => f x = y)).
-  extensionality y.
-  apply (epsilon_spec Ha (fun x => f x = y)).
-  apply Hf.
+  apply ex_forall in Hf.
+  destruct Hf as [g H].
+  exists g.
+  extensionality x.
+  apply H.
 Qed.
 
 Lemma fobj_splitmonic {S T: Category} (F: S ~> T): splitmonic F -> @splitmonic Typ S T (fobj F).

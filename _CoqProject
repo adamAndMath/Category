@@ -4,6 +4,7 @@ Base/Categories.v
 Base/Isomorphism.v
 Base/Functor.v
 Base/Natural.v
+Base/Equivalence.v
 Base/Adjoint.v
 Base.v
 Categories/Cone.v

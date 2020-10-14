@@ -1,4 +1,4 @@
-Require Export Base.
+Require Export Two.
 
 Module Arrow.
 
@@ -122,3 +122,91 @@ End Arrow.
 Canonical Arrow.cat.
 Coercion Arrow.Obj: hom >-> Arrow.obj.
 Notation Arrow := Arrow.cat.
+
+Section TwoFun.
+Context (C: Category).
+
+Program Definition TwoFun_to: Arrow C ~> Fun 2 C := {|
+  fobj x := Two.F (Arrow.arr x);
+  fmap x y f := {|
+    transform b := 
+      match b return (if b then Arrow.cod x else Arrow.dom x) ~> (if b then Arrow.cod y else Arrow.dom y) with
+      | false => Arrow.fdom f
+      | true => Arrow.fcod f
+      end;
+  |};
+|}.
+Next Obligation.
+  destruct x0, y0, f0.
+  1, 3: rewrite comp_id_l.
+  1, 2: apply comp_id_r.
+  apply Arrow.comm.
+Qed.
+Next Obligation.
+  natural_eq b.
+  now destruct b.
+Qed.
+Next Obligation.
+  natural_eq x.
+  now destruct x.
+Qed.
+
+Program Definition TwoFun_from: Fun 2 C ~> Arrow C := {|
+  fobj F := {|
+    Arrow.dom := F false;
+    Arrow.cod := F true;
+    Arrow.arr := fmap F (tt: (false: 2) ~> true);
+  |};
+  fmap F G η := {|
+    Arrow.fdom := η false;
+    Arrow.fcod := η true;
+  |};
+|}.
+Next Obligation.
+  apply naturality.
+Qed.
+Next Obligation.
+  now apply Arrow.hom_eq.
+Qed.
+Next Obligation.
+  now apply Arrow.hom_eq.
+Qed.
+
+Lemma TwoFun_inv_l: TwoFun_from ∘ TwoFun_to = id (Arrow C).
+Proof.
+  fun_eq x y F.
+  now destruct x.
+  destruct x as [x x' f].
+  destruct y as [y y' g].
+  rewrite !eq_iso_refl.
+  clear H H0.
+  simpl.
+  rewrite comp_id_l, comp_id_r.
+  now apply Arrow.hom_eq.
+Qed.
+
+Lemma TwoFun_inv_r: TwoFun_to ∘ TwoFun_from = id (Fun 2 C).
+Proof.
+  fun_eq F G η.
+  destruct (Two.F_unique x) as [a [b [f H]]].
+  now subst x.
+  destruct (Two.F_unique F) as [x [x' [f HF]]].
+  destruct (Two.F_unique G) as [y [y' [g HG]]].
+  subst F G.
+  rewrite !eq_iso_refl.
+  clear H H0.
+  simpl.
+  rewrite comp_id_l, comp_id_r.
+  natural_eq b.
+  now destruct b.
+Qed.
+
+Definition TwoFun: Arrow C <~> Fun 2 C :=
+  Isomorphism.Pack TwoFun_to (Isomorphism.Mixin _ _ _ TwoFun_to TwoFun_from TwoFun_inv_l TwoFun_inv_r).
+
+Lemma Arrow_is_Fun: Arrow C ≃ Fun 2 C.
+Proof.
+  constructor.
+  exact TwoFun.
+Qed.
+End TwoFun.

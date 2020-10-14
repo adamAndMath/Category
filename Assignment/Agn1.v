@@ -44,7 +44,7 @@ Next Obligation.
   intros x Hx.
   rewrite !(map_ap _ _ Hx).
   simpl.
-  rewrite map_comp.
+  rewrite Basic.map_comp.
   apply set_eq_ext.
   intros z.
   rewrite !in_map.
@@ -427,9 +427,7 @@ Proof.
   simpl.
   rewrite !(map_ap _ _ Hx).
   simpl.
-  apply in_single in Hx.
-  subst x.
-  rewrite !intersect_pair.
+  rewrite !set_pi1_correct.
   reflexivity.
   intros H.
   rewrite setf_eq in H.

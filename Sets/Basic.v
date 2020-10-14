@@ -1,4 +1,5 @@
 Require Export Base.
+Local Unset Universe Polymorphism.
 
 Inductive Acz :=
   acz_of: forall A: Type, (A -> Acz) -> Acz.
@@ -273,7 +274,7 @@ Proof.
   all: apply acz_eq_N.
 Qed.
 
-Theorem in_set_of x T (f: T -> set): x ∈ set_of T f <-> exists a: T, x = f a.
+Theorem in_set_of x (T: Type) (f: T -> set): x ∈ set_of T f <-> exists a: T, x = f a.
 Proof.
   unfold In.
   simpl.
@@ -858,6 +859,18 @@ Proof.
     now exists y.
 Qed.
 
+Lemma in_cartisian' (x y X Y: set): pair x y ∈ cartisian X Y <-> x ∈ X /\ y ∈ Y.
+Proof.
+  rewrite in_cartisian.
+  split.
+  intros [x' [y' [Hx [Hy H]]]].
+  apply pair_inj in H.
+  destruct H.
+  now subst x' y'.
+  intros [Hx Hy].
+  now exists x, y.
+Qed.
+
 Lemma cartisian_inj (X Y Z V: set): X <> Ø -> Y <> Ø -> cartisian X Y = cartisian Z V <-> X = Z /\ Y = V.
 Proof.
   intros HX HY.
@@ -898,39 +911,23 @@ Proof.
   rewrite <- set_eq_ext in H.
   assert (x ∈ Z /\ y ∈ V).
     specialize (H (pair x y)).
-    rewrite !in_cartisian in H.
+    rewrite !in_cartisian' in H.
     apply proj1 in H.
-    destruct H as [x' [y' [HZ [HV H]]]].
-    now exists x, y.
-    apply pair_inj in H.
-    destruct H.
-    now subst y' x'.
+    now apply H.
   destruct H0 as [HZ HV].
   split.
   + apply set_eq_ext.
     intros z.
     specialize (H (pair z y)).
-    rewrite !in_cartisian in H.
+    rewrite !in_cartisian' in H.
     split.
-    2: symmetry in H.
-    all: apply proj1 in H.
     all: intros Hz.
-    all: destruct H as [z' [y' [Hz' [_ H]]]].
-    1, 3: now exists z, y.
-    all: apply pair_inj in H.
-    all: destruct H as [H _].
-    all: now subst z'.
+    all: now apply H.
   + apply set_eq_ext.
     intros z.
     specialize (H (pair x z)).
-    rewrite !in_cartisian in H.
+    rewrite !in_cartisian' in H.
     split.
-    2: symmetry in H.
-    all: apply proj1 in H.
     all: intros Hz.
-    all: destruct H as [x' [z' [_ [Hz' H]]]].
-    1, 3: now exists x, z.
-    all: apply pair_inj in H.
-    all: destruct H as [_ H].
-    all: now subst z'.
+    all: now apply H.
 Qed.

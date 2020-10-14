@@ -140,15 +140,8 @@ Proof.
     exists (f a).
     apply Hf.
   + intros [o H].
-    red in H.
+    apply ex_forall in H.
+    destruct H as [f Hf].
     constructor.
-    assert (forall x: C, inhabited (x ~> o)).
-    intros x.
-    now destruct (H x) as [f _].
-    unshelve econstructor.
-    exact o.
-    exact (fun x => epsilon (H0 x) (fun f => forall g, f = g)).
-    simpl.
-    intros a.
-    apply epsilon_spec, H.
+    now exists o f.
 Qed.

@@ -84,3 +84,61 @@ Definition REL_mixin: Category.mixin_of set :=
 
 Definition REL: Category :=
   Category.Pack set REL_mixin.
+
+Program Definition Set2Rel: SET ~> REL := {|
+  fobj X := X;
+  fmap X Y f := exist _ (fun x y => x ∈ X /\ map f x = y) _;
+|}.
+Next Obligation.
+  split.
+  exact H.
+  apply mapto, H.
+Qed.
+Next Obligation.
+  apply rel_eq; simpl.
+  intros x y.
+  split.
+  all: intros [Hx H].
+  now rewrite (map_ap _ _ Hx) in H.
+  now rewrite (map_ap _ _ Hx).
+Qed.
+Next Obligation.
+  apply rel_eq; simpl.
+  intros x z.
+  split.
+  + intros [Hx Hz].
+    subst z.
+    exists (map g x).
+    repeat split.
+    apply mapto, Hx.
+    symmetry.
+    apply map_comp, Hx.
+    exact Hx.
+  + intros [y [[_ Hz] [Hx Hy]]].
+    subst y z.
+    split.
+    exact Hx.
+    apply map_comp, Hx.
+Qed.
+
+Program Definition Conv: co REL ~> REL := {|
+  fobj X := X;
+  fmap X Y R := exist _ (fun x y => proj1_sig R y x) _;
+|}.
+Next Obligation.
+  now apply (proj2_sig R) in H.
+Qed.
+Next Obligation.
+  apply rel_eq; simpl.
+  intros x y.
+  split.
+  all: intros [H e].
+  all: now subst y.
+Qed.
+Next Obligation.
+  apply rel_eq; simpl.
+  intros x z.
+  split.
+  all: intros [y [H1 H2]].
+  all: now exists y.
+Qed.

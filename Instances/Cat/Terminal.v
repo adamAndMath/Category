@@ -29,53 +29,7 @@ Definition CatTop_mixin: TopCategory.mixin_of Cat :=
 Canonical CatTop: TopCategory :=
   TopCategory.Pack Cat CatTop_mixin.
 
-Definition ONE_Top_mixin: TopCategory.mixin_of 1 :=
-  TopCategory.Mixin 1 tt (fun _ => tt) (fun _ => unit_unique).
-
-Canonical ONE_Top: TopCategory :=
-  TopCategory.Pack 1 ONE_Top_mixin.
-
-Definition ONE_Bot_mixin: BotCategory.mixin_of 1 :=
-  BotCategory.Mixin 1 tt (fun _ => tt) (fun _ => unit_unique).
-
-Canonical ONE_Bot: BotCategory :=
-  BotCategory.Pack 1 ONE_Bot_mixin.
-
-Lemma ONE_fork_pi (a b c: ONE) (f: a ~> b) (g: a ~> c) (h: a ~> tt): h = tt <-> tt = f /\ tt = g.
-Proof.
-  split.
-  all: intros _.
-  split.
-  3: symmetry.
-  all: apply unit_unique.
-Qed.
-
-Definition ONE_Prod_mixin: ProdCategory.mixin_of 1 :=
-  ProdCategory.Mixin 1 (fun _ _ => tt)
-  (fun _ _ _ _ _ => tt) (fun _ _ => tt) (fun _ _ => tt)
-  ONE_fork_pi.
-
-Canonical ONE_Prod: ProdCategory :=
-  ProdCategory.Pack 1 ONE_Prod_mixin.
-
-Lemma ONE_merge_in (a b c: ONE) (f: a ~> c) (g: b ~> c) (h: tt ~> c): h = tt <-> tt = f /\ tt = g.
-Proof.
-  split.
-  all: intros _.
-  split.
-  3: symmetry.
-  all: apply unit_unique.
-Qed.
-
-Definition ONE_Coprod_mixin: CoprodCategory.mixin_of 1 :=
-  CoprodCategory.Mixin 1 (fun _ _ => tt)
-  (fun _ _ _ _ _ => tt) (fun _ _ => tt) (fun _ _ => tt)
-  ONE_fork_pi.
-
-Canonical ONE_Coprod: CoprodCategory :=
-  CoprodCategory.Pack 1 ONE_Coprod_mixin.
-
-Definition CoOne_from: 1 ~> co 1 := {|
+  Definition CoOne_from: 1 ~> co 1 := {|
   fobj x := x;
   fmap x y f := f;
   fmap_id _ := eq_refl;
@@ -104,3 +58,59 @@ Proof.
   constructor.
   exact CoOne.
 Qed.
+
+Definition ONE_Top_mixin: TopCategory.mixin_of ONE :=
+  TopCategory.Mixin ONE tt (fun _ => tt) (fun _ => unit_unique).
+
+Canonical ONE_Top: TopCategory :=
+  TopCategory.Pack ONE ONE_Top_mixin.
+
+Definition ONE_Bot_mixin: BotCategory.mixin_of ONE :=
+  BotCategory.Mixin ONE tt (fun _ => tt) (fun _ => unit_unique).
+
+Canonical ONE_Bot: BotCategory :=
+  BotCategory.Pack ONE ONE_Bot_mixin.
+
+Lemma ONE_fork_pi (a b c: ONE) (f: a ~> b) (g: a ~> c) (h: a ~> tt): h = tt <-> tt = f /\ tt = g.
+Proof.
+  split.
+  all: intros _.
+  split.
+  3: symmetry.
+  all: apply unit_unique.
+Qed.
+
+Definition ONE_Prod_mixin: ProdCategory.mixin_of ONE :=
+  ProdCategory.Mixin ONE (fun _ _ => tt)
+  (fun _ _ _ _ _ => tt) (fun _ _ => tt) (fun _ _ => tt)
+  ONE_fork_pi.
+
+Canonical ONE_Prod: ProdCategory :=
+  ProdCategory.Pack ONE ONE_Prod_mixin.
+
+Lemma ONE_merge_in (a b c: ONE) (f: a ~> c) (g: b ~> c) (h: tt ~> c): h = tt <-> tt = f /\ tt = g.
+Proof.
+  split.
+  all: intros _.
+  split.
+  3: symmetry.
+  all: apply unit_unique.
+Qed.
+
+Definition ONE_Coprod_mixin: CoprodCategory.mixin_of ONE :=
+  CoprodCategory.Mixin ONE (fun _ _ => tt)
+  (fun _ _ _ _ _ => tt) (fun _ _ => tt) (fun _ _ => tt)
+  ONE_fork_pi.
+
+Canonical ONE_Coprod: CoprodCategory :=
+  CoprodCategory.Pack ONE ONE_Coprod_mixin.
+
+Lemma ONE_transpose_ump (t s x: ONE) (f: x × s ~> t) (g: x ~> tt): tt = f <-> tt = g.
+Proof.
+  now destruct f, g.
+Qed.
+
+Definition ONE_Exp_mixin: ExpCategory.mixin_of ONE_Prod :=
+  ExpCategory.Mixin ONE_Prod (fun _ _ => tt) (fun _ _ => tt) (fun _ _ _ _ => tt) ONE_transpose_ump.
+
+Canonical ONE_Exp := ExpCategory.Pack ONE (ExpCategory.Class ONE ONE_Prod_mixin ONE_Exp_mixin).

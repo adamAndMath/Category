@@ -99,3 +99,39 @@ Definition CatExp_mixin: ExpCategory.mixin_of CatProd :=
 
 Canonical CatExp: ExpCategory :=
   ExpCategory.Pack Cat (ExpCategory.Class Cat CatProd_mixin CatExp_mixin).
+
+Program Definition FExp {C: ExpCategory}: C × co C ~> C := {|
+  fobj p := fst p ^ snd p;
+  fmap p q f := transpose (fst f ∘ eval (fst p) (snd p) ∘ (id (fst p ^ snd p) (×) snd f));
+|}.
+Next Obligation.
+  simpl.
+  rewrite comp_id_l.
+  apply transpose_inv_r.
+Qed.
+Next Obligation.
+  simpl.
+  apply transpose_inv_inj.
+  rewrite transpose_inv_l.
+  unfold transpose_inv.
+  rewrite <- (comp_id_l (id o0)).
+  rewrite <- fprod_comp.
+  rewrite comp_assoc.
+  rewrite eval_transpose.
+  rewrite <- !(comp_assoc (fst f)).
+  f_equal.
+  rewrite <- (comp_assoc (eval o1 o2)).
+  rewrite fprod_comp.
+  rewrite comp_id_l, comp_id_r.
+  rewrite <- (comp_id_r (transpose _)).
+  setoid_rewrite <- (comp_id_r (snd f)) at 2.
+  setoid_rewrite <- fprod_comp.
+  rewrite comp_assoc.
+  setoid_rewrite eval_transpose.
+  rewrite <- (comp_assoc (_ ∘ _)).
+  f_equal.
+  rewrite fprod_comp.
+  f_equal.
+  symmetry.
+  apply comp_id_l.
+Qed.

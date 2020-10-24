@@ -135,35 +135,17 @@ Definition CatProd_Prod_mixin (C D: ProdCategory): ProdCategory.mixin_of (C × D
 Canonical CatProd_Prod (C D: ProdCategory): ProdCategory :=
   ProdCategory.Pack (C × D) (CatProd_Prod_mixin C D).
 
-Program Definition FProd (C D: Category): C ~> Fun D (C × D) := {|
-  fobj x := {|
-    fobj y := (x, y);
-    fmap _ _ f := (id x, f);
-  |};
-  fmap _ _ f := {|
-    transform x := (f, id x);
-  |}
+Program Definition FProd {C: ProdCategory}: C × C ~> C := {|
+  fobj p := fst p × snd p;
+  fmap p q f := fst f (×) snd f;
 |}.
 Next Obligation.
-  apply Prod.hom_eq; simpl; split.
+  simpl.
+  apply fprod_id.
+Qed.
+Next Obligation.
   symmetry.
-  apply comp_id_l.
-  reflexivity.
-Qed.
-Next Obligation.
-  apply Prod.hom_eq; simpl; split.
-  all: rewrite comp_id_l, comp_id_r.
-  all: reflexivity.
-Qed.
-Next Obligation.
-  now natural_eq y.
-Qed.
-Next Obligation.
-  natural_eq y.
-  apply Prod.hom_eq; simpl; split.
-  reflexivity.
-  symmetry.
-  apply comp_id_l.
+  apply fprod_comp.
 Qed.
 
 Section CoProd.

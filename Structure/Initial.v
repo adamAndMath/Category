@@ -1,5 +1,65 @@
 Require Export Base.
 
+Definition is_initial {C: Category} (o: C) :=
+  forall x: C, exists f: o ~> x, forall g, f = g.
+
+Definition ex_initial (C: Category) :=
+  exists x: C, is_initial x.
+
+Instance is_initial_iso (C: Category): Proper (isomorphic C ==> iff) is_initial.
+Proof.
+  enough (Proper (isomorphic C ==> impl) is_initial).
+  now split; apply H.
+  intros X Y [i] H Z.
+  specialize (H Z).
+  destruct H as [f H].
+  exists (f ∘ i⁻¹).
+  intros g.
+  specialize (H (g ∘ i)).
+  subst f.
+  rewrite <- comp_assoc.
+  rewrite inv_r.
+  apply comp_id_r.
+Qed.
+
+Lemma iso_initial {C: Category} (x y: C): is_initial x -> is_initial y -> x ≃ y.
+Proof.
+  intros Hx Hy.
+  destruct (Hx y) as [f _].
+  destruct (Hy x) as [g _].
+  specialize (Hx x).
+  specialize (Hy y).
+  destruct Hx as [x' Hx].
+  destruct Hy as [y' Hy].
+  constructor.
+  exists f, g.
+  transitivity x'.
+  symmetry.
+  1, 2: apply Hx.
+  transitivity y'.
+  symmetry.
+  all: apply Hy.
+Qed.
+
+Instance ex_initial_iso: Proper (isomorphic Cat ==> iff) ex_initial.
+Proof.
+  enough (Proper (isomorphic Cat ==> impl) ex_initial).
+  now split; apply H.
+  intros C D [I] [o H].
+  exists (to I o).
+  intros x'.
+  destruct (ex_fobj_iso I x') as [x].
+  subst x'.
+  specialize (H x).
+  destruct H as [f H].
+  exists (fmap (to I) f).
+  intros g'.
+  destruct (ex_fmap_iso I g') as [g].
+  subst g'.
+  f_equal.
+  apply H.
+Qed.
+
 Module BotCategory.
 
 Structure mixin_of (C: Category) := Mixin {
@@ -63,3 +123,18 @@ End Initial.
 
 Notation "0" := zero.
 Notation "¡" := from_zero.
+
+Lemma initial_correct C: inhabited (BotCategory.mixin_of C) <-> ex_initial C.
+Proof.
+  split.
+  + intros [[o f Hf]].
+    exists o.
+    intros a.
+    exists (f a).
+    apply Hf.
+  + intros [o H].
+    apply ex_forall in H.
+    destruct H as [f Hf].
+    constructor.
+    now exists o f.
+Qed.

@@ -572,3 +572,100 @@ Qed.
 
 Lemma co_eq_iso {C: Category} {x y: C} (e: x = y): to (@eq_iso (co C) x y e) = to (eq_iso e)⁻¹.
 Proof. now destruct e. Qed.
+
+Definition eunique {C: Category} (P: C -> Prop) (x: C) :=
+  Proper (isomorphic C ==> iff) P /\
+  P x /\ forall x', P x' -> x ≃ x'.
+
+Definition euniqueness {C: Category} (P: C -> Prop) :=
+  forall x y, P x -> P y -> x ≃ y.
+
+Notation "'exists' !! x .. y , p" :=
+  (ex (eunique (fun x => .. (ex (eunique (fun y => p))) ..)))
+  (at level 200, x binder, right associativity,
+    format "'[' 'exists' !! '/ ' x .. y , '/ ' p ']'"): type_scope.
+
+Instance euniqueness_impl (C: Category): Proper (flip (pointwise_relation C impl) ==> impl) euniqueness.
+Proof.
+  intros P Q PQ H x y Hx Hy.
+  apply H.
+  all: now apply PQ.
+Qed.
+
+Instance euniqueness_iff (C: Category): Proper (pointwise_relation C iff ==> iff) euniqueness.
+Proof.
+  intros P Q H.
+  split.
+  all: change (?P -> ?Q) with (impl P Q).
+  all: f_equiv.
+  all: intros x.
+  exact (proj2 (H x)).
+  exact (proj1 (H x)).
+Qed.
+
+Instance eunique_iff (C: Category): Proper (pointwise_relation C iff ==> isomorphic C ==> iff) eunique.
+Proof.
+  enough (Proper (pointwise_relation C iff ==> isomorphic C ==> impl) eunique).
+  now split; apply H.
+  intros P Q PQ x y xy [PP [H u]].
+  split; [| split].
+  intros a b H1.
+  rewrite <- PQ.
+  now apply PP.
+  apply PQ.
+  now rewrite <- xy.
+  intros y' H'.
+  rewrite <- xy.
+  apply u, PQ, H'.
+Qed.
+
+Lemma eunique_existence {C: Category} (P: C -> Prop): (Proper (isomorphic C ==> iff) P /\ (exists x, P x) /\ euniqueness P) <-> exists!! x, P x.
+Proof.
+  split.
+  + intros [PP [[x H] u]].
+    exists x; split.
+    2: split.
+    1, 2: assumption.
+    intros y Hy.
+    now apply u.
+  + intros [x [PP [H u]]].
+    split.
+    2: split.
+    exact PP.
+    now exists x.
+    intros y z Hy Hz.
+    transitivity x.
+    symmetry.
+    all: now apply u.
+Qed.
+
+Lemma forall_exists_eunique_domain_coincide {C: Category} (P:C->Prop): (exists!! x, P x) -> forall Q: C -> Prop,
+  Proper (isomorphic C ==> iff) Q ->
+  (forall x, P x -> Q x) <-> (exists x, P x /\ Q x).
+Proof.
+  intros [x [PP [Hx u]]] Q PQ.
+  split.
+  + intros H.
+    exists x; split.
+    exact Hx.
+    apply H, Hx.
+  + intros [y [Hy]] z Hz.
+    rewrite <- (u z Hz).
+    rewrite (u y Hy).
+    exact H.
+Qed.
+
+Lemma forall_exists_coincide_unique_domain {C: Category} (P: C -> Prop): Proper (isomorphic C ==> iff) P ->
+  (forall Q: C -> Prop, Proper (isomorphic C ==> iff) Q -> (forall x, P x -> Q x) <-> (exists x, P x /\ Q x))
+  -> (exists!! x, P x).
+Proof.
+  intros PP H.
+  destruct (proj1 (H P PP)) as [x [Hx _]].
+  easy.
+  exists x; split; [| split].
+  1, 2: assumption.
+  apply H.
+  intros y z yz.
+  now f_equiv.
+  now exists x.
+Qed.

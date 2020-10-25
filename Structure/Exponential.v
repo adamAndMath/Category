@@ -1,5 +1,111 @@
 Require Export Structure.Product.
 
+Definition is_exp {C: ProdCategory} (t s p: C) (e: p × s ~> t) :=
+  forall x (f: x × s ~> t), exists! g: x ~> p, e ∘ (g (×) id s) = f.
+
+Definition is_exp_obj {C: ProdCategory} (t s p: C) :=
+  exists e, is_exp t s p e.
+
+Definition ex_exp {C: ProdCategory} (t s: C) :=
+  exists p, is_exp_obj t s p.
+
+Instance is_exp_obj_iso (C: ProdCategory): Proper (isomorphic C ==> isomorphic C ==> isomorphic C ==> iff) is_exp_obj.
+Proof.
+  enough (Proper (isomorphic C ==> isomorphic C ==> isomorphic C ==> impl) is_exp_obj).
+  now split; apply H.
+  intros a x [i] b y [j] p q [k] [e H].
+  exists (i ∘ e ∘ (k⁻¹ (×) j⁻¹)).
+  intros z f'.
+  assert (exists f, i ∘ f ∘ (id z (×) j⁻¹) = f').
+    exists (i⁻¹ ∘ f' ∘ (id z (×) j)).
+    rewrite !comp_assoc, <- comp_assoc.
+    rewrite fprod_comp.
+    rewrite !inv_r, !comp_id_l.
+    rewrite fprod_id.
+    apply comp_id_r.
+  destruct H0 as [f].
+  subst f'.
+  specialize (H z f).
+  destruct H as [g [H u]].
+  subst f.
+  exists (k ∘ g); split.
+  rewrite <- !comp_assoc.
+  do 2 f_equal.
+  rewrite !fprod_comp.
+  f_equal.
+  rewrite comp_assoc, comp_id_r.
+  rewrite inv_l.
+  apply comp_id_l.
+  rewrite comp_id_l.
+  apply comp_id_r.
+  intros h H.
+  rewrite <- !comp_assoc in H.
+  apply iso_monic in H.
+  rewrite !fprod_comp, !comp_id_r, comp_id_l in H.
+  apply (iso_monic k⁻¹).
+  rewrite comp_assoc.
+  rewrite inv_l, comp_id_l.
+  apply u.
+  rewrite <- (inv_l j).
+  rewrite <- (comp_id_r (k⁻¹ ∘ h)).
+  rewrite <- (comp_id_r g).
+  rewrite <- !fprod_comp.
+  rewrite !comp_assoc.
+  now f_equal.
+Qed.
+
+Instance ex_exp_iso (C: ProdCategory): Proper (isomorphic C ==> isomorphic C ==> iff) ex_exp.
+Proof.
+  intros a x H1 b y H2.
+  unfold ex_exp.
+  f_equiv; intros z.
+  now f_equiv.
+Qed.
+
+Lemma exp_obj_euniqueness {C: ProdCategory} (a b: C): euniqueness (is_exp_obj a b).
+Proof.
+  intros P Q [p Hp] [q Hq].
+  destruct (Hq P p) as [f [Hf _]].
+  destruct (Hp Q q) as [g [Hg _]].
+  constructor.
+  exists f, g.
+  all: symmetry.
+  + specialize (Hp P p).
+    destruct Hp as [p' [Hp H]].
+    transitivity p'.
+    symmetry.
+    all: apply H.
+    rewrite fprod_id.
+    apply comp_id_r.
+    rewrite <- (comp_id_l (id b)).
+    rewrite <- fprod_comp, comp_assoc.
+    now rewrite Hg.
+  + specialize (Hq Q q).
+    destruct Hq as [q' [Hq H]].
+    transitivity q'.
+    symmetry.
+    all: apply H.
+    rewrite fprod_id.
+    apply comp_id_r.
+    rewrite <- (comp_id_l (id b)).
+    rewrite <- fprod_comp, comp_assoc.
+    now rewrite Hf.
+Qed.
+
+Lemma ex_exp_eunique {C: ProdCategory} (a b: C): ex_exp a b <-> exists!! p, is_exp_obj a b p.
+Proof.
+  rewrite <- eunique_existence.
+  split.
+  + intros H.
+    split.
+    now apply is_exp_obj_iso.
+    split.
+    exact H.
+    apply exp_obj_euniqueness.
+  + intros [_ [H _]].
+    exact H.
+Qed.
+
 Module ExpCategory.
 
 Structure mixin_of (C: ProdCategory) := Mixin {
@@ -193,6 +299,60 @@ Proof.
   now apply comp_l_iso, inv.
 Qed.
 
+Lemma eval_is_exp (a b: C): is_exp a b (a ^ b) (eval a b).
+Proof.
+  intros z f.
+  exists (transpose f); split.
+  apply eval_transpose.
+  intros g.
+  apply transpose_ump.
+Qed.
+
+Lemma exp_is_exp_obj (a b: C): is_exp_obj a b (a ^ b).
+Proof.
+  exists (eval a b).
+  apply eval_is_exp.
+Qed.
+
 End Exponential.
 
 Infix "^" := exp.
+
+Lemma exp_correct (C: ProdCategory): inhabited (ExpCategory.mixin_of C) <-> (forall a b: C, ex_exp a b).
+Proof.
+  split.
+  + intros [[E e t H]] a b.
+    exists (E a b), (e a b).
+    intros z f.
+    exists (t a b z f); split.
+    now apply H.
+    intros g.
+    apply H.
+  + intros H.
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [E H].
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [e H].
+    generalize (fun a b z => ex_forall _ (H a b z)).
+    clear H; intros H.
+    generalize (fun a b => ex_forall _ (H a b)).
+    clear H; intros H.
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [t H].
+    constructor.
+    exists E e t.
+    intros a b c f g.
+    specialize (H a b c f).
+    destruct H as [H u].
+    split.
+    intros Hh.
+    now apply u.
+    intros Hg.
+    now subst g.
+Qed.

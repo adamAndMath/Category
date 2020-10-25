@@ -56,9 +56,9 @@ Proof.
   now f_equiv.
 Qed.
 
-Lemma iso_prod_obj {C: Category} (a b p q: C): is_prod_obj a b p -> is_prod_obj a b q -> p ≃ q.
+Lemma prod_obj_euniqueness {C: Category} (a b: C): euniqueness (is_prod_obj a b).
 Proof.
-  intros [p1 [p2 Hp]] [q1 [q2 Hq]].
+  intros p q [p1 [p2 Hp]] [q1 [q2 Hq]].
   destruct (Hq p p1 p2) as [f [Hf _]].
   destruct (Hp q q1 q2) as [g [Hg _]].
   constructor.
@@ -84,6 +84,20 @@ Proof.
     all: rewrite comp_assoc.
     now rewrite (proj1 Hf).
     now rewrite (proj2 Hf).
+Qed.
+
+Lemma ex_product_eunique {C: Category} (a b: C): ex_product a b <-> exists!! p, is_prod_obj a b p.
+Proof.
+  rewrite <- eunique_existence.
+  split.
+  + intros H.
+    split.
+    now apply is_prod_obj_iso.
+    split.
+    exact H.
+    apply prod_obj_euniqueness.
+  + intros [_ [H _]].
+    exact H.
 Qed.
 
 Module ProdCategory.
@@ -366,3 +380,50 @@ Notation "⟨ f , g ⟩" := (fork f g).
 Canonical iprod.
 Notation π₁ := pi1.
 Notation π₂ := pi2.
+
+Lemma product_correct C: inhabited (ProdCategory.mixin_of C) <-> (forall a b: C, ex_product a b).
+Proof.
+  split.
+  + intros [[p fork p1 p2 H]] a b.
+    exists (p a b), (p1 a b), (p2 a b).
+    intros z f g.
+    exists (fork z a b f g); split.
+    now apply H.
+    intros h Hh.
+    symmetry.
+    now apply H.
+  + intros H.
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [P H].
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [p1 H].
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [p2 H].
+    generalize (fun a b z f => ex_forall _ (H a b z f)).
+    clear H; intros H.
+    generalize (fun a b z => ex_forall _ (H a b z)).
+    clear H; intros H.
+    generalize (fun a b => ex_forall _ (H a b)).
+    clear H; intros H.
+    generalize (fun a => ex_forall _ (H a)).
+    clear H; intros H.
+    apply ex_forall in H.
+    destruct H as [fo H].
+    constructor.
+    exists P (fun a b c => fo b c a) p1 p2.
+    intros a b c f g h.
+    specialize (H b c a f g).
+    destruct H as [H u].
+    split.
+    intros Hh.
+    now subst h.
+    intros Hh.
+    symmetry.
+    now apply u.
+Qed.

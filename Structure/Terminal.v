@@ -22,9 +22,9 @@ Proof.
   apply comp_id_l.
 Qed.
 
-Lemma iso_terminal {C: Category} (x y: C): is_terminal x -> is_terminal y -> x ≃ y.
+Lemma terminal_euniqueness (C: Category): euniqueness (@is_terminal C).
 Proof.
-  intros Hx Hy.
+  intros x y Hx Hy.
   destruct (Hx y) as [f _].
   destruct (Hy x) as [g _].
   specialize (Hx x).
@@ -39,6 +39,20 @@ Proof.
   transitivity y'.
   symmetry.
   all: apply Hy.
+Qed.
+
+Lemma ex_terminal_eunique (C: Category): ex_terminal C <-> exists!! x: C, is_terminal x.
+Proof.
+  rewrite <- eunique_existence.
+  split.
+  + intros H.
+    split.
+    exact (is_terminal_iso C).
+    split.
+    exact H.
+    exact (terminal_euniqueness C).
+  + intros [_ [H _]].
+    exact H.
 Qed.
 
 Instance ex_terminal_iso: Proper (isomorphic Cat ==> iff) ex_terminal.

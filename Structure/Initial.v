@@ -22,9 +22,9 @@ Proof.
   apply comp_id_r.
 Qed.
 
-Lemma iso_initial {C: Category} (x y: C): is_initial x -> is_initial y -> x ≃ y.
+Lemma initial_euniqueness (C: Category): euniqueness (@is_initial C).
 Proof.
-  intros Hx Hy.
+  intros x y Hx Hy.
   destruct (Hx y) as [f _].
   destruct (Hy x) as [g _].
   specialize (Hx x).
@@ -39,6 +39,20 @@ Proof.
   transitivity y'.
   symmetry.
   all: apply Hy.
+Qed.
+
+Lemma ex_initial_eunique (C: Category): ex_initial C <-> exists!! x: C, is_initial x.
+Proof.
+  rewrite <- eunique_existence.
+  split.
+  + intros H.
+    split.
+    exact (is_initial_iso C).
+    split.
+    exact H.
+    exact (initial_euniqueness C).
+  + intros [_ [H _]].
+    exact H.
 Qed.
 
 Instance ex_initial_iso: Proper (isomorphic Cat ==> iff) ex_initial.

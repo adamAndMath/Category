@@ -193,6 +193,41 @@ Proof.
   all: exact Hf.
 Qed.
 
+Program Definition Co': Cat ~> Cat := {|
+  fobj := co;
+  fmap := @cof;
+|}.
+
+Lemma Co'_invol: Co' ∘ Co' = id Cat.
+Proof.
+  fun_eq C D F.
+  apply co_invol.
+  revert H H0.
+  destruct C as [X [xs xid xcomp xassoc xid_l xid_r]].
+  destruct D as [Y [ys yid ycomp yassoc yid_l yid_r]].
+  destruct F as [f F Fid Fcomp].
+  unfold cof, co, co_mixin; simpl.
+  unfold comp; simpl.
+  unfold fun_comp; simpl.
+  assert ((fun (a b c d: X)
+    (f : xs c d) (g : xs b c) (h : xs a b) =>
+    eq_sym (eq_sym (xassoc a b c d f g h))) = xassoc).
+  apply proof_irrelevance.
+  rewrite H; clear H.
+  assert ((fun (a b c d: Y)
+    (f : ys c d) (g : ys b c) (h : ys a b) =>
+    eq_sym (eq_sym (yassoc a b c d f g h))) = yassoc).
+  apply proof_irrelevance.
+  rewrite H; clear H.
+  intros H H0.
+  rewrite !eq_iso_refl; clear H H0.
+  simpl.
+  reflexivity.
+Qed.
+
+Canonical Co: Cat <~> Cat :=
+  Isomorphism.Pack Co' (Isomorphism.Mixin _ _ _ Co' Co' Co'_invol Co'_invol).
+
 Definition full {S T: Category} (F: S ~> T) :=
   forall (x y: S) (f: F x ~> F y), exists f': x ~> y, fmap F f' = f.
 
@@ -407,4 +442,13 @@ Proof.
   1: rewrite <- iso_co.
   2: rewrite iso_co.
   all: exact H.
+Qed.
+
+Lemma fiso_surj {S T: Category} (F: S <~> T): forall y, exists x, to F x = y.
+Proof.
+  intros y.
+  exists (to F⁻¹ y).
+  change ((F ∘ F⁻¹) y = (id T) y).
+  f_equal.
+  apply inv_r.
 Qed.

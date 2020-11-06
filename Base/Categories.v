@@ -2,8 +2,8 @@ Require Export Basic.
 
 Module Category.
 
-Structure mixin_of (obj: Type) := Mixin {
-  hom: obj -> obj -> Type;
+Structure mixin_of@{i j} (obj: Type@{i}) := Mixin {
+  hom: obj -> obj -> Type@{j};
   id (a: obj): hom a a;
   comp {a b c: obj}: hom b c -> hom a b -> hom a c;
   comp_assoc (a b c d: obj) (f: hom c d) (g: hom b c) (h: hom a b): comp f (comp g h) = comp (comp f g) h;
@@ -15,7 +15,7 @@ Notation class_of := mixin_of (only parsing).
 
 Section ClassDef.
 
-Structure type := Pack { obj: Type; _: class_of obj }.
+Structure type@{i j} := Pack { obj: Type@{i}; _: class_of@{i j} obj }.
 Local Coercion obj: type >-> Sortclass.
 
 Variable (C: type).
@@ -95,28 +95,27 @@ Proof.
     all: apply proof_irrelevance.
 Qed.
 
-Definition co_mixin (C: Category): Category.mixin_of C :=
+Definition co_mixin@{i j} C (m: Category.mixin_of@{i j} C): Category.mixin_of@{i j} C :=
   Category.Mixin C
-  (fun x y => Category.hom C (Category.class C) y x)
-  (Category.id C (Category.class C))
-  (fun _ _ _ f g => Category.comp C (Category.class C) g f)
-  (fun _ _ _ _ f g h => eq_sym (Category.comp_assoc C (Category.class C) _ _ _ _ h g f))
-  (fun _ _ f => Category.comp_id_r C (Category.class C) _ _ f)
-  (fun _ _ f => Category.comp_id_l C (Category.class C) _ _ f).
+  (fun x y => Category.hom C m y x)
+  (Category.id C m)
+  (fun _ _ _ f g => Category.comp C m g f)
+  (fun _ _ _ _ f g h => eq_sym (Category.comp_assoc C m _ _ _ _ h g f))
+  (fun _ _ f => Category.comp_id_r C m _ _ f)
+  (fun _ _ f => Category.comp_id_l C m _ _ f).
 
-Definition co (C: Category): Category :=
-  Category.Pack C (co_mixin C).
+Definition co@{i j} (C: Category@{i j}): Category@{i j} :=
+  Category.Pack C (co_mixin C (Category.class C)).
 
 Lemma co_invol (C: Category): co (co C) = C.
 Proof.
-  destruct C as [obj [hom id comp comp_assoc comp_id_l comp_id_r]].
-  unfold co, co_mixin; simpl.
-  do 2 f_equal.
-  all: repeat (
-    let x := fresh x in
-    extensionality x
-  ).
-  all: apply proof_irrelevance.
+  destruct C.
+  unfold co; simpl.
+  f_equal.
+  destruct m.
+  unfold co_mixin; simpl.
+  f_equal.
+  apply proof_irrelevance.
 Qed.
 
 Lemma gen_eq_l {C: Category} {x y: C} (f g: x ~> y): f = g <-> forall (z: C) (a: y ~> z), a ∘ f = a ∘ g.

@@ -563,11 +563,12 @@ Proof. reflexivity. Qed.
 Lemma splitepic_co' {C: Category} {x y: C} (f: (x: co C) ~> y): splitepic (f: y ~> x) <-> splitmonic f.
 Proof. reflexivity. Qed.
 
-Lemma is_eq_co {C: Category} {x y: C} (f: x ~> y): is_eq f -> is_eq (f: (y: co C) ~> x).
+Lemma is_eq_co {C: Category} {x y: C} (f: x ~> y): is_eq f <-> is_eq (f: (y: co C) ~> x).
 Proof.
-  intros [e H].
-  subst f y.
-  exact is_eq_id.
+  split.
+  all: intros [e H].
+  all: subst f y.
+  all: exact is_eq_id.
 Qed.
 
 Lemma co_eq_iso {C: Category} {x y: C} (e: x = y): to (@eq_iso (co C) x y e) = to (eq_iso e)⁻¹.

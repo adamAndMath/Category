@@ -434,6 +434,21 @@ Next Obligation.
   apply iunit_co.
 Qed.
 
+Instance co_equiv: Proper (cequiv ==> cequiv) co.
+Proof.
+  intros C D [F [G [Hl Hr]]].
+  exists (fmap Co' F), (fmap Co' G).
+  split.
+  all: rewrite <- (@fmap_comp _ _ Co').
+  all: rewrite <- (@fmap_id _ _ Co').
+  all: simpl.
+  all: change (cof ?F) with (to (CoFun _ _) F).
+  all: apply fobj_iso.
+  1, 3: reflexivity.
+  all: rewrite iso_co.
+  all: assumption.
+Qed.
+
 Lemma iso2_is_equiv {C D: Category} (F: C <=> D): is_equiv F.
 Proof.
   exists (to2 F⁻).

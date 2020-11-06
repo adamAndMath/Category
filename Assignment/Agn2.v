@@ -33,6 +33,7 @@ Qed.
 
 Lemma poset_coequalizer (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_colimit Parallel (Poset R).
 Proof.
+  rewrite <- (co_invol Parallel), <- co_invol.
   apply has_limit_co.
   rewrite dual_poset.
   generalize (@poset_equalizer (flip R) _ (PartialOrder_inverse po)).
@@ -71,11 +72,12 @@ Qed.
 Lemma iso_coequalizer (C D: Category): C ≃ D -> has_colimit Parallel C <-> has_colimit Parallel D.
 Proof.
   intros H.
+  rewrite Parallel.dual_iso.
+  rewrite <- (co_invol C), <- (co_invol D).
   rewrite <- !has_limit_co.
-  rewrite <- Parallel.dual_iso.
   f_equiv.
   apply iso_cequiv.
-  now f_equiv.
+  apply co_iso, H.
 Qed.
 
 End ex2.

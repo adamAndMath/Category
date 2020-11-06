@@ -158,6 +158,70 @@ Proof.
     apply H.
 Qed.
 
+Lemma nat_monic {S T: Category} {F G: S ~> T} (η: F ~> G): (forall x, monic (η x)) -> monic η.
+Proof.
+  intros Hη Z α β H.
+  natural_eq x.
+  apply Hη.
+  change ((η ∘ α) x = (η ∘ β) x).
+  now f_equal.
+Qed.
+
+Lemma nat_epic {S T: Category} {F G: S ~> T} (η: F ~> G): (forall x, epic (η x)) -> epic η.
+Proof.
+  intros Hη Z α β H.
+  natural_eq x.
+  apply Hη.
+  change ((α ∘ η) x = (β ∘ η) x).
+  now f_equal.
+Qed.
+
+Lemma nat_splitmonic {S T: Category} {F G: S ~> T} (η: F ~> G): splitmonic η -> forall x, splitmonic (η x).
+Proof.
+  intros [ϵ H] x.
+  exists (ϵ x).
+  change ((ϵ ∘ η) x = id F x).
+  now f_equal.
+Qed.
+
+Lemma nat_splitepic {S T: Category} {F G: S ~> T} (η: F ~> G): splitepic η -> forall x, splitepic (η x).
+Proof.
+  intros [ϵ H] x.
+  exists (ϵ x).
+  change ((η ∘ ϵ) x = id G x).
+  now f_equal.
+Qed.
+
+Lemma nat_is_iso {S T: Category} {F G: S ~> T} (η: F ~> G): is_iso η <-> forall x, is_iso (η x).
+Proof.
+  split.
+  + intros [ϵ H] x.
+    exists (ϵ x); split.
+    1: change ((ϵ ∘ η) x = id F x).
+    2: change ((η ∘ ϵ) x = id G x).
+    all: now f_equal.
+  + intros H.
+    apply ex_forall in H.
+    destruct H as [ϵ H].
+    unshelve eexists.
+    exists ϵ.
+    2: split.
+    2, 3: natural_eq x.
+    2, 3: apply H.
+    intros x y f.
+    rewrite <- (comp_id_r (ϵ y ∘ fmap G f)).
+    rewrite <- comp_id_r.
+    rewrite <- (proj2 (H x)).
+    rewrite !comp_assoc.
+    f_equal.
+    rewrite <- !comp_assoc.
+    rewrite <- naturality.
+    rewrite comp_assoc.
+    rewrite !(proj1 (H _)).
+    rewrite comp_id_r.
+    apply comp_id_l.
+Qed.
+
 Lemma ex_fobj_iso {S T: Category} (I: S <~> T) (x: T): exists x': S, to I x' = x.
 Proof.
   exists (to I⁻¹ x).
@@ -518,18 +582,15 @@ Proof.
   apply fmap_id.
 Qed.
 
-Lemma cof_diag_c {S T: Category} (c: T): cof (@Δ T S c) ≃ Δ (c: co T).
+Lemma cof_diag_c {S T: Category} (c: T): cof (@Δ T S c) = Δ (c: co T).
 Proof.
-  apply fun_iso; simpl.
-  exists (fun _ => id_iso (c: co T)).
-  now intros _ _ _.
+  fun_eq x y f.
+  now rewrite !eq_iso_refl.
 Qed.
 
-Lemma cof'_diag_c {S T: Category} (c: T): cof' (@Δ (co T) (co S) c) ≃ Δ c.
+Lemma cof'_diag_c {S T: Category} (c: T): cof' (@Δ (co T) (co S) c) = Δ c.
 Proof.
-  apply fun_iso; simpl.
-  exists (fun _ => id_iso c).
-  now intros _ _ _.
+  now fun_eq x y f.
 Qed.
 
 Program Definition Hom: co Cat ~> Fun Cat Cat := {|

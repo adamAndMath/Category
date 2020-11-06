@@ -683,3 +683,96 @@ Canonical setexp := ExpCategory.Pack setprod (ExpCategory.Class SET setprod_mixi
 
 Canonical setcart := CartCategory.Pack SET (CartCategory.Class SET settop_mixin setprod_mixin).
 Canonical setccc := CCC.Pack SET (CCC.Class SET (CartCategory.class setcart) setexp_mixin).
+
+Lemma set_monic {X Y: set} (f: X ~> Y): monic f <-> forall x y, x ∈ X -> y ∈ X -> map f x = map f y -> x = y.
+Proof.
+  split.
+  + intros Hf x y Hx Hy H.
+    assert (
+      f ∘ (fun _ : {x : set | x ∈ 1} => exist (fun y : set => y ∈ X) x Hx) =
+      f ∘ (fun _ : {x : set | x ∈ 1} => exist (fun y : set => y ∈ X) y Hy)
+    ).
+      apply setf_eq.
+      intros u Hu.
+      rewrite !map_comp by exact Hu.
+      rewrite !(map_ap _ _ Hu).
+      exact H.
+    apply Hf in H0.
+    apply (f_equal (fun f => f (exist _ Ø (proj2 (in_single Ø Ø) eq_refl)))) in H0.
+    apply eq_sig in H0; simpl in H0.
+    exact H0.
+  + intros Hf Z g1 g2 H.
+    rewrite setf_eq in H.
+    apply setf_eq.
+    intros x Hx.
+    apply Hf.
+    1, 2: apply mapto, Hx.
+    rewrite <- !map_comp by exact Hx.
+    apply H, Hx.
+Qed.
+
+Lemma set_epic {X Y: set} (f: X ~> Y): epic f <-> forall y, y ∈ Y -> exists x, x ∈ X /\ map f x = y.
+Proof.
+  split.
+  + intros Hf y Hy.
+    red in Hf.
+    destruct (classic (exists x, x ∈ X /\ map f x = y)).
+    exact H.
+    apply False_ind.
+    assert (forall x, x ∈ X -> map f x <> y).
+      intros x Hx.
+      contradict H.
+      now exists x.
+    clear H; rename H0 into H.
+    assert (0 ∈ {0, 1}) as H0.
+      apply in_upair.
+      now left.
+    assert (1 ∈ {0, 1}) as H1.
+      apply in_upair.
+      now right.
+    set (g0 := (fun _ => exist _ 0 H0): Y ~> {0, 1}).
+    simpl in g0.
+    set (g1 := (fun x => if dec (proj1_sig x = y) then exist _ 1 H1 else exist _ 0 H0): Y ~> {0, 1}).
+    absurd (g0 = g1).
+    intros n.
+    rewrite setf_eq in n.
+    specialize (n y Hy).
+    rewrite !(map_ap _ _ Hy) in n.
+    unfold g0, g1 in n.
+    simpl in n.
+    destruct (dec (y = y)).
+    simpl in n.
+    symmetry in n.
+    contradict n.
+    apply not_empty.
+    exists 0.
+    now apply in_single.
+    now apply n0.
+    apply Hf.
+    apply setf_eq.
+    intros x Hx.
+    rewrite !map_comp by exact Hx.
+    rewrite !(map_ap _ _ (mapto f x Hx)).
+    unfold g0, g1.
+    simpl.
+    destruct (dec (map f x = y)).
+    contradict e.
+    now apply H.
+    reflexivity.
+  + intros Hf.
+    apply splitepic_is_epic.
+    assert (forall y: sig (fun y => y ∈ Y), exists x: sig (fun x => x ∈ X), f x = y).
+    intros [y Hy].
+    specialize (Hf y Hy).
+    destruct Hf as [x [Hx H]].
+    exists (exist _ x Hx).
+    apply eq_sig; simpl.
+    rewrite <- map_ap.
+    exact H.
+    clear Hf.
+    apply ex_forall in H.
+    destruct H as [g H].
+    exists g.
+    extensionality x.
+    apply H.
+Qed.

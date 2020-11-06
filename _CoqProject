@@ -7,6 +7,7 @@ Base/Natural.v
 Base/Equivalence.v
 Base/Adjoint.v
 Base.v
+Categories/Nat.v
 Categories/Cone.v
 Categories/Parallel.v
 Categories/Two.v
@@ -16,6 +17,8 @@ Categories/Arrow.v
 Categories/Slice.v
 Categories/Comma.v
 Categories/Typ.v
+Categories/Algebra.v
+Categories/Path.v
 Structure/Terminal.v
 Structure/Initial.v
 Structure/Product.v
@@ -53,3 +56,4 @@ Sets/Rel.v
 Assignment/Agn1.v
 Assignment/Agn2.v
 Assignment/Agn3.v
+Assignment/Agn4.v

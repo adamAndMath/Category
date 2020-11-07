@@ -244,43 +244,43 @@ Proof.
     apply tree_eq_Nf.
 Qed.
 
-Structure setf: Type := tree_setf {
-  setf_tree: {X | Nf X = X};
+Structure fset: Type := tree_fset {
+  fset_tree: {X | Nf X = X};
 }.
 
-Declare Scope setf_scope.
-Delimit Scope setf_scope with setf.
-Bind Scope setf_scope with setf.
-Local Open Scope setf_scope.
+Declare Scope fset_scope.
+Delimit Scope fset_scope with fset.
+Bind Scope fset_scope with fset.
+Local Open Scope fset_scope.
 
-Definition NSf (X: Tree): setf := tree_setf (exist _ (Nf X) (Nf_idem X)).
+Definition NSf (X: Tree): fset := tree_fset (exist _ (Nf X) (Nf_idem X)).
 
-Lemma tree_eq_NSf (X: Tree): tree_eq X (proj1_sig (setf_tree (NSf X))).
+Lemma tree_eq_NSf (X: Tree): tree_eq X (proj1_sig (fset_tree (NSf X))).
 Proof. apply tree_eq_Nf. Qed.
 
-Definition Inf (X Y: setf): Prop := tree_in (proj1_sig (setf_tree X)) (proj1_sig (setf_tree Y)).
+Definition fIn (X Y: fset): Prop := tree_in (proj1_sig (fset_tree X)) (proj1_sig (fset_tree Y)).
 
-Infix "∈" := Inf (at level 70): setf_scope.
-Notation "x ∉ X" := (~Inf x X) (at level 70): setf_scope.
+Infix "∈" := fIn (at level 70): fset_scope.
+Notation "x ∉ X" := (~fIn x X) (at level 70): fset_scope.
 
-Lemma tree_in_setf (X Y: setf): tree_in (proj1_sig (setf_tree X)) (proj1_sig (setf_tree Y)) -> X ∈ Y.
+Lemma tree_in_fset (X Y: fset): tree_in (proj1_sig (fset_tree X)) (proj1_sig (fset_tree Y)) -> X ∈ Y.
 Proof. intro H. exact H. Qed.
 
 Lemma tree_in_NSf (X Y: Tree): tree_in X Y -> NSf X ∈ NSf Y.
 Proof.
   intro H.
-  apply tree_in_setf.
+  apply tree_in_fset.
   simpl.
   rewrite <- !tree_eq_Nf.
   exact H.
 Qed.
 
-Definition subsetf (X Y: setf): Prop :=
+Definition subfset (X Y: fset): Prop :=
   forall z, z ∈ X -> z ∈ Y.
 
-Infix "⊆" := subsetf (at level 70): setf_scope.
+Infix "⊆" := subfset (at level 70): fset_scope.
 
-Instance subsetf_preorder: PreOrder subsetf.
+Instance subfset_preorder: PreOrder subfset.
 Proof.
   constructor.
   easy.
@@ -288,13 +288,13 @@ Proof.
   apply YZ, XY, H.
 Qed.
 
-Theorem subsetf_subtree (X Y: setf): sub_tree (proj1_sig (setf_tree X)) (proj1_sig (setf_tree Y)) -> X ⊆ Y.
+Theorem subfset_subtree (X Y: fset): sub_tree (proj1_sig (fset_tree X)) (proj1_sig (fset_tree Y)) -> X ⊆ Y.
 Proof.
   intros XY z zX.
   apply XY, zX.
 Qed.
 
-Instance subsetf_partialorder: PartialOrder eq subsetf.
+Instance subfset_partialorder: PartialOrder eq subfset.
 Proof.
   intros X Y.
   split.
@@ -318,7 +318,7 @@ Proof.
   all: exact (XY (NSf a) H).
 Qed.
 
-Theorem setf_eq_ext (X Y: setf): (forall z, z ∈ X <-> z ∈ Y) <-> X = Y.
+Theorem fset_eq_ext (X Y: fset): (forall z, z ∈ X <-> z ∈ Y) <-> X = Y.
 Proof.
   split.
   intros H.
@@ -329,28 +329,28 @@ Proof.
   now subst Y.
 Qed.
 
-Theorem setf_tree_eq (X Y: setf): tree_eq (proj1_sig (setf_tree X)) (proj1_sig (setf_tree Y)) -> X = Y.
+Theorem fset_tree_eq (X Y: fset): tree_eq (proj1_sig (fset_tree X)) (proj1_sig (fset_tree Y)) -> X = Y.
 Proof.
   intros H.
   apply partial_order_equivalence in H.
   destruct H as [XY YX].
   apply antisymmetry.
-  all: now apply subsetf_subtree.
+  all: now apply subfset_subtree.
 Qed.
 
-Definition indexf (X: setf): list setf :=
-  match proj1_sig (setf_tree X) with
+Definition indexf (X: fset): list fset :=
+  match proj1_sig (fset_tree X) with
   | node l => List.map NSf l
   end.
 
-Definition setf_of (l: list setf): setf :=
-  tree_setf (exist _ (Nf (node (List.map (fun x => proj1_sig (setf_tree x)) l))) (Nf_idem _)).
+Definition fset_of (l: list fset): fset :=
+  tree_fset (exist _ (Nf (node (List.map (fun x => proj1_sig (fset_tree x)) l))) (Nf_idem _)).
 
-Lemma setf_of_indexf (X: setf): setf_of (indexf X) = X.
+Lemma fset_of_indexf (X: fset): fset_of (indexf X) = X.
 Proof.
-  apply setf_tree_eq.
+  apply fset_tree_eq.
   unfold indexf; simpl.
-  generalize (proj1_sig (setf_tree X)).
+  generalize (proj1_sig (fset_tree X)).
   clear X; intros [X].
   simpl.
   rewrite <- tree_eq_Nf.
@@ -380,9 +380,9 @@ Proof.
   exact H.
 Qed.
 
-Theorem in_setf_of x xs: x ∈ setf_of xs <-> List.In x xs.
+Theorem in_fset_of x xs: x ∈ fset_of xs <-> List.In x xs.
 Proof.
-  unfold Inf.
+  unfold fIn.
   simpl.
   rewrite <- tree_eq_Nf.
   split.
@@ -391,48 +391,48 @@ Proof.
     apply List.in_map_iff in Ha.
     destruct Ha as [e [Ha He]].
     subst a.
-    apply setf_tree_eq in H.
+    apply fset_tree_eq in H.
     now subst e.
   + intros H.
-    exists (proj1_sig (setf_tree x)).
+    exists (proj1_sig (fset_tree x)).
     simpl.
     split.
-    now apply (List.in_map (fun x => proj1_sig (setf_tree x))).
+    now apply (List.in_map (fun x => proj1_sig (fset_tree x))).
     reflexivity.
 Qed.
 
-Theorem in_indexf (x X: setf): x ∈ X <-> List.In x (indexf X).
+Theorem in_indexf (x X: fset): x ∈ X <-> List.In x (indexf X).
 Proof.
-  rewrite <- (setf_of_indexf X) at 1.
-  apply in_setf_of.
+  rewrite <- (fset_of_indexf X) at 1.
+  apply in_fset_of.
 Qed.
 
-Lemma setf_NSf (X: setf): exists x: Tree, X = NSf x.
+Lemma fset_NSf (X: fset): exists x: Tree, X = NSf x.
 Proof.
   destruct X as [[X H]].
   exists X.
-  apply setf_tree_eq, tree_eq_Nf.
+  apply fset_tree_eq, tree_eq_Nf.
 Qed.
 
-Lemma setf_ind (P: setf -> Prop):
+Lemma fset_ind (P: fset -> Prop):
   (forall X, (forall x, x ∈ X -> P x) -> P X) ->
   forall X, P X.
 Proof.
   intros IH X.
-  destruct (setf_NSf X) as [x H].
+  destruct (fset_NSf X) as [x H].
   subst X.
   revert x.
   apply tin_ind.
   intros X Y XY.
   f_equiv.
-  apply setf_tree_eq.
+  apply fset_tree_eq.
   simpl.
   rewrite <- !tree_eq_Nf.
   exact XY.
   intros X H.
   apply IH.
   intros Y Hx.
-  destruct (setf_NSf Y) as [x H0].
+  destruct (fset_NSf Y) as [x H0].
   subst Y.
   apply H.
   rewrite (tree_eq_Nf x).
@@ -440,15 +440,15 @@ Proof.
   exact Hx.
 Qed.
 
-Definition empty: setf := setf_of nil.
+Definition empty: fset := fset_of nil.
 Notation Ø := empty.
 
-Theorem in_empty (x: setf): x ∉ Ø.
+Theorem in_empty (x: fset): x ∉ Ø.
 Proof.
-  exact (proj1 (in_setf_of x nil)).
+  exact (proj1 (in_fset_of x nil)).
 Qed.
 
-Theorem not_empty (x: setf): x <> Ø <-> exists z, z ∈ x.
+Theorem not_empty (x: fset): x <> Ø <-> exists z, z ∈ x.
 Proof.
   split.
   + intros H.
@@ -470,47 +470,47 @@ Proof.
     now apply in_empty in Hz.
 Qed.
 
-Definition single (x: setf): setf :=
-  setf_of (x :: nil).
+Definition single (x: fset): fset :=
+  fset_of (x :: nil).
 
-Theorem in_single (z x: setf): z ∈ single x <-> z = x.
+Theorem in_single (z x: fset): z ∈ single x <-> z = x.
 Proof.
   unfold single.
-  rewrite in_setf_of.
+  rewrite in_fset_of.
   split.
   now intros [].
   intros H.
   now left.
 Qed.
 
-Theorem single_inj (x y: setf): single x = single y <-> x = y.
+Theorem single_inj (x y: fset): single x = single y <-> x = y.
 Proof.
   symmetry.
   split.
   all: intros H.
   now subst y.
-  rewrite <- setf_eq_ext in H.
+  rewrite <- fset_eq_ext in H.
   specialize H with x.
   rewrite !in_single in H.
   now apply H.
 Qed.
 
-Theorem single_not_empty (x: setf): single x <> Ø.
+Theorem single_not_empty (x: fset): single x <> Ø.
 Proof.
   apply not_empty.
   exists x.
   now apply in_single.
 Qed.
 
-Definition upair (X Y: setf): setf :=
-  setf_of (X :: Y :: nil).
+Definition upair (X Y: fset): fset :=
+  fset_of (X :: Y :: nil).
 
-Notation "{ x , y }" := (upair x y) (at level 0, x at level 99, y at level 99): setf_scope.
+Notation "{ x , y }" := (upair x y) (at level 0, x at level 99, y at level 99): fset_scope.
 
-Theorem in_upair (z x y: setf): z ∈ {x, y} <-> z = x \/ z = y.
+Theorem in_upair (z x y: fset): z ∈ {x, y} <-> z = x \/ z = y.
 Proof.
   unfold upair.
-  rewrite in_setf_of.
+  rewrite in_fset_of.
   simpl.
   f_equiv.
   easy.
@@ -520,7 +520,7 @@ Proof.
   now left.
 Qed.
 
-Lemma upair_not_empty (x y: setf): upair x y <> Ø.
+Lemma upair_not_empty (x y: fset): upair x y <> Ø.
 Proof.
   apply not_empty.
   exists x.
@@ -528,9 +528,9 @@ Proof.
   now left.
 Qed.
 
-Lemma upair_refl (x: setf): upair x x = single x.
+Lemma upair_refl (x: fset): upair x x = single x.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_upair, in_single.
   split.
@@ -539,15 +539,15 @@ Proof.
   now left.
 Qed.
 
-Definition union (X: setf): setf :=
-  setf_of (List.flat_map indexf (indexf X)).
+Definition union (X: fset): fset :=
+  fset_of (List.flat_map indexf (indexf X)).
 
-Notation "∪ X" := (union X) (at level 40): setf_scope.
+Notation "∪ X" := (union X) (at level 40): fset_scope.
 
-Theorem in_union (x X: setf): x ∈ ∪ X <-> exists y, y ∈ X /\ x ∈ y.
+Theorem in_union (x X: fset): x ∈ ∪ X <-> exists y, y ∈ X /\ x ∈ y.
 Proof.
   unfold union.
-  rewrite in_setf_of.
+  rewrite in_fset_of.
   split.
   + intros H.
     apply List.in_flat_map in H.
@@ -562,9 +562,9 @@ Proof.
     all: now apply in_indexf.
 Qed.
 
-Definition union_single (x: setf): ∪ (single x) = x.
+Definition union_single (x: fset): ∪ (single x) = x.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_union.
   setoid_rewrite in_single.
@@ -575,15 +575,15 @@ Proof.
     now exists x.
 Qed.
 
-Definition map (f: setf -> setf) (X: setf): setf :=
-  setf_of (List.map f (indexf X)).
+Definition map (f: fset -> fset) (X: fset): fset :=
+  fset_of (List.map f (indexf X)).
 
-Notation "{ y | x ⋴ X }" := (map (fun x => y) X) (at level 0, y at level 99, x, X at level 89): setf_scope.
+Notation "{ y | x ⋴ X }" := (map (fun x => y) X) (at level 0, y at level 99, x, X at level 89): fset_scope.
 
-Lemma in_map (z: setf) (f: setf -> setf) (X: setf): z ∈ { f x | x ⋴ X } <-> exists x, x ∈ X /\ z = f x.
+Lemma in_map (z: fset) (f: fset -> fset) (X: fset): z ∈ { f x | x ⋴ X } <-> exists x, x ∈ X /\ z = f x.
 Proof.
   unfold map.
-  rewrite in_setf_of.
+  rewrite in_fset_of.
   rewrite List.in_map_iff.
   f_equiv.
   intros x.
@@ -594,16 +594,16 @@ Proof.
   easy.
 Qed.
 
-Lemma in_map' (z: setf) (f: setf -> setf) (X: setf): z ∈ X -> f z ∈ { f x | x ⋴ X}.
+Lemma in_map' (z: fset) (f: fset -> fset) (X: fset): z ∈ X -> f z ∈ { f x | x ⋴ X}.
 Proof.
   intros Hz.
   apply in_map.
   now exists z.
 Qed.
 
-Lemma map_id (X: setf): {x | x ⋴ X} = X.
+Lemma map_id (X: fset): {x | x ⋴ X} = X.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_map.
   split.
@@ -613,7 +613,7 @@ Proof.
   now exists z.
 Qed.
 
-Lemma map_comp (f g: setf -> setf) (X: setf): {f y | y ⋴ {g x | x ⋴ X}} = {f (g x) | x ⋴ X}.
+Lemma map_comp (f g: fset -> fset) (X: fset): {f y | y ⋴ {g x | x ⋴ X}} = {f (g x) | x ⋴ X}.
 Proof.
   apply antisymmetry.
   + intros z Hz.
@@ -632,9 +632,9 @@ Proof.
     exact Hx.
 Qed.
 
-Lemma map_single (f: setf -> setf) (x: setf): {f x | x ⋴ single x} = single (f x).
+Lemma map_single (f: fset -> fset) (x: fset): {f x | x ⋴ single x} = single (f x).
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_map.
   setoid_rewrite in_single.
@@ -645,7 +645,7 @@ Proof.
     now exists x.
 Qed.
 
-Lemma in_flat_map (z: setf) (f: setf -> setf) (X: setf): z ∈ ∪ {f x | x ⋴ X} <-> exists y, y ∈ X /\ z ∈ f y.
+Lemma in_flat_map (z: fset) (f: fset -> fset) (X: fset): z ∈ ∪ {f x | x ⋴ X} <-> exists y, y ∈ X /\ z ∈ f y.
 Proof.
   split.
   + intros Hz.
@@ -664,10 +664,10 @@ Proof.
     exact Hz.
 Qed.
 
-Definition sep (P: setf -> Prop) (X: setf): setf :=
-  setf_of (List.filter (fun x => if dec (P x) then true else false) (indexf X)).
+Definition sep (P: fset -> Prop) (X: fset): fset :=
+  fset_of (List.filter (fun x => if dec (P x) then true else false) (indexf X)).
 
-Notation "{ x ⋴ X | P }" := (sep (fun x => P) X) (at level 0, x, X at level 99, P at level 99): setf_scope.
+Notation "{ x ⋴ X | P }" := (sep (fun x => P) X) (at level 0, x, X at level 99, P at level 99): fset_scope.
 
 Lemma list_in_filter {A} (P: A -> bool) (x: A) (l: list A): List.In x (List.filter P l) <-> P x = true /\ List.In x l.
 Proof.
@@ -698,10 +698,10 @@ Proof.
     all: now apply IHl.
 Qed.
 
-Lemma in_sep (z: setf) (P: setf -> Prop) (X: setf): z ∈ { x ⋴ X | P x } <-> z ∈ X /\ P z.
+Lemma in_sep (z: fset) (P: fset -> Prop) (X: fset): z ∈ { x ⋴ X | P x } <-> z ∈ X /\ P z.
 Proof.
   unfold sep.
-  rewrite in_setf_of.
+  rewrite in_fset_of.
   rewrite list_in_filter.
   rewrite and_comm.
   f_equiv.
@@ -710,12 +710,12 @@ Proof.
   now destruct (dec (P z)).
 Qed.
 
-Definition intersect (X: setf) :=
+Definition intersect (X: fset) :=
   { x ⋴ ∪ X | forall y, y ∈ X -> x ∈ y}.
 
-Notation "∩ X" := (intersect X) (at level 40): setf_scope.
+Notation "∩ X" := (intersect X) (at level 40): fset_scope.
 
-Lemma in_intersect (z X: setf): X <> Ø -> z ∈ ∩ X <-> forall x, x ∈ X -> z ∈ x.
+Lemma in_intersect (z X: fset): X <> Ø -> z ∈ ∩ X <-> forall x, x ∈ X -> z ∈ x.
 Proof.
   intros HX.
   unfold intersect.
@@ -743,9 +743,9 @@ Proof.
   exact Hz.
 Qed.
 
-Lemma intersect_single (x: setf): ∩ single x = x.
+Lemma intersect_single (x: fset): ∩ single x = x.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_intersect.
   2: apply single_not_empty.
@@ -756,10 +756,10 @@ Proof.
   now subst e.
 Qed.
 
-Definition binunion (x y: setf) := ∪ {x, y}.
-Infix "∪" := binunion (at level 50, left associativity): setf_scope.
+Definition binunion (x y: fset) := ∪ {x, y}.
+Infix "∪" := binunion (at level 50, left associativity): fset_scope.
 
-Lemma in_binunion (z x y: setf): z ∈ x ∪ y <-> z ∈ x \/ z ∈ y.
+Lemma in_binunion (z x y: fset): z ∈ x ∪ y <-> z ∈ x \/ z ∈ y.
 Proof.
   unfold binunion.
   rewrite in_union.
@@ -778,38 +778,38 @@ Proof.
     now right.
 Qed.
 
-Definition binintersect (X Y: setf) := {x ⋴ X | x ∈ Y}.
-Infix "∩" := binintersect (at level 50, left associativity): setf_scope.
+Definition binintersect (X Y: fset) := {x ⋴ X | x ∈ Y}.
+Infix "∩" := binintersect (at level 50, left associativity): fset_scope.
 
-Lemma in_binintersect (z x y: setf): z ∈ x ∩ y <-> z ∈ x /\ z ∈ y.
+Lemma in_binintersect (z x y: fset): z ∈ x ∩ y <-> z ∈ x /\ z ∈ y.
 Proof.
   unfold binintersect.
   exact (in_sep _ _ _).
 Qed.
 
-Definition diff (X Y: setf) := {x ⋴ X | x ∉ Y}.
-Infix "\" := diff (at level 50, left associativity): setf_scope.
+Definition diff (X Y: fset) := {x ⋴ X | x ∉ Y}.
+Infix "\" := diff (at level 50, left associativity): fset_scope.
 
-Lemma in_diff (z X Y: setf): z ∈ X \ Y <-> z ∈ X /\ z ∉ Y.
+Lemma in_diff (z X Y: fset): z ∈ X \ Y <-> z ∈ X /\ z ∉ Y.
 Proof.
   unfold diff.
   rewrite in_sep.
   reflexivity.
 Qed.
 
-Fixpoint pow_index (l: list setf): list setf :=
+Fixpoint pow_index (l: list fset): list fset :=
   match l with
   | nil => Ø :: nil
   | cons x tl => (pow_index tl ++ List.map (fun s => single x ∪ s) (pow_index tl))%list
   end.
 
-Definition pow (X: setf): setf :=
-  setf_of (pow_index (indexf X)).
+Definition pow (X: fset): fset :=
+  fset_of (pow_index (indexf X)).
 
-Lemma in_pow (z X: setf): z ∈ pow X <-> z ⊆ X.
+Lemma in_pow (z X: fset): z ∈ pow X <-> z ⊆ X.
 Proof.
-  unfold pow, subsetf.
-  rewrite in_setf_of.
+  unfold pow, subfset.
+  rewrite in_fset_of.
   setoid_rewrite in_indexf at 2.
   generalize (indexf X).
   clear X; intros xs.
@@ -832,7 +832,7 @@ Proof.
   + intros H.
     induction xs in z, H |- *; simpl.
     left.
-    apply setf_eq_ext.
+    apply fset_eq_ext.
     intros e.
     split.
     1, 2: intros He.
@@ -845,7 +845,7 @@ Proof.
     apply List.in_map_iff.
     exists (z \ single a).
     split.
-    apply setf_eq_ext.
+    apply fset_eq_ext.
     intros e.
     rewrite in_binunion, in_diff, in_single.
     split.
@@ -866,30 +866,30 @@ Proof.
     now subst a.
 Qed.
 
-Definition pair (x y: setf): setf :=
+Definition pair (x y: fset): fset :=
   { single x, { x, y } }.
 
-Lemma in_pair (z x y: setf): z ∈ pair x y <-> z = single x \/ z = {x, y}.
+Lemma in_pair (z x y: fset): z ∈ pair x y <-> z = single x \/ z = {x, y}.
 Proof. apply in_upair. Qed.
 
-Lemma pair_not_empty (x y: setf): pair x y <> Ø.
+Lemma pair_not_empty (x y: fset): pair x y <> Ø.
 Proof. apply upair_not_empty. Qed.
 
-Lemma pair_refl (x: setf): pair x x = single (single x).
+Lemma pair_refl (x: fset): pair x x = single (single x).
 Proof.
   unfold pair.
   rewrite upair_refl.
   apply upair_refl.
 Qed.
 
-Lemma pair_inj (x y z v: setf): pair x y = pair z v <-> x = z /\ y = v.
+Lemma pair_inj (x y z v: fset): pair x y = pair z v <-> x = z /\ y = v.
 Proof.
   symmetry.
   split.
   intros [].
   now subst z v.
   intros H.
-  rewrite <- setf_eq_ext in H.
+  rewrite <- fset_eq_ext in H.
   assert (x = z).
   + specialize (H (single x)).
     apply proj1 in H.
@@ -897,7 +897,7 @@ Proof.
     specialize (H (or_introl eq_refl)).
     destruct H.
     apply single_inj, H.
-    rewrite <- setf_eq_ext in H.
+    rewrite <- fset_eq_ext in H.
     specialize (H x) as Hx.
     apply proj1 in Hx.
     rewrite in_single, in_upair in Hx.
@@ -918,7 +918,7 @@ Proof.
     apply proj1 in Hy.
     specialize (Hy (or_intror eq_refl)).
     destruct Hy as [Hy | Hy].
-    all: rewrite <- setf_eq_ext in Hy.
+    all: rewrite <- fset_eq_ext in Hy.
     - specialize (Hy y).
       rewrite in_upair, in_single in Hy.
       apply proj1 in Hy.
@@ -929,13 +929,13 @@ Proof.
       rewrite !in_pair in H.
       specialize (H (or_intror eq_refl)).
       destruct H.
-      rewrite <- setf_eq_ext in H.
+      rewrite <- fset_eq_ext in H.
       specialize (H v).
       rewrite in_upair, in_single in H.
       apply proj1 in H.
       specialize (H (or_intror eq_refl)).
       now symmetry.
-      rewrite <- setf_eq_ext in H.
+      rewrite <- fset_eq_ext in H.
       specialize (H v).
       rewrite !in_upair in H.
       apply proj1 in H.
@@ -955,9 +955,9 @@ Proof.
       exact H0.
 Qed.
 
-Lemma union_pair (x y: setf): ∪ pair x y = {x, y}.
+Lemma union_pair (x y: fset): ∪ pair x y = {x, y}.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_union, in_upair.
   setoid_rewrite in_pair.
@@ -977,9 +977,9 @@ Proof.
     now right.
 Qed.
 
-Lemma intersect_pair (x y: setf): ∩ pair x y = single x.
+Lemma intersect_pair (x y: fset): ∩ pair x y = single x.
 Proof.
-  apply setf_eq_ext.
+  apply fset_eq_ext.
   intros z.
   rewrite in_intersect, in_single.
   2: apply pair_not_empty.
@@ -995,10 +995,10 @@ Proof.
     now left.
 Qed.
 
-Definition cartisian (X Y: setf): setf :=
+Definition cartisian (X Y: fset): fset :=
   ∪ { { pair x y | y ⋴ Y } | x ⋴ X }.
 
-Lemma in_cartisian (z X Y: setf): z ∈ cartisian X Y <-> exists x y, x ∈ X /\ y ∈ Y /\ z = pair x y.
+Lemma in_cartisian (z X Y: fset): z ∈ cartisian X Y <-> exists x y, x ∈ X /\ y ∈ Y /\ z = pair x y.
 Proof.
   unfold cartisian.
   rewrite in_flat_map.
@@ -1013,7 +1013,7 @@ Proof.
     now exists y.
 Qed.
 
-Lemma in_cartisian' (x y X Y: setf): pair x y ∈ cartisian X Y <-> x ∈ X /\ y ∈ Y.
+Lemma in_cartisian' (x y X Y: fset): pair x y ∈ cartisian X Y <-> x ∈ X /\ y ∈ Y.
 Proof.
   rewrite in_cartisian.
   split.
@@ -1025,7 +1025,7 @@ Proof.
     now exists x, y.
 Qed.
 
-Lemma cartisian_inj (X Y Z V: setf): X <> Ø -> Y <> Ø -> cartisian X Y = cartisian Z V <-> X = Z /\ Y = V.
+Lemma cartisian_inj (X Y Z V: fset): X <> Ø -> Y <> Ø -> cartisian X Y = cartisian Z V <-> X = Z /\ Y = V.
 Proof.
   intros HX HY.
   assert (exists x, x ∈ X).
@@ -1062,14 +1062,14 @@ Proof.
   intros [].
   now subst Z V.
   intros H.
-  rewrite <- setf_eq_ext in H.
+  rewrite <- fset_eq_ext in H.
   assert (x ∈ Z /\ y ∈ V).
     specialize (H (pair x y)).
     rewrite !in_cartisian' in H.
     now apply H.
   destruct H0 as [HZ HV].
   split.
-  + apply setf_eq_ext.
+  + apply fset_eq_ext.
     intros z.
     specialize (H (pair z y)).
     rewrite !in_cartisian' in H.
@@ -1078,7 +1078,7 @@ Proof.
     all: apply proj1 in H.
     all: intros Hz.
     all: now apply H.
-  + apply setf_eq_ext.
+  + apply fset_eq_ext.
     intros z.
     specialize (H (pair x z)).
     rewrite !in_cartisian' in H.
@@ -1089,177 +1089,201 @@ Proof.
     all: now apply H.
 Qed.
 
-Module SETf.
+Module FinSet.
 Section category.
-Let obj := setf.
+Let obj := fset.
 
 Structure hom (S T: obj) := Hom {
-  rel: setf;
+  rel: fset;
   sign: rel ⊆ cartisian S T;
   functional: forall x, x ∈ S -> exists! y, pair x y ∈ rel
 }.
 
-Coercion rel: hom >-> setf.
+Coercion rel: hom >-> fset.
 
-Lemma hom_eq {S T: obj} (f g: hom S T): f = g <-> (forall p, p ∈ f <-> p ∈ g).
+Lemma hom_eq {S T: obj} (f g: hom S T): f = g <-> (forall x y, pair x y ∈ f <-> pair x y ∈ g).
 Proof.
   split; intros H.
   now subst g.
   destruct f as [f Hf1 Hf2], g as [g Hg1 Hg2].
   simpl in H.
-  assert (f = g).
-  apply setf_eq_ext, H.
+  enough (f = g).
   subst g.
-  f_equiv.
-  all: apply proof_irrelevance.
+  f_equiv; apply proof_irrelevance.
+  apply fset_eq_ext.
+  intros p.
+  split.
+  all: intros Hp.
+  1: specialize (Hf1 p Hp) as e.
+  2: specialize (Hg1 p Hp) as e.
+  all: apply in_cartisian in e.
+  all: destruct e as [x [y [Hx [Hy e]]]].
+  all: subst p.
+  all: apply H, Hp.
 Qed.
 
-Program Definition id (A: obj): hom A A := {|
-  rel := map (fun x => pair x x) A
+Program Definition homFun {X Y: fset} (f: fset -> fset) (Hf: forall x, x ∈ X -> f x ∈ Y): hom X Y := {|
+  rel := { pair x (f x) | x ⋴ X };
 |}.
 Next Obligation.
-  intros x H.
-  apply in_map in H.
-  destruct H as [a [Ha Hx]].
-  subst x.
-  now apply in_cartisian'.
-Qed.
-Next Obligation.
-  rename H into Hx.
-  exists x.
-  repeat split.
-  apply (in_map' x (fun x => pair x x)), Hx.
-  intros y H.
-  apply in_map in H.
-  destruct H as [e [He H]].
-  apply pair_inj in H.
-  now transitivity e.
-Qed.
-
-Program Definition comp {A B C: obj} (f: hom B C) (g: hom A B): hom A C := {|
-  rel := { p ⋴ cartisian A C | exists a b c, pair a c = p /\ pair a b ∈ g /\ pair b c ∈ f}
-|}.
-Next Obligation.
-  intros e H.
-  now apply in_sep in H.
-Qed.
-Next Obligation.
-  rename H into Hx.
-  destruct (functional _ _ g x Hx) as [y [Hg Hg']].
-  assert (y ∈ B) as Hy.
-  apply sign in Hg.
-  apply in_cartisian in Hg.
-  destruct Hg as [x' [y' [Hx' [Hy' H]]]].
-  apply pair_inj in H.
-  destruct H.
-  now subst x' y'.
-  destruct (functional _ _ f y Hy) as [z [Hf Hf']].
-  exists z.
-  split.
-  apply in_sep.
-  split.
+  intros p Hp.
+  apply in_map in Hp.
+  destruct Hp as [x [Hx Hp]].
+  subst p.
   apply in_cartisian'.
   split.
   exact Hx.
-  apply sign in Hf.
-  now apply in_cartisian' in Hf.
-  now exists x, y, z.
-  intros e He.
-  apply in_sep in He.
-  destruct He as [_ [x' [y' [e' [H [xy ye]]]]]].
-  apply pair_inj in H.
-  destruct H.
-  subst x' e'.
-  enough (y = y').
-  subst y'.
-  now apply Hf'.
-  now apply Hg'.
+  apply Hf, Hx.
 Qed.
+Next Obligation.
+  exists (f x).
+  split.
+  apply (in_map' x), H.
+  intros y Hy.
+  apply in_map in Hy.
+  destruct Hy as [x' [_ Hp]].
+  apply pair_inj in Hp.
+  destruct Hp as [Hx' Hy].
+  now subst x'.
+Qed.
+
+Lemma Fun_def {X Y: fset} (f: hom X Y) (x: fset): sig (fun y => x ∈ X -> pair x y ∈ f).
+Proof.
+  exists (epsilon (inhabits x) (fun y => x ∈ X -> pair x y ∈ f)).
+  apply epsilon_spec.
+  destruct (classic (x ∈ X)).
+  apply (functional _ _ f) in H.
+  destruct H as [y [H _]].
+  now exists y.
+  now exists Ø.
+Qed.
+
+Definition Fun {X Y: fset} (f: hom X Y) (x: fset): fset := proj1_sig (Fun_def f x).
+Definition Fun_spec {X Y: fset} (f: hom X Y) (x: fset): x ∈ X -> pair x (Fun f x) ∈ f := proj2_sig (Fun_def f x).
+
+Lemma Fun_unique {X Y: fset} (f: hom X Y) (x y: fset): pair x y ∈ f -> Fun f x = y.
+Proof.
+  intros H.
+  assert (x ∈ X) as Hx.
+  apply sign in H.
+  now apply in_cartisian' in H.
+  destruct (functional _ _ f x Hx) as [y' [_ Hy]].
+  specialize (Hy y H) as e.
+  subst y'.
+  symmetry.
+  apply Hy.
+  now apply Fun_spec.
+Qed.
+
+Lemma Fun_to {X Y: fset} (f: hom X Y) (x: fset): x ∈ X -> Fun f x ∈ Y.
+Proof.
+  intros Hx.
+  apply (Fun_spec f) in Hx.
+  apply sign in Hx.
+  now apply in_cartisian' in Hx.
+Qed.
+
+Lemma hom_ext {X Y: fset} (f g: hom X Y): f = g <-> forall x, x ∈ X -> Fun f x = Fun g x.
+Proof.
+  split.
+  all: intros H.
+  now subst g.
+  apply hom_eq.
+  intros x.
+  split.
+  all: intros Hp.
+  all: specialize (sign _ _ _ _ Hp) as He.
+  all: apply in_cartisian' in He.
+  all: destruct He as [Hx Hy].
+  all: specialize (H x Hx).
+  all: apply Fun_unique in Hp.
+  all: rewrite Hp in H; clear Hp.
+  all: subst y.
+  all: apply Fun_spec, Hx.
+Qed.
+
+Lemma Fun_homFun {X Y: fset} (f: fset -> fset) Hf x: x ∈ X -> @Fun X Y (homFun f Hf) x = f x.
+Proof.
+  intros Hx.
+  apply Fun_unique.
+  apply (in_map' x), Hx.
+Qed.
+
+Lemma homFun_Fun {X Y: fset} (f: hom X Y): homFun (Fun f) (Fun_to f) = f.
+Proof.
+  apply hom_eq.
+  intros x y.
+  simpl.
+  rewrite in_map.
+  split.
+  + intros [x' [Hx Hp]].
+    apply pair_inj in Hp.
+    destruct Hp as [Hx' Hy].
+    subst x' y.
+    apply Fun_spec, Hx.
+  + intros Hp.
+    exists x.
+    split.
+    apply sign in Hp.
+    now apply in_cartisian' in Hp.
+    f_equal.
+    symmetry.
+    apply Fun_unique, Hp.
+Qed.
+
+Definition id (A: obj): hom A A :=
+  homFun (fun x => x) (fun x Hx => Hx).
+
+Definition comp {A B C: obj} (f: hom B C) (g: hom A B): hom A C :=
+  homFun (fun x => Fun f (Fun g x)) (fun x Hx => Fun_to f _ (Fun_to g _ Hx)).
 
 Lemma comp_assoc {A B C D: obj} (f: hom C D) (g: hom B C) (h: hom A B): comp f (comp g h) = comp (comp f g) h.
 Proof.
-  apply hom_eq; simpl.
-  intros p.
-  rewrite !in_sep.
-  setoid_rewrite in_sep.
-  f_equiv.
-  split.
-  + intros [a [c [d [Hp [[_ H] Hf]]]]].
-    destruct H as [a' [b [c' [H [Hh Hg]]]]].
-    apply pair_inj in H.
-    destruct H.
-    subst p a' c'.
-    exists a, b, d.
-    repeat split.
-    assumption.
-    apply in_cartisian'.
-    split.
-    now apply sign, in_cartisian' in Hg.
-    now apply sign, in_cartisian' in Hf.
-    now exists b, c, d.
-  + intros [a [b [d [Hp [Hh [_ H]]]]]].
-    destruct H as [b' [c [d' [H [Hg Hf]]]]].
-    apply pair_inj in H.
-    destruct H.
-    subst p b' d'.
-    exists a, c, d.
-    repeat split.
-    apply in_cartisian'.
-    split.
-    now apply sign, in_cartisian' in Hh.
-    now apply sign, in_cartisian' in Hg.
-    now exists a, b, c.
-    exact Hf.
+  apply hom_ext.
+  intros x Hx.
+  transitivity (Fun f (Fun g (Fun h x))).
+  2: symmetry.
+  all: apply Fun_unique.
+  all: apply in_map.
+  all: exists x; split.
+  1, 3: exact Hx.
+  all: f_equal.
+  f_equal.
+  all: symmetry.
+  all: apply Fun_unique.
+  apply (in_map' x), Hx.
+  apply (in_map' (Fun h x)).
+  apply Fun_to, Hx.
 Qed.
 
 Lemma comp_id_l {S T: obj} (f: hom S T): comp (id T) f = f.
 Proof.
-  apply hom_eq; simpl.
-  intros p.
-  rewrite in_sep.
-  split.
-  + intros [xy [x [y [y' [Hp [Hf H]]]]]].
-    apply in_map in H.
-    destruct H as [e [_ H]].
-    apply pair_inj in H.
-    destruct H.
-    now subst y' e p.
-  + intros Hf.
-    specialize (sign _ _ f p Hf) as H.
-    apply in_cartisian in H.
-    destruct H as [x [y [Hx [Hy H]]]].
-    subst p.
-    split.
-    now apply in_cartisian'.
-    exists x, y, y.
-    repeat split.
-    exact Hf.
-    apply (in_map' y (fun x => pair x x)), Hy.
+  apply hom_ext.
+  intros x Hx.
+  apply Fun_unique.
+  apply in_map.
+  exists x; split.
+  exact Hx.
+  f_equal.
+  symmetry.
+  apply Fun_unique.
+  apply (in_map' (Fun f x) (fun x => pair x x)).
+  apply Fun_to, Hx.
 Qed.
 
 Lemma comp_id_r {S T: obj} (f: hom S T): comp f (id S) = f.
 Proof.
-  apply hom_eq; simpl.
-  intros p.
-  rewrite in_sep.
-  split.
-  + intros [xy [x [x' [y [Hp [H Hf]]]]]].
-    apply in_map in H.
-    destruct H as [e [_ H]].
-    apply pair_inj in H.
-    destruct H.
-    now subst x' e p.
-  + intros Hf.
-    specialize (sign _ _ f p Hf) as H.
-    apply in_cartisian in H.
-    destruct H as [x [y [Hx [Hy H]]]].
-    subst p.
-    split.
-    now apply in_cartisian'.
-    exists x, x, y.
-    repeat split.
-    apply (in_map' x (fun x => pair x x)), Hx.
-    exact Hf.
+  apply hom_ext.
+  intros x Hx.
+  apply Fun_unique.
+  apply in_map.
+  exists x; split.
+  exact Hx.
+  do 2 f_equal.
+  symmetry.
+  apply Fun_unique.
+  apply (in_map' x (fun x => pair x x)).
+  exact Hx.
 Qed.
 
 Definition cat_mixin: Category.mixin_of obj :=
@@ -1267,9 +1291,26 @@ Definition cat_mixin: Category.mixin_of obj :=
 
 Canonical cat := Category.Pack obj cat_mixin.
 
+Lemma Fun_id {X: cat} (x: fset): x ∈ X -> Fun (Categories.id X) x = x.
+Proof.
+  intros Hx.
+  apply Fun_unique.
+  apply (in_map' x (fun x => pair x x)).
+  exact Hx.
+Qed.
+
+Lemma Fun_comp {X Y Z: cat} (f: Y ~> Z) (g: X ~> Y) (x: fset): x ∈ X -> Fun (f ∘ g) x = Fun f (Fun g x).
+Proof.
+  intros Hx.
+  apply Fun_unique.
+  apply (in_map' x), Hx.
+Qed.
+
 End category.
 
-End SETf.
+End FinSet.
 
-Coercion SETf.rel: SETf.hom >-> setf.
-Canonical SETf.cat.
+Coercion FinSet.rel: FinSet.hom >-> fset.
+Coercion FinSet.Fun: FinSet.hom >-> Funclass.
+Canonical FinSet.cat.
+Notation FinSet := FinSet.cat.

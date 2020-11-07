@@ -53,6 +53,8 @@ Monad.v
 Sets/Basic.v
 Sets/Sets.v
 Sets/Rel.v
+Sets/FinSet.v
+Instances/FinSet.v
 Assignment/Agn1.v
 Assignment/Agn2.v
 Assignment/Agn3.v

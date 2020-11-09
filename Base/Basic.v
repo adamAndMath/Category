@@ -30,6 +30,26 @@ Proof.
   exact H.
 Qed.
 
+Instance forall_iff T: Proper (pointwise_relation T iff ==> iff) (fun P => forall x, P x).
+Proof.
+  intros P Q H.
+  split.
+  all: intros HP x.
+  all: now apply H.
+Qed.
+
+Instance unique_iff T: Proper (pointwise_relation T iff ==> pointwise_relation T iff) (@unique T).
+Proof.
+  intros P Q H x.
+  unfold unique.
+  f_equiv.
+  apply H.
+  apply forall_iff.
+  intros y.
+  change (?P -> ?Q) with (impl P Q).
+  now f_equiv.
+Qed.
+
 Lemma ex_forall {T} {F: T -> Type} (P: forall x, F x -> Prop): (forall x, exists y, P x y) -> exists (f: forall x, F x), forall x, P x (f x).
 Proof.
   intros H.

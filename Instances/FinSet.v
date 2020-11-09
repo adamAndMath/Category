@@ -2,10 +2,35 @@ Require Export Sets.FinSet.
 Require Export Structure.
 Local Open Scope fset.
 
-Definition finset_one: FinSet := single Ø.
+Program Definition finset_from_zero (X: FinSet): Ø ~> X := {|
+  FinSet.rel := Ø;
+|}.
+Next Obligation.
+  intros x Hx.
+  now apply in_empty in Hx.
+Qed.
+Next Obligation.
+  now apply in_empty in H.
+Qed.
 
-Program Definition finset_to_one (X: FinSet): X ~> finset_one := {|
-  FinSet.rel := cartisian X finset_one;
+Lemma finset_from_zero_unique {X: FinSet} (f: Ø ~> X): finset_from_zero X = f.
+Proof.
+  apply FinSet.hom_eq.
+  split; intros Hp.
+  now apply in_empty in Hp.
+  apply FinSet.sign in Hp.
+  apply in_cartisian' in Hp.
+  destruct Hp as [Hx _].
+  now apply in_empty in Hx.
+Qed.
+
+Definition BotFinSet_mixin: BotCategory.mixin_of FinSet :=
+  BotCategory.Mixin FinSet Ø finset_from_zero (@finset_from_zero_unique).
+
+Canonical BotFinSet := BotCategory.Pack FinSet BotFinSet_mixin.
+
+Program Definition finset_to_one (X: FinSet): X ~> single 0 := {|
+  FinSet.rel := cartisian X (single 0);
 |}.
 Next Obligation.
   reflexivity.
@@ -22,7 +47,7 @@ Next Obligation.
   now apply in_single.
 Qed.
 
-Lemma finset_to_one_unique {X: FinSet} (f: X ~> finset_one): finset_to_one X = f.
+Lemma finset_to_one_unique {X: FinSet} (f: X ~> single 0): finset_to_one X = f.
 Proof.
   apply FinSet.hom_eq.
   split; intros Hp.
@@ -41,38 +66,9 @@ Proof.
 Qed.
 
 Definition TopFinSet_mixin: TopCategory.mixin_of FinSet :=
-  TopCategory.Mixin FinSet finset_one finset_to_one (@finset_to_one_unique).
+  TopCategory.Mixin FinSet (single 0) finset_to_one (@finset_to_one_unique).
 
 Canonical TopFinSet := TopCategory.Pack FinSet TopFinSet_mixin.
-
-Definition finset_zero: FinSet := Ø.
-
-Program Definition finset_from_zero (X: FinSet): finset_zero ~> X := {|
-  FinSet.rel := Ø;
-|}.
-Next Obligation.
-  intros x Hx.
-  now apply in_empty in Hx.
-Qed.
-Next Obligation.
-  now apply in_empty in H.
-Qed.
-
-Lemma finset_from_zero_unique {X: FinSet} (f: finset_zero ~> X): finset_from_zero X = f.
-Proof.
-  apply FinSet.hom_eq.
-  split; intros Hp.
-  now apply in_empty in Hp.
-  apply FinSet.sign in Hp.
-  apply in_cartisian' in Hp.
-  destruct Hp as [Hx _].
-  now apply in_empty in Hx.
-Qed.
-
-Definition BotFinSet_mixin: BotCategory.mixin_of FinSet :=
-  BotCategory.Mixin FinSet finset_zero finset_from_zero (@finset_from_zero_unique).
-
-Canonical BotFinSet := BotCategory.Pack FinSet BotFinSet_mixin.
 
 Lemma in_one (x: fset): x ∈ 1 <-> x = 0.
 Proof. apply in_single. Qed.
@@ -204,6 +200,35 @@ Definition FinSetProd_mixin :=
 
 Canonical FinSetProd := ProdCategory.Pack FinSet FinSetProd_mixin.
 
+Lemma in_prod (p X Y: fset): p ∈ X × Y <-> exists x y, x ∈ X /\ y ∈ Y /\ p = pair x y.
+Proof. apply in_cartisian. Qed.
+
+Lemma in_prod' (x y X Y: fset): pair x y ∈ X × Y <-> x ∈ X /\ y ∈ Y.
+Proof. apply in_cartisian'. Qed.
+
+Lemma Fun_fork {X Y Z: fset} (f: X ~> Y) (g: X ~> Z) x: x ∈ X -> ⟨f, g⟩ x = pair (f x) (g x).
+Proof.
+  apply (FinSet.Fun_homFun (fun x => pair (f x) (g x))).
+Qed.
+
+Lemma Fun_pi1 {X Y: fset} x y: x ∈ X -> y ∈ Y -> (@π₁ _ X Y) (pair x y) = x.
+Proof.
+  intros Hx Hy.
+  unfold π₁; simpl.
+  unfold finset_pi1.
+  rewrite FinSet.Fun_homFun by now apply in_prod'.
+  apply finset_pi1_correct.
+Qed.
+
+Lemma Fun_pi2 {X Y: fset} x y: x ∈ X -> y ∈ Y -> (@π₂ _ X Y) (pair x y) = y.
+Proof.
+  intros Hx Hy.
+  unfold π₂; simpl.
+  unfold finset_pi2.
+  rewrite FinSet.Fun_homFun by now apply in_prod'.
+  apply finset_pi2_correct.
+Qed.
+
 Definition finsum (X Y: fset): fset :=
   {pair 0 x | x ⋴ X} ∪ {pair 1 y | y ⋴ Y}.
 
@@ -304,15 +329,345 @@ Definition FinSetCoprod_mixin: CoprodCategory.mixin_of FinSet :=
 
 Canonical FinSetCoprod := CoprodCategory.Pack FinSet FinSetCoprod_mixin.
 
+Lemma in_sum (p X Y: fset): p ∈ X + Y <-> exists x, x ∈ X /\ p = pair 0 x \/ x ∈ Y /\ p = pair 1 x.
+Proof.
+  unfold "+"; simpl.
+  unfold finsum.
+  rewrite in_binunion, !in_map.
+  split.
+  + intros [[x [Hx Hp]] | [x [Hx Hp]]].
+    all: exists x.
+    all: now [> left | right].
+  + intros [x [[Hx Hp] | [Hx Hp]]].
+    all: [> left | right].
+    all: now exists x.
+Qed.
+
+Lemma in_sum_l (x X Y: fset): pair 0 x ∈ X + Y <-> x ∈ X.
+Proof.
+  rewrite in_sum.
+  split.
+  + intros [x' [[Hx H] | [_ H]]].
+    all: apply pair_inj in H.
+    all: destruct H.
+    now subst x'.
+    symmetry in H.
+    contradict H.
+    apply not_empty.
+    exists 0.
+    now apply in_one.
+  + intros Hx.
+    exists x.
+    now left.
+Qed.
+
+Lemma in_sum_r (y X Y: fset): pair 1 y ∈ X + Y <-> y ∈ Y.
+Proof.
+  rewrite in_sum.
+  split.
+  + intros [y' [[_ H] | [Hy H]]].
+    all: apply pair_inj in H.
+    all: destruct H.
+    contradict H.
+    apply not_empty.
+    exists 0.
+    now apply in_one.
+    now subst y'.
+  + intros Hy.
+    exists y.
+    now right.
+Qed.
+
+Lemma Fun_merge_l {X Y Z: fset} (f: X ~> Z) (g: Y ~> Z) x: x ∈ X -> [f, g] (pair 0 x) = f x.
+Proof.
+  intros Hx.
+  unfold merge; simpl.
+  unfold finset_merge.
+  rewrite FinSet.Fun_homFun by now apply in_sum_l.
+  rewrite finset_pi1_correct, finset_pi2_correct.
+  destruct (dec (0 ∈ 0)).
+  now apply in_empty in f0.
+  reflexivity.
+Qed.
+
+Lemma Fun_merge_r {X Y Z: fset} (f: X ~> Z) (g: Y ~> Z) y: y ∈ Y -> [f, g] (pair 1 y) = g y.
+Proof.
+  intros Hy.
+  unfold merge; simpl.
+  unfold finset_merge.
+  rewrite FinSet.Fun_homFun by now apply in_sum_r.
+  rewrite finset_pi1_correct, finset_pi2_correct.
+  destruct (dec (0 ∈ 1)).
+  reflexivity.
+  destruct n.
+  now apply in_one.
+Qed.
+
+Lemma Fun_in1 {X Y: fset} x: x ∈ X -> @in1 _ X Y x = pair 0 x.
+Proof. apply FinSet.Fun_homFun. Qed.
+
+Lemma Fun_in2 {X Y: fset} y: y ∈ Y -> @in2 _ X Y y = pair 1 y.
+Proof. apply FinSet.Fun_homFun. Qed.
+
+Definition finset_exp (T S: FinSet): FinSet :=
+  { f ⋴ pow (S × T) | forall x, x ∈ S -> exists! y, pair x y ∈ f }.
+
+Program Definition finset_eval (T S: FinSet): finset_exp T S × S ~> T := {|
+  FinSet.rel := { p ⋴ finset_exp T S × S × T | exists f x y, pair x y ∈ f /\ pair (pair f x) y = p }
+|}.
+Next Obligation.
+  intros p Hp.
+  now apply in_sep in Hp.
+Qed.
+Next Obligation.
+  rename x into p.
+  apply in_prod in H.
+  destruct H as [f [x [Hf [Hx Hp]]]].
+  subst p.
+  apply in_sep in Hf.
+  destruct Hf as [Hf H].
+  generalize (H x Hx).
+  change (?P -> ?Q) with (impl P Q).
+  f_equiv; intros y.
+  apply iff_impl_subrelation.
+  apply unique_iff; clear y.
+  intros y.
+  rewrite in_sep.
+  rewrite !in_prod'.
+  unfold finset_exp.
+  rewrite in_sep.
+  split.
+  intros Hy.
+  repeat split.
+  1, 2, 3: assumption.
+  apply in_pow in Hf.
+  apply Hf in Hy.
+  now apply in_prod' in Hy.
+  now exists f, x, y.
+  intros [_ [f' [x' [y' [Hy Hp]]]]].
+  rewrite !pair_inj in Hp.
+  destruct Hp as [[Hf' Hx'] Hy'].
+  now subst f' x' y'.
+Qed.
+
+Program Definition finset_transpose {T S X: FinSet} (f: X × S ~> T): X ~> finset_exp T S :=
+  FinSet.homFun (fun x => {p ⋴ S × T | exists y, y ∈ S /\ pair y (f (pair x y)) = p}) _.
+Next Obligation.
+  apply in_sep.
+  split.
+  apply in_pow.
+  intros p Hp.
+  now apply in_sep in Hp.
+  intros y Hy.
+  exists (f (pair x y)).
+  split.
+  apply in_sep.
+  split.
+  apply in_prod'.
+  split.
+  exact Hy.
+  apply FinSet.Fun_to.
+  now apply in_prod'.
+  now exists y.
+  intros z Hp.
+  apply in_sep in Hp.
+  destruct Hp as [_ [y' [_ Hp]]].
+  apply pair_inj in Hp.
+  destruct Hp.
+  now subst y'.
+Qed.
+
+Lemma finset_transpose_ump {T S X: FinSet} (f: X × S ~> T) (g: X ~> finset_exp T S): finset_eval T S ∘ (g (×) id S) = f <-> finset_transpose f = g.
+Proof.
+  split; intros H.
+  + subst f.
+    apply FinSet.hom_ext.
+    intros x Hx.
+    unfold finset_transpose.
+    rewrite FinSet.Fun_homFun by exact Hx.
+    apply fset_eq_ext.
+    intros p.
+    rewrite in_sep.
+    split.
+    intros [_ [y [Hy Hp]]].
+    subst p.
+    rewrite FinSet.Fun_comp by now apply in_prod'.
+    unfold fprod.
+    rewrite comp_id_l.
+    rewrite Fun_fork by now apply in_prod'.
+    rewrite FinSet.Fun_comp by now apply in_prod'.
+    rewrite Fun_pi1, Fun_pi2 by assumption.
+    apply (FinSet.Fun_to g) in Hx.
+    apply in_sep in Hx as H.
+    destruct H as [_ H].
+    specialize (H y Hy).
+    destruct H as [z [Hz _]].
+    enough (finset_eval T S (pair (g x) y) = z).
+    rewrite H.
+    apply Hz.
+    apply FinSet.Fun_unique.
+    apply in_sep.
+    split.
+    apply in_prod'.
+    split.
+    now apply in_prod'.
+    apply in_sep, proj1 in Hx.
+    apply in_pow in Hx.
+    apply Hx in Hz.
+    now apply in_prod' in Hz.
+    now exists (g x), y, z.
+    intros Hp.
+    apply (FinSet.Fun_to g) in Hx as H.
+    apply in_sep in H.
+    destruct H as [H _].
+    apply in_pow in H.
+    specialize (H p Hp).
+    split.
+    exact H.
+    apply in_prod in H.
+    destruct H as [y [z [Hy [Hz e]]]].
+    subst p.
+    exists y.
+    split.
+    exact Hy.
+    f_equal.
+    rewrite FinSet.Fun_comp by now apply in_prod'.
+    unfold fprod.
+    rewrite comp_id_l.
+    rewrite Fun_fork by now apply in_prod'.
+    rewrite FinSet.Fun_comp by now apply in_prod'.
+    rewrite Fun_pi1, Fun_pi2 by assumption.
+    apply FinSet.Fun_unique.
+    apply in_sep.
+    split.
+    apply in_prod'.
+    split.
+    apply in_prod'.
+    split.
+    apply FinSet.Fun_to.
+    1, 2, 3: assumption.
+    now exists (g x), y, z.
+  + subst g.
+    apply FinSet.hom_ext.
+    intros p Hp.
+    rewrite FinSet.Fun_comp by exact Hp.
+    unfold fprod.
+    rewrite comp_id_l.
+    rewrite Fun_fork by exact Hp.
+    rewrite FinSet.Fun_comp by exact Hp.
+    apply in_prod in Hp.
+    destruct Hp as [x [y [Hx [Hy Hp]]]].
+    subst p.
+    rewrite Fun_pi1, Fun_pi2 by assumption.
+    unfold finset_transpose.
+    rewrite FinSet.Fun_homFun by exact Hx.
+    apply FinSet.Fun_unique.
+    apply in_sep.
+    split.
+    apply in_prod'.
+    split.
+    apply in_prod'.
+    split.
+    apply in_sep.
+    split.
+    apply in_pow.
+    intros p Hp.
+    now apply in_sep in Hp.
+    clear y Hy.
+    intros y Hy.
+    exists (f (pair x y)).
+    split.
+    apply in_sep.
+    split.
+    apply in_prod'.
+    split.
+    exact Hy.
+    apply FinSet.Fun_to.
+    now apply in_prod'.
+    now exists y.
+    intros z Hz.
+    apply in_sep in Hz.
+    destruct Hz as [_ [y' [_ H]]].
+    rewrite !pair_inj in H.
+    destruct H.
+    now subst y'.
+    exact Hy.
+    apply FinSet.Fun_to.
+    now apply in_prod'.
+    do 3 eexists.
+    split.
+    2: reflexivity.
+    apply in_sep.
+    split.
+    apply in_prod'.
+    split.
+    exact Hy.
+    apply FinSet.Fun_to.
+    now apply in_prod'.
+    now exists y.
+Qed.
+
+Definition FinSetExp_mixin: ExpCategory.mixin_of FinSetProd :=
+  ExpCategory.Mixin FinSetProd finset_exp finset_eval (@finset_transpose) (@finset_transpose_ump).
+
+Canonical FinSetExp := ExpCategory.Pack FinSet (ExpCategory.Class FinSet FinSetProd_mixin FinSetExp_mixin).
+
+Lemma in_exp (f T S: fset): f ∈ T ^ S <-> f ⊆ S × T /\ forall x, x ∈ S -> exists! y, pair x y ∈ f.
+Proof.
+  unfold "^"; simpl.
+  unfold finset_exp.
+  rewrite in_sep.
+  f_equiv.
+  apply in_pow.
+Qed.
+
+Lemma in_exp' {X Y: fset} (f: X ~> Y): f ∈ Y ^ X.
+Proof.
+  apply in_exp.
+  split.
+  apply FinSet.sign.
+  apply FinSet.functional.
+Qed.
+
+Lemma Fun_eval {X Y: fset} (f: X ~> Y) x: x ∈ X -> eval Y X (pair f x) = f x.
+Proof.
+  intros Hx.
+  apply FinSet.Fun_unique.
+  apply in_sep.
+  split.
+  apply in_prod'.
+  split.
+  apply in_prod'.
+  split.
+  apply in_exp'.
+  exact Hx.
+  apply FinSet.Fun_to, Hx.
+  exists f, x, (f x).
+  split.
+  apply FinSet.Fun_spec, Hx.
+  reflexivity.
+Qed.
+
+Lemma Fun_transpose {X Y Z: fset} (f: X × Y ~> Z) x: x ∈ X -> transpose f x = {p ⋴ Y × Z | exists y, y ∈ Y /\ pair y (f (pair x y)) = p}.
+Proof.
+  apply (FinSet.Fun_homFun (fun x => {p ⋴ Y × Z | exists y, y ∈ Y /\ pair y (f (pair x y)) = p})).
+Qed.
+
 Definition finset_const {X: fset} (x: fset) (Hx: x ∈ X): 1 ~> X := 
   FinSet.homFun (fun _ => x) (fun _ _ => Hx).
+
+Lemma Fun_const {X: fset} (x: fset) (Hx: x ∈ X): finset_const x Hx 0 = x.
+Proof.
+  apply FinSet.Fun_homFun.
+  now apply in_one.
+Qed.
 
 Lemma finset_monic_inj {X Y: FinSet} (f: X ~> Y): monic f <-> forall x y, x ∈ X -> y ∈ X -> f x = f y -> x = y.
 Proof.
   split.
   + intros Hf x y Hx Hy H.
-    rewrite <- ((FinSet.Fun_unique (finset_const x Hx) Ø x)).
-    rewrite <- ((FinSet.Fun_unique (finset_const y Hy) Ø y)).
+    rewrite <- (Fun_const x Hx).
+    rewrite <- (Fun_const y Hy).
     f_equal.
     apply Hf.
     apply FinSet.hom_ext; simpl.
@@ -320,11 +675,8 @@ Proof.
     apply in_one in Ho.
     subst o.
     rewrite !FinSet.Fun_comp by now apply in_one.
-    unfold finset_const.
-    rewrite !FinSet.Fun_homFun by now apply in_one.
+    rewrite !Fun_const.
     exact H.
-    all: apply (in_map' 0).
-    all: now apply in_one.
   + intros H Z g1 g2 Hg.
     apply FinSet.hom_ext.
     intros z Hz.
@@ -339,13 +691,9 @@ Proof.
   split.
   + intros Hf y Hy.
     assert (pair 0 0 ∈ (1: FinSet) + 1) as i0.
-      apply in_binunion.
-      left.
-      now apply in_map', in_one.
+      now apply in_sum_l, in_one.
     assert (pair 1 0 ∈ (1: FinSet) + 1) as i1.
-      apply in_binunion.
-      right.
-      now apply in_map', in_one.
+      now apply in_sum_r, in_one.
     simpl in i0, i1.
     set (g1 := FinSet.homFun (fun _ => pair 0 0) (fun y (_: y ∈ Y) => i0): Y ~> _).
     set (g2 := FinSet.homFun (fun y => if dec (exists x, x ∈ X /\ f x = y) then pair 0 0 else pair 1 0)
@@ -807,6 +1155,132 @@ Proof.
       now apply Hr.
 Qed.
 
+Fixpoint fencode (n: nat): fset :=
+  match n with
+  | O => 0
+  | S n => fencode n ∪ single (fencode n)
+  end.
+
+Lemma in_self x: x ∉ x.
+Proof.
+  induction x using fset_ind.
+  intros Hx.
+  specialize (H x Hx).
+  contradiction.
+Qed.
+
+Lemma in_fencode x n: x ∈ fencode n <-> exists m, m < n /\ fencode m = x.
+Proof.
+  split.
+  + intros Hx.
+    induction n; simpl in *.
+    now apply in_empty in Hx.
+    apply in_binunion in Hx.
+    destruct Hx as [Hx | Hx].
+    specialize (IHn Hx).
+    revert IHn.
+    change (?P -> ?Q) with (impl P Q).
+    f_equiv.
+    intros m [Hm H].
+    split.
+    now right.
+    exact H.
+    apply in_single in Hx.
+    subst x.
+    exists n.
+    split.
+    now red.
+    reflexivity.
+  + intros [m [Hm Hx]].
+    subst x.
+    induction n; simpl.
+    inversion Hm.
+    apply in_binunion.
+    apply le_S_n in Hm.
+    inversion Hm; clear Hm.
+    subst m.
+    all: [> right | left].
+    now apply in_single.
+    subst n; rename m0 into n.
+    apply IHn.
+    now apply le_n_S.
+Qed.
+
+Lemma fencode_inj (n m: nat): fencode n = fencode m -> n = m.
+Proof.
+  intros H.
+  destruct (PeanoNat.Nat.lt_total n m) as [|[|]].
+  2: exact H0.
+  1: destruct (in_self (fencode n)).
+  2: destruct (in_self (fencode m)).
+  all: rewrite <- fset_eq_ext in H.
+  all: apply H.
+  all: apply in_fencode.
+  now exists n.
+  now exists m.
+Qed.
+
+Lemma in_fencode' (n m: nat): fencode n ∈ fencode m <-> n < m.
+Proof.
+  rewrite in_fencode.
+  split.
+  + intros [x [H e]].
+    apply fencode_inj in e.
+    now subst x.
+  + intros H.
+    now exists n.
+Qed.
+
+Lemma fencode_subset (n m: nat): fencode n ⊆ fencode m <-> n <= m.
+Proof.
+  split.
+  + intros H.
+    destruct (PeanoNat.Nat.lt_total n m) as [|[|]].
+    apply le_S_n.
+    now right.
+    now subst n.
+    destruct (in_self (fencode m)).
+    apply H.
+    now apply in_fencode'.
+  + intros H x.
+    change (?P -> ?Q) with (impl P Q).
+    rewrite !in_fencode.
+    f_equiv.
+    intros p.
+    f_equiv.
+    intros Hp.
+    red.
+    now rewrite <- H.
+Qed.
+
+Lemma fsize_fencode (n: nat): fsize (fencode n) = n.
+Proof.
+  rewrite <- (List.seq_length n 0) at 2.
+  rewrite <- (List.map_length fencode).
+  apply fsize_incl.
+  + apply List_NoDup_map.
+    split.
+    apply List.seq_NoDup.
+    intros x y _ _.
+    apply fencode_inj.
+  + intros x.
+    rewrite in_fencode.
+    rewrite List.in_map_iff.
+    f_equiv.
+    intros m.
+    rewrite and_comm.
+    apply iff_and_l.
+    intros Hx.
+    subst x.
+    rewrite List.in_seq.
+    split.
+    intros H.
+    split.
+    apply le_0_n.
+    exact H.
+    easy.
+Qed.
+
 Lemma fsize_0: fsize 0 = 0%nat.
 Proof.
   change 0%nat with (@length fset nil).
@@ -818,113 +1292,647 @@ Proof.
   all: contradiction.
 Qed.
 
-Lemma fsize_1: fsize 1 = 1%nat.
+Lemma fsize_single x: fsize (single x) = 1%nat.
 Proof.
-  change 1%nat with (length (Ø :: nil)).
+  change 1%nat with (length (x :: nil)).
   apply fsize_incl.
   now repeat constructor.
-  intros x.
-  unfold one; simpl.
-  unfold finset_one.
+  intros y.
   rewrite in_single.
   split; intros H.
   now left.
   now destruct H.
 Qed.
 
-Lemma fsize_sum (X Y: FinSet): fsize (X + Y) = (fsize X + fsize Y)%nat.
+Lemma fsize_1: fsize 1 = 1%nat.
+Proof. apply fsize_single. Qed.
+
+Lemma fsize_map_inj f X: (forall x y, x ∈ X -> y ∈ X -> f x = f y -> x = y) -> fsize { f x | x ⋴ X } = fsize X.
 Proof.
+  intros H.
+  apply fsize_iso.
+  symmetry.
+  assert (forall x, x ∈ X -> f x ∈ {f x | x ⋴ X}) as Hf.
+    intros x.
+    apply in_map'.
+  apply (@is_isomorphic FinSet _ _ (FinSet.homFun f Hf)).
+  apply splitepic_monic.
+  apply finset_epic_split.
+  apply finset_epic_surj.
+  intros y.
+  change (?P -> ?Q) with (impl P Q).
+  rewrite in_map.
+  f_equiv.
+  intros x [Hx Hy].
+  subst y.
+  split.
+  exact Hx.
+  apply FinSet.Fun_homFun, Hx.
+  apply finset_monic_inj.
+  intros x y Hx Hy.
+  rewrite !FinSet.Fun_homFun by assumption.
+  now apply H.
+Qed.
+
+Lemma fsize_disjoint_binunion X Y: (forall x, x ∈ X -> x ∉ Y) -> fsize (X ∪ Y) = (fsize X + fsize Y)%nat.
+Proof.
+  intros H.
   unfold fsize at 2 3.
-  rewrite <- (List.map_length (@in1 FinSetCoprod X Y) (findex_nd X)).
-  rewrite <- (List.map_length (@in2 FinSetCoprod X Y) (findex_nd Y)).
   rewrite <- List.app_length.
   apply fsize_incl.
   apply List_NoDup_app.
-  rewrite <- and_assoc.
+  repeat split.
+  1, 2: apply nodup_correct.
+  intros x.
+  rewrite !in_findex_nd.
+  apply H.
+  intros x.
+  symmetry.
+  rewrite in_binunion, List.in_app_iff.
+  f_equiv.
+  all: apply in_findex_nd.
+Qed.
+
+Lemma fsize_flat_map_inj X f: (forall x y e, x ∈ X -> y ∈ X -> e ∈ f x -> e ∈ f y -> x = y) -> fsize (∪ {f x | x ⋴ X}) = List.list_sum (List.map fsize (List.map f (findex_nd X))).
+Proof.
+  intros H.
+  transitivity (fsize (List.fold_right binunion Ø (List.map f (findex_nd X)))).
+  clear H.
+  f_equiv.
+  apply fset_eq_ext.
+  intros e.
+  rewrite in_union.
+  setoid_rewrite in_map.
+  setoid_rewrite <- in_findex_nd at 1.
+  generalize (findex_nd X).
+  clear X; intros xs.
   split.
-  + split.
-    all: apply List_NoDup_map.
-    all: split.
-    1, 3: apply nodup_correct.
-    all: intros x y Hx Hy.
-    all: rewrite in_findex_nd in Hx, Hy.
-    all: unfold in1, in2; simpl.
-    all: unfold finset_in1, finset_in2.
-    all: rewrite !FinSet.Fun_homFun by assumption.
-    all: intros H.
-    all: now apply pair_inj in H.
-  + intros p H1 H2.
-    apply List.in_map_iff in H1.
-    apply List.in_map_iff in H2.
-    destruct H1 as [x [H1 Hx]].
-    destruct H2 as [y [H2 Hy]].
-    subst p.
-    rewrite in_findex_nd in Hx, Hy.
-    unfold in1, in2 in H2; simpl in H2.
-    unfold finset_in1, finset_in2 in H2.
-    rewrite !FinSet.Fun_homFun in H2 by assumption.
-    apply pair_inj, proj1 in H2.
-    contradict H2.
-    apply not_empty.
-    exists 0.
-    now apply in_one.
-  + intros p.
-    unfold "+"; simpl.
-    unfold finsum.
-    rewrite in_binunion.
-    rewrite List.in_app_iff.
-    rewrite !in_map, !List.in_map_iff.
-    do 2 f_equiv.
-    all: intros x.
-    all: rewrite and_comm.
-    all: rewrite in_findex_nd.
-    all: apply iff_and_r.
-    all: intros Hx.
-    all: unfold in1, in2; simpl.
-    all: unfold finset_in1, finset_in2.
-    all: rewrite FinSet.Fun_homFun by exact Hx.
-    all: easy.
+  1: intros [y [[x [Hx Hy]] He]].
+  2: intros He.
+  subst y.
+  1, 2: induction xs; simpl in *.
+  contradiction.
+  apply in_binunion.
+  destruct Hx; [left | right].
+  now subst x.
+  apply IHxs, H.
+  now apply in_empty in He.
+  apply in_binunion in He.
+  destruct He as [He | He].
+  exists (f a); split.
+  exists a; split.
+  now left.
+  reflexivity.
+  exact He.
+  apply IHxs in He; clear IHxs.
+  destruct He as [y [[x [Hx Hy]] He]].
+  exists y; split.
+  exists x; split.
+  now right.
+  exact Hy.
+  exact He.
+  revert H.
+  setoid_rewrite <- in_findex_nd at 1 2.
+  generalize (nodup_correct (indexf X)).
+  change (nodup (indexf X)) with (findex_nd X).
+  generalize (findex_nd X).
+  clear X; intros xs Hxs H.
+  induction xs; simpl.
+  apply fsize_0.
+  inversion_clear Hxs.
+  rename H0 into Ha, H1 into Hxs.
+  rewrite fsize_disjoint_binunion.
+  f_equal.
+  apply IHxs.
+  exact Hxs.
+  intros x y e Hx Hy.
+  apply H.
+  1, 2: now right.
+  intros e He.
+  simpl in H.
+  specialize (fun x Hx => H a x e (or_introl eq_refl) (or_intror Hx) He).
+  clear - H Ha.
+  induction xs; simpl in *.
+  apply in_empty.
+  intros Hx.
+  apply in_binunion in Hx.
+  destruct Hx as [Hx | Hx].
+  destruct Ha.
+  left.
+  symmetry.
+  apply H.
+  now left.
+  exact Hx.
+  revert Hx.
+  apply IHxs.
+  intros x Hx.
+  apply H.
+  now right.
+  contradict Ha.
+  now right.
+Qed.
+
+Lemma fsize_disjoint_union X: (forall x y e, x ∈ X -> y ∈ X -> e ∈ x -> e ∈ y -> x = y) -> fsize (∪ X) = List.list_sum (List.map fsize (findex_nd X)).
+Proof.
+  intros H.
+  rewrite <- (map_id X) at 1.
+  rewrite fsize_flat_map_inj.
+  do 2 f_equal.
+  apply List.map_id.
+  exact H.
+Qed.
+
+Lemma fsize_sum (X Y: FinSet): fsize (X + Y) = (fsize X + fsize Y)%nat.
+Proof.
+  unfold "+"; simpl.
+  unfold finsum.
+  rewrite fsize_disjoint_binunion.
+  f_equiv.
+  1, 2: apply fsize_map_inj.
+  1, 2: intros x y _ _ H.
+  1, 2: now apply pair_inj in H.
+  intros p Hx Hy.
+  rewrite in_map in Hx, Hy.
+  destruct Hx as [x [_ Hx]].
+  destruct Hy as [y [_ Hy]].
+  subst p.
+  apply pair_inj, proj1 in Hy.
+  symmetry in Hy.
+  apply not_empty in Hy.
+  exact Hy.
+  exists 0.
+  now apply in_one.
 Qed.
 
 Lemma fsize_prod (X Y: FinSet): fsize (X × Y) = (fsize X * fsize Y)%nat.
 Proof.
-  transitivity (length (List.flat_map (fun x => List.map (pair x) (findex_nd Y)) (findex_nd X))).
-  apply fsize_incl.
-  apply List_NoDup_flat_map.
-  repeat split.
-  apply List.NoDup_filter.
-  apply nodup_correct.
-  intros x Hx.
-  apply List_NoDup_map.
-  split.
-  apply nodup_correct.
-  intros y1 y2 _ _ H.
-  now apply pair_inj in H.
-  intros x1 x2 p _ _ Hp1 Hp2.
-  rewrite List.in_map_iff in Hp1, Hp2.
-  destruct Hp1 as [y1 [Hp _]].
-  subst p.
-  destruct Hp2 as [y2 [H _]].
-  now apply pair_inj in H.
-  intros p.
-  rewrite in_cartisian, List.in_flat_map.
-  f_equiv; intros x.
-  rewrite List.in_map_iff.
-  setoid_rewrite in_findex_nd.
-  split.
-  intros [y [Hx [Hy Hp]]].
-  split.
-  exact Hx.
-  now exists y.
-  intros [Hx [y [Hp Hy]]].
-  now exists y.
-  unfold fsize.
-  generalize (findex_nd X) (findex_nd Y).
-  clear X Y; intros xs ys.
+  unfold "×"; simpl.
+  unfold cartisian.
+  rewrite fsize_flat_map_inj.
+  unfold fsize at 2.
+  generalize (findex_nd X).
+  clear X; intros xs.
   induction xs; simpl.
   reflexivity.
-  rewrite List.app_length.
   f_equal.
-  apply List.map_length.
+  apply fsize_map_inj.
+  intros x y _ _ H.
+  now apply pair_inj in H.
   exact IHxs.
+  intros x y e Hx Hy Hx' Hy'.
+  rewrite in_map in Hx', Hy'.
+  destruct Hx' as [p1 [_ He]].
+  destruct Hy' as [p2 [_ H]].
+  subst e.
+  now apply pair_inj in H.
 Qed.
+
+Lemma fsize_exp (Y X: FinSet): fsize (Y ^ X) = PeanoNat.Nat.pow (fsize Y) (fsize X).
+Proof.
+  assert (forall xs, List.NoDup xs -> forall f, (forall p, p ∈ f -> exists x y, List.In x xs /\ y ∈ Y /\ p = pair x y) /\ (forall x, List.In x xs -> exists! y, pair x y ∈ f) <-> f ∈ List.fold_right (fun x r => ∪{{ single (pair x y) ∪ f | f ⋴ r} | y ⋴ Y}) (@one TopFinSet) (xs)).
+  clear X.
+  intros xs Hxs f.
+  split.
+  intros [H Hf].
+  induction xs in Hxs, f, H, Hf |- *; simpl in *.
+  apply in_one.
+  apply fset_eq_ext.
+  intros z.
+  split; intros Hz.
+  apply H in Hz.
+  destruct Hz as [_ [_ [Hz _]]].
+  contradiction.
+  now apply in_empty in Hz.
+  inversion_clear Hxs.
+  rename H0 into Ha, H1 into Hxs.
+  specialize (IHxs Hxs).
+  destruct (Hf a (or_introl eq_refl)) as [b Hb].
+  apply in_flat_map.
+  exists b; split.
+  specialize (H _ (proj1 Hb)).
+  destruct H as [x [y [_ [Hy H]]]].
+  apply pair_inj, proj2 in H.
+  now subst y.
+  apply in_map.
+  exists (f \ single (pair a b)).
+  split.
+  apply IHxs.
+  intros p Hp.
+  rewrite in_diff, in_single in Hp.
+  destruct Hp as [Hp n].
+  specialize (H p Hp).
+  destruct H as [x [y [Hx [Hy H]]]].
+  subst p.
+  destruct Hx as [Hx | Hx].
+  destruct n.
+  subst x.
+  f_equal.
+  symmetry.
+  apply Hb, Hp.
+  now exists x, y.
+  intros x Hx.
+  specialize (Hf x (or_intror Hx)).
+  revert Hf.
+  apply iff_impl_subrelation.
+  do 2 f_equiv.
+  intros y.
+  rewrite in_diff, in_single.
+  split.
+  intros Hp.
+  split.
+  exact Hp.
+  intros n.
+  apply pair_inj in n.
+  destruct n.
+  now subst x y.
+  now intros [Hp _].
+  apply fset_eq_ext.
+  intros p.
+  rewrite in_binunion, in_diff, in_single.
+  split.
+  intros Hp.
+  destruct (classic (p = pair a b)).
+  1, 2: now [> left | right].
+  intros [Hp | [Hp _]].
+  subst p.
+  apply Hb.
+  exact Hp.
+  intros Hf.
+  induction xs in Hxs, f, Hf |- *; simpl in *.
+  apply in_one in Hf.
+  subst f.
+  split.
+  intros o Ho.
+  now apply in_empty in Ho.
+  intros x.
+  apply False_ind.
+  inversion_clear Hxs.
+  rename H into Ha, H0 into Hxs.
+  apply in_flat_map in Hf.
+  destruct Hf as [b [Hb Hf]].
+  apply in_map in Hf.
+  destruct Hf as [f' [Hf e]].
+  subst f; rename f' into f.
+  specialize (IHxs Hxs f Hf).
+  clear Hf.
+  destruct IHxs as [H Hf].
+  split.
+  intros p Hp.
+  rewrite in_binunion, in_single in Hp.
+  destruct Hp as [Hp | Hp].
+  subst p.
+  exists a, b.
+  repeat split.
+  now left.
+  exact Hb.
+  specialize (H p Hp).
+  destruct H as [x [y [Hx [Hy e]]]].
+  exists x, y.
+  repeat split.
+  now right.
+  exact Hy.
+  exact e.
+  intros x Hx.
+  destruct Hx as [Hx | Hx].
+  subst x.
+  exists b.
+  split.
+  rewrite in_binunion, in_single.
+  now left.
+  intros y Hy.
+  rewrite in_binunion, in_single in Hy.
+  destruct Hy as [Hy | Hy].
+  now apply pair_inj in Hy.
+  apply H in Hy.
+  destruct Hy as [x [y' [Hx [_ e]]]].
+  apply pair_inj, proj1 in e.
+  now subst x.
+  specialize (Hf x Hx).
+  revert Hf.
+  apply iff_impl_subrelation.
+  do 2 f_equiv.
+  intros y.
+  rewrite in_binunion, in_single.
+  split.
+  intros Hy.
+  now right.
+  intros [Hy | Hy].
+  apply pair_inj, proj1 in Hy.
+  now subst x.
+  exact Hy.
+  transitivity (fsize (List.fold_right (fun x r : fset => ∪ {{single (pair x y) ∪ f0 | f0 ⋴ r} | y ⋴ Y}) 1 (findex_nd X))).
+  f_equal.
+  apply fset_eq_ext.
+  intros z.
+  rewrite <- H; clear H.
+  rewrite in_exp.
+  setoid_rewrite in_findex_nd.
+  setoid_rewrite <- in_prod.
+  reflexivity.
+  apply nodup_correct.
+  generalize (nodup_correct (indexf X)).
+  change (nodup (indexf X)) with (findex_nd X).
+  unfold fsize at 3.
+  generalize (findex_nd X).
+  clear X; intros xs Hxs.
+  induction xs; simpl.
+  apply fsize_1.
+  inversion_clear Hxs.
+  rename H0 into Ha, H1 into Hxs.
+  specialize (IHxs Hxs).
+  specialize (H xs Hxs).
+  rewrite fsize_flat_map_inj.
+  2: {
+    intros x y e Hx Hy Hx' Hy'.
+    rewrite in_map in Hx', Hy'.
+    destruct Hx' as [f [Hf Hx']].
+    destruct Hy' as [g [Hg Hy']].
+    subst e.
+    rewrite <- fset_eq_ext in Hy'.
+    specialize (Hy' (pair a x)).
+    apply proj1 in Hy'.
+    rewrite !in_binunion, !in_single in Hy'.
+    specialize (Hy' (or_introl eq_refl)).
+    destruct Hy' as [e | Hp].
+    now apply pair_inj in e.
+    apply H, proj1 in Hg.
+    apply Hg in Hp.
+    destruct Hp as [a' [x' [Ha' [_ Hp]]]].
+    apply pair_inj, proj1 in Hp.
+    now subst a'.
+  }
+  rewrite List.map_map.
+  transitivity (List.list_sum (List.map (fun _ => PeanoNat.Nat.pow (fsize Y) (length xs)) (findex_nd Y))).
+  f_equal.
+  apply List.map_ext_in.
+  intros b Hb.
+  rewrite <- IHxs; clear IHxs.
+  apply fsize_map_inj.
+  intros f g Hf Hg e.
+  rewrite <- fset_eq_ext in e |- *.
+  intros p.
+  specialize (e p).
+  rewrite !in_binunion, !in_single in e.
+  split; [apply proj1 in e | apply proj2 in e].
+  1, 2: intros Hp.
+  1, 2: specialize (e (or_intror Hp)).
+  1, 2: destruct e as [e | e].
+  2, 4: exact e.
+  1, 2: subst p.
+  1: apply H, proj1 in Hf.
+  2: apply H, proj1 in Hg.
+  1: apply Hf in Hp.
+  2: apply Hg in Hp.
+  1, 2: destruct Hp as [x [y [Hx [_ e]]]].
+  1, 2: apply pair_inj, proj1 in e.
+  1, 2: now subst x.
+  unfold fsize at 2.
+  generalize (findex_nd Y) (PeanoNat.Nat.pow (fsize Y) (length xs)).
+  clear.
+  intros l n.
+  induction l; simpl.
+  reflexivity.
+  now f_equal.
+Qed.
+
+Module FinOrd.
+
+Structure hom (n m: nat) := Hom {
+  repr: list nat;
+  repr_from: length repr = n;
+  repr_to x: List.In x repr -> x < m;
+}.
+
+Arguments repr {n m} _.
+Arguments repr_from {n m} _.
+Arguments repr_to {n m} _ x H.
+
+Lemma hom_eq {n m} (f g: hom n m): f = g <-> repr f = repr g.
+Proof.
+  split.
+  intros H.
+  now subst g.
+  destruct f as [f f1 f2], g as [g g1 g2].
+  simpl.
+  intros H.
+  subst g.
+  f_equal; apply proof_irrelevance.
+Qed.
+
+Lemma hom_ext {n m} (f g: hom n m): f = g <-> forall i, i < n -> List.nth i (repr f) 0%nat = List.nth i (repr g) 0%nat.
+Proof.
+  split.
+  intros H.
+  now subst g.
+  intros H.
+  apply hom_eq.
+  apply (List.nth_ext _ _ 0%nat 0%nat).
+  all: now rewrite !repr_from.
+Qed.
+
+Program Definition id n: hom n n := {|
+  repr := List.seq 0 n;
+|}.
+Next Obligation.
+  apply List.seq_length.
+Qed.
+Next Obligation.
+  now apply List.in_seq in H.
+Qed.
+
+Program Definition comp {x y z} (f: hom y z) (g: hom x y): hom x z := {|
+  repr := List.map (fun x => List.nth x (repr f) 0%nat) (repr g);
+|}.
+Next Obligation.
+  rewrite List.map_length.
+  apply repr_from.
+Qed.
+Next Obligation.
+  apply List.in_map_iff in H.
+  destruct H as [n [H Hn]].
+  subst x0.
+  apply (repr_to f).
+  apply List.nth_In.
+  rewrite repr_from.
+  apply (repr_to g), Hn.
+Qed.
+
+Lemma comp_assoc {a b c d} (f: hom c d) (g: hom b c) (h: hom a b): comp f (comp g h) = comp (comp f g) h.
+Proof.
+  apply hom_eq; simpl.
+  rewrite List.map_map.
+  apply List.map_ext_in.
+  intros x Hx.
+  symmetry.
+  rewrite (List.nth_indep _ _ (List.nth 0 (repr f) 0%nat)).
+  apply (List.map_nth (fun x => List.nth x (repr f) 0%nat)).
+  rewrite List.map_length, repr_from.
+  apply (repr_to h), Hx.
+Qed.
+
+Lemma comp_id_l {n m} (f: hom n m): comp (id m) f = f.
+Proof.
+  apply hom_eq; simpl.
+  rewrite <- List.map_id.
+  apply List.map_ext_in.
+  intros x Hx.
+  apply List.seq_nth.
+  apply (repr_to f), Hx.
+Qed.
+
+Lemma comp_id_r {n m} (f: hom n m): comp f (id n) = f.
+Proof.
+  apply hom_eq; simpl.
+  destruct f as [f H H0]; simpl.
+  clear H0.
+  subst n.
+  induction f.
+  reflexivity.
+  simpl length.
+  rewrite <- List.cons_seq, <- List.seq_shift.
+  change (a :: List.map (fun x => List.nth x (a :: f) 0%nat) (List.map S (List.seq 0 (length f))) = a :: f)%list.
+  f_equal.
+  rewrite List.map_map.
+  exact IHf.
+Qed.
+
+Definition cat_mixin: Category.mixin_of nat :=
+  Category.Mixin nat hom id (@comp) (@comp_assoc) (@comp_id_l) (@comp_id_r).
+
+Definition cat := Category.Pack nat cat_mixin.
+
+End FinOrd.
+
+Notation FinOrd := FinOrd.cat.
+
+Section FinOrdSet.
+
+Program Definition FinOrdSet: FinOrd ~> FinSet := {|
+  fobj := fencode;
+  fmap X Y f := FinSet.homFun (fun x => fencode (List.nth (fsize x) (FinOrd.repr f) 0%nat)) _;
+|}.
+Next Obligation.
+  rewrite in_fencode in H |- *.
+  destruct H as [n [Hn Hx]].
+  subst x.
+  eexists; split.
+  2: reflexivity.
+  rewrite fsize_fencode.
+  apply (FinOrd.repr_to f).
+  apply List.nth_In.
+  rewrite FinOrd.repr_from.
+  exact Hn.
+Qed.
+Next Obligation.
+  apply FinSet.hom_ext.
+  intros x Hx.
+  rewrite FinSet.Fun_homFun by exact Hx.
+  rewrite FinSet.Fun_id by exact Hx.
+  apply in_fencode in Hx.
+  destruct Hx as [n [Hn Hx]].
+  subst x.
+  f_equal.
+  rewrite fsize_fencode.
+  apply List.seq_nth, Hn.
+Qed.
+Next Obligation.
+  apply FinSet.hom_ext.
+  intros x Hx.
+  rewrite FinSet.Fun_comp by exact Hx.
+  rewrite !FinSet.Fun_homFun.
+  3: apply FinSet.Fun_to.
+  2, 3, 4: exact Hx.
+  f_equal.
+  apply in_fencode in Hx.
+  destruct Hx as [n [Hn Hx]].
+  subst x.
+  rewrite !fsize_fencode.
+  rewrite List.nth_indep with _ _ _ _ (List.nth 0 (FinOrd.repr f) 0%nat).
+  apply (List.map_nth (fun x => List.nth x (FinOrd.repr f) 0%nat)).
+  rewrite List.map_length.
+  rewrite FinOrd.repr_from.
+  exact Hn.
+Qed.
+
+Lemma FinOrdSet_full: full FinOrdSet.
+Proof.
+  intros X Y f.
+  unshelve eexists.
+  exists (List.map (fun x => fsize (f (fencode x))) (List.seq 0 X)).
+  3: apply FinSet.hom_ext.
+  3: intros x Hx.
+  3: simpl.
+  3: rewrite FinSet.Fun_homFun by exact Hx.
+  rewrite List.map_length.
+  apply List.seq_length.
+  intros y Hy.
+  apply List.in_map_iff in Hy.
+  destruct Hy as [x [Hy Hx]].
+  subst y.
+  apply List.in_seq, proj2 in Hx.
+  simpl in Hx.
+  apply in_fencode' in Hx.
+  apply (FinSet.Fun_to f) in Hx.
+  apply in_fencode in Hx.
+  destruct Hx as [y [Hy Hx]].
+  rewrite <- Hx.
+  now rewrite fsize_fencode.
+  apply in_fencode in Hx.
+  destruct Hx as [n [Hn Hx]].
+  subst x.
+  rewrite fsize_fencode.
+  rewrite List.nth_indep with _ _ _ _ (fsize (f (fencode 0))).
+  rewrite (List.map_nth (fun x => fsize (f (fencode x)))).
+  rewrite List.seq_nth by exact Hn.
+  simpl.
+  apply in_fencode' in Hn.
+  apply (FinSet.Fun_to f) in Hn.
+  apply in_fencode in Hn.
+  destruct Hn as [x [Hx Hn]].
+  setoid_rewrite <- Hn.
+  f_equal.
+  apply fsize_fencode.
+  rewrite List.map_length.
+  rewrite List.seq_length.
+  exact Hn.
+Qed.
+
+Lemma FinOrdSet_faithful: faithful FinOrdSet.
+Proof.
+  intros X Y f g H.
+  rewrite FinSet.hom_ext in H.
+  apply FinOrd.hom_ext.
+  intros i Hi.
+  apply in_fencode' in Hi.
+  specialize (H (fencode i) Hi).
+  simpl in H.
+  rewrite !FinSet.Fun_homFun in H by exact Hi.
+  rewrite fsize_fencode in H.
+  now apply fencode_inj.
+Qed.
+
+Lemma FinOrdSet_esurj: esurj FinOrdSet.
+Proof.
+  intros X.
+  exists (fsize X).
+  apply fsize_iso.
+  apply fsize_fencode.
+Qed.
+
+Lemma FinOrdSet_is_equiv: is_equiv FinOrdSet.
+  apply is_equiv_alt.
+  split.
+  apply full_and_faithful.
+  split.
+  exact FinOrdSet_full.
+  exact FinOrdSet_faithful.
+  exact FinOrdSet_esurj.
+Qed.
+
+Lemma FinOrd_FinSet_equiv: FinOrd ≈ FinSet.
+Proof.
+  exists FinOrdSet.
+  exact FinOrdSet_is_equiv.
+Qed.
+
+End FinOrdSet.

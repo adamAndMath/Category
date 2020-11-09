@@ -1175,6 +1175,13 @@ Proof.
   now apply Fun_spec.
 Qed.
 
+Lemma Fun_unique' {X Y: fset} (f: hom X Y) (x y: fset): x ∈ X -> Fun f x = y -> pair x y ∈ f.
+Proof.
+  intros Hx Hy.
+  subst y.
+  apply Fun_spec, Hx.
+Qed.
+
 Lemma Fun_to {X Y: fset} (f: hom X Y) (x: fset): x ∈ X -> Fun f x ∈ Y.
 Proof.
   intros Hx.

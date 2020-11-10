@@ -297,6 +297,78 @@ Qed.
 
 End algebra_cof.
 
+Section coalgebra_cof.
+Context {C: Category} (F: C ~> C).
+
+Program Definition coalgebra_cof_to: co (Coalgebra F) ~> Algebra (cof F) := {|
+  fobj A := {|
+    Algebra.carrier := A;
+    Algebra.law := Coalgebra.law A;
+  |};
+  fmap A B f := {|
+    Algebra.arr := f;
+    Algebra.comm := Coalgebra.comm f;
+  |};
+|}.
+Next Obligation.
+  now apply Algebra.hom_eq.
+Qed.
+Next Obligation.
+  now apply Algebra.hom_eq.
+Qed.
+
+Program Definition coalgebra_cof_from: Algebra (cof F) ~> co (Coalgebra F) := {|
+  fobj A := {|
+    Coalgebra.carrier := A;
+    Coalgebra.law := Algebra.law A;
+  |};
+  fmap A B f := {|
+    Coalgebra.arr := f;
+    Coalgebra.comm := Algebra.comm f;
+  |};
+|}.
+Next Obligation.
+  now apply Coalgebra.hom_eq.
+Qed.
+Next Obligation.
+  now apply Coalgebra.hom_eq.
+Qed.
+
+Lemma coalgebra_cof_inv_l: coalgebra_cof_from ∘ coalgebra_cof_to = id (co (Coalgebra F)).
+Proof.
+  fun_eq x y f.
+  now destruct x.
+  destruct x as [X x], y as [Y y], f as [f Hf].
+  simpl in *.
+  rewrite !eq_iso_refl; clear H H0.
+  simpl.
+  rewrite comp_id_r.
+  apply comp_id_l.
+Qed.
+
+Lemma coalgebra_cof_inv_r: coalgebra_cof_to ∘ coalgebra_cof_from = id (Algebra (cof F)).
+Proof.
+  fun_eq x y f.
+  now destruct x.
+  destruct x as [X x], y as [Y y], f as [f Hf].
+  simpl in *.
+  rewrite !eq_iso_refl; clear H H0.
+  simpl.
+  rewrite comp_id_r.
+  apply comp_id_l.
+Qed.
+
+Canonical coalgebra_cof: co (Coalgebra F) <~> Algebra (cof F) :=
+  Isomorphism.Pack coalgebra_cof_to (Isomorphism.Mixin _ _ _ coalgebra_cof_to coalgebra_cof_from coalgebra_cof_inv_l coalgebra_cof_inv_r).
+
+Lemma coalgebra_co: co (Coalgebra F) ≃ Algebra (cof F).
+Proof.
+  constructor.
+  exact coalgebra_cof.
+Qed.
+
+End coalgebra_cof.
+
 (* is_initial coincieds with initial objects *)
 Definition is_final {C: Category} {F: C ~> C} (A: Coalgebra F) := is_terminal A.
 

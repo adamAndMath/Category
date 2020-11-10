@@ -170,9 +170,9 @@ Fixpoint rec_arr {C: Category} (F: C ~> C) (o: C) (f: o ~> F o) n: rec_obj F o n
   | S n => fmap F (rec_arr F o f n)
   end.
 
-Definition rec_path {C: Category} (F: C ~> C) (o: C) (f: o ~> F o): Path C := {|
-  Path.objs := rec_obj F o;
-  Path.step := rec_arr F o f;
+Definition rec_path {C: Category} (F: C ~> C) (o: C) (f: o ~> F o): Future C := {|
+  Future.objs := rec_obj F o;
+  Future.step := rec_arr F o f;
 |}.
 
 Fixpoint rec_alg_tr {C: BotCategory} {F: C ~> C} (A: Algebra F) n: rec_obj F 0 n ~> A :=
@@ -181,7 +181,7 @@ Fixpoint rec_alg_tr {C: BotCategory} {F: C ~> C} (A: Algebra F) n: rec_obj F 0 n
   | S n => Algebra.law A ∘ fmap F (rec_alg_tr A n)
   end.
 
-Program Definition rec_alg {C: BotCategory} {F: C ~> C} (A: Algebra F): Path.pfun (rec_path F 0 ¡) ~> Δ (A: C) := {|
+Program Definition rec_alg {C: BotCategory} {F: C ~> C} (A: Algebra F): Future.pfun (rec_path F 0 ¡) ~> Δ (A: C) := {|
   transform := rec_alg_tr A;
 |}.
 Next Obligation.
@@ -204,6 +204,17 @@ Next Obligation.
   now do 2 f_equal.
 Qed.
 
+Fixpoint corec_arr {C: Category} (F: C ~> C) (o: C) (f: F o ~> o) n: rec_obj F o (S n) ~> rec_obj F o n :=
+  match n return rec_obj F o (S n) ~> rec_obj F o n with
+  | O => f
+  | S n => fmap F (corec_arr F o f n)
+  end.
+
+Definition corec_path {C: Category} (F: C ~> C) (o: C) (f: F o ~> o): Past C := {|
+  Past.objs := rec_obj F o;
+  Past.step := corec_arr F o f;
+|}.
+
 Lemma ex4 {C: BotCategory} (F: C ~> C): has_colimit Nat C -> copreserve F Nat -> exists L: Algebra F, is_colimit_obj (rec_path F 0 ¡) L /\ is_initial L.
 Proof.
   intros H HF.
@@ -214,12 +225,12 @@ Proof.
   specialize (HF _ l η H).
   assert (F ∘ rec_path F 0 ¡ = rec_path F 0 ¡ ∘ Nat.Step) as Hstep.
     change (id (Fun Nat C) (F ∘ rec_path F 0 ¡) = id (Fun Nat C) (rec_path F 0 ¡ ∘ Nat.Step)).
-    rewrite <- (inv_r (Path_iso C)).
+    rewrite <- (inv_r (Future_iso C)).
     unfold comp at 1 3.
     unfold Cat, Cat_mixin, Category.comp, Category.class.
     unfold fobj, fun_comp.
     f_equal.
-    apply Path.obj_eq; simpl.
+    apply Future.obj_eq; simpl.
     repeat split.
     intros n e eS.
     rewrite !eq_iso_refl; clear e eS.
@@ -376,7 +387,50 @@ Lemma CoTopBot (C: TopCategory): CoTop (CoBot C) = C.
   reflexivity.
 Qed.
 
-(*Lemma ex5 {C: TopCategory} (F: C ~> C): has_limit (co Nat) C -> preserve F (co Nat) -> exists L: Coalgebra F, is_limit_obj (cof (rec_path (cof F) 1 !)) L /\ is_final L.
+Lemma cof_rec_path {C: Category} (F: C ~> C) (o: C) (f: o ~> F o): Past.pfun (corec_path (cof F) o f) = cof (rec_path F o f).
+Proof.
+  assert (forall x, rec_obj (cof F) o x = rec_obj F o x).
+    intros x.
+    induction x; simpl.
+    reflexivity.
+    now f_equal.
+  fun_eq x y g.
+  apply H.
+  assert (H0 = H x) by apply proof_irrelevance.
+  assert (H1 = H y) by apply proof_irrelevance.
+  subst H0 H1.
+  destruct g as [p Hp].
+  subst x.
+  unfold from; simpl.
+  rewrite comp_id_l, comp_id_r.
+  induction p; simpl.
+  rewrite comp_id_r.
+  symmetry.
+  apply (comp_id_l (eq_iso (H y))).
+  change (@comp C _ _ _ ?f ?g) with (@comp (co C) _ _ _ g f).
+  rewrite comp_assoc.
+  rewrite IHp; clear IHp.
+  rewrite <- !comp_assoc.
+  f_equal.
+  generalize (p + y)%nat.
+  clear p y; intros n.
+  assert (forall x, to (eq_iso (H (S x))) = fmap F (eq_iso (H x))).
+    intros x.
+    apply is_eq_unique.
+    2: apply (fmap_is_eq (cof F)).
+    1, 2: apply eq_iso_is_eq.
+  induction n; simpl.
+  rewrite !eq_iso_refl.
+  simpl.
+  rewrite comp_id_r.
+  apply comp_id_l.
+  setoid_rewrite (H0 n).
+  setoid_rewrite (H0 (S n)).
+  setoid_rewrite <- (@fmap_comp _ _ F).
+  now f_equal.
+Qed.
+
+Lemma ex5 {C: TopCategory} (F: C ~> C): has_limit (co Nat) C -> preserve F (co Nat) -> exists L: Coalgebra F, is_limit_obj (corec_path F 1 !) L /\ is_final L.
 Proof.
   assert (exists C': BotCategory, CoTop C' = C).
     exists (CoBot C).
@@ -399,37 +453,8 @@ Proof.
   clear H HF; rename H' into H.
   exists (to (algebra_cof F) L).
   split.
-  2: apply is_final_co, H.
-  unfold one, to_one; simpl.
-  rewrite is_limit_obj_co.
-  revert HL.
-  apply is_colimit_obj_alt in HL.
-  apply is_limit_obj_alt.
-  destruct HL as [η HL].
-  set (fmap (to (CoFun Nat C)) η ∘ (eq_iso (cof_diag_c (Algebra.carrier L)))⁻¹).
-  simpl fobj at 2 in h.
-  rewrite is_limit'_co' in HL.
-  assert (cof (rec_path F 0 ¡) = cof (rec_path (cof (cof F)) 0 ¡)).
-  Set Printing All.
-  destruct L as [L γ].
-  simpl in *.
-  assert (rec_path (cof (cof F)) 0 ¡ = to () rec_path F 0 ¡).
-  apply is_colimit_obj_alt in HL.
-  apply is_limit_obj_alt.
-  destruct HL as [η Hη].
-  eset (is_limit_obj_co).
-  unfold one, to_one; simpl.
-  destruct HL as .
-  change (co (co C)) with (BotCategory.sort (CoBot (CoTop C))).
-  change (co (co C)) with ((Co' ∘ Co') C).
-  change (cof (cof F)) with (fmap (Co' ∘ Co') F).
-  Set Printing Implicit.
-  rewrite Co'_invol.
-  apply is_limit_obj_co.
-  specialize (H (path_fun (rec_path F))).
-  apply ex_limit_alt in H.
-  destruct H as [L [η H]].
-  set (η 2).
-  simpl in h.
-  red in H.
-Qed.*)
+  rewrite cof_rec_path.
+  setoid_rewrite is_limit_obj_co'.
+  exact HL.
+  apply is_final_co, H.
+Qed.

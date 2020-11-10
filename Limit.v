@@ -455,6 +455,28 @@ Proof.
     apply is_limit_co, H.
 Qed.
 
+Lemma is_limit_obj_co' {D C: Category} (F: D ~> C) (l: C): is_limit_obj (cof F) l <-> is_colimit_obj F l.
+Proof.
+  rewrite is_limit_obj_alt, is_colimit_obj_alt.
+  split.
+  + intros [η H].
+    assert (exists η': cof (Δ l) ~> cof F, η' ∘ (eq_iso (cof_diag_c l))⁻¹ = η).
+      exists (η ∘ eq_iso (cof_diag_c l)).
+      rewrite <- comp_assoc, inv_r.
+      apply comp_id_r.
+    destruct H0 as [η'].
+    subst η.
+    destruct (iso_full (CoFun _ _) _ _ η') as [η].
+    subst η'.
+    rewrite <- is_limit'_co' in H.
+    now exists η.
+  + intros [η H].
+    set (fmap (to (CoFun _ _)) η).
+    rewrite is_limit'_co' in H.
+    eexists.
+    exact H.
+Qed.
+
 Lemma ex_limit_co {D C: Category} (F: D ~> C): ex_limit F <-> ex_colimit (cof F).
 Proof.
   split.

@@ -35,7 +35,7 @@ Qed.
 
 Notation よ := Yoneda.
 
-Lemma Yoneda_lemma (C: Category) (c: C) (P: Fun (co C) Typ): Hom (Fun (co C) Typ) (よ C c, P) ≃ P c.
+Lemma Yoneda_lemma {C: Category} (c: C) (P: Fun (co C) Typ): Hom (Fun (co C) Typ) (よ C c, P) ≃ P c.
 Proof.
   constructor.
   unshelve eexists.
@@ -99,4 +99,55 @@ Proof.
   split.
   apply Yoneda_full.
   apply Yoneda_faithful.
+Qed.
+
+(* fully_faithful_iso is currently to strict in its universes *)
+Lemma Yoneda_principle {C: Category} (A B: C): よ C A ≃ よ C B <-> A ≃ B.
+Proof.
+  split.
+  + intros [η].
+    constructor.
+    exists (to η A (id A)),  (to η⁻¹ B (id B)).
+    specialize (@naturality _ _ _ _ (to η⁻¹) B A (to η A (id A))) as H.
+    apply (f_equal (fun f => f (id B))) in H.
+    unfold comp in H; simpl in H.
+    change (from ?i) with (to i⁻¹) in H.
+    etransitivity.
+    symmetry.
+    exact H.
+    rewrite comp_id_l.
+    change ((η⁻¹ ∘ η) A (id A) = id (よ C A) A (id A)).
+    f_equal.
+    apply inv_l.
+    specialize (@naturality _ _ _ _ (to η) A B (to η⁻¹ B (id B))) as H.
+    apply (f_equal (fun f => f (id A))) in H.
+    unfold comp in H; simpl in H.
+    change (from ?i) with (to i⁻¹) in H.
+    etransitivity.
+    symmetry.
+    exact H.
+    rewrite comp_id_l.
+    change ((η ∘ η⁻¹) B (id B) = id (よ C B) B (id B)).
+    f_equal.
+    apply inv_r.
+  + intros [f].
+    constructor.
+    1: unshelve eexists.
+    2: unshelve eexists.
+    1: exists (fun Z g => f ∘ g).
+    2: exists (fun Z g => f⁻¹ ∘ g).
+    3, 4: natural_eq Z.
+    1, 2: intros Y X g.
+    1, 2: simpl in Y, X.
+    1, 2: change (X ~> Y) in g.
+    all: extensionality h.
+    all: simpl in h.
+    1, 2: unfold comp at 1 3; simpl.
+    3, 4: unfold comp at 1, id; simpl.
+    all: change (from ?i) with (to i⁻¹).
+    1, 2: apply comp_assoc.
+    all: rewrite comp_assoc, <- comp_id_l.
+    all: f_equal.
+    apply inv_l.
+    apply inv_r.
 Qed.

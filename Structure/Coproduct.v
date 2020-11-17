@@ -199,15 +199,22 @@ Proof.
   now rewrite !comp_id_l, !comp_id_r.
 Qed.
 
-Lemma fcoprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (+) f') ∘ (g (+) g') = (f ∘ g) (+) (f' ∘ g').
+Lemma merge_fcoprod {a a' b b' c} (f: b ~> c) (f': b' ~> c) (g: a ~> b) (g': a' ~> b'): [f, f'] ∘ (g (+) g') = [f ∘ g, f' ∘ g'].
 Proof.
   unfold fcoprod.
   rewrite merge_comp.
   f_equal.
-  all: rewrite !comp_assoc.
+  all: rewrite comp_assoc.
   all: f_equal.
   apply merge_in1.
   apply merge_in2.
+Qed.
+
+Lemma fcoprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (+) f') ∘ (g (+) g') = (f ∘ g) (+) (f' ∘ g').
+Proof.
+  unfold fcoprod at 2 3.
+  rewrite !comp_assoc.
+  apply merge_fcoprod.
 Qed.
 
 Lemma fcoprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (+) g⁻¹) ∘ (f (+) g) = id (a + c).

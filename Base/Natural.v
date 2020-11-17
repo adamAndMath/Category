@@ -947,7 +947,7 @@ Proof.
   apply comp_id_r.
 Qed.
 
-Lemma iso_full {S T: Category} (F: S <~> T): full F.
+Lemma iso_full {S T: Category} (F: S <~> T): full (to F).
 Proof.
   intros x y f.
   exists (to (eq_iso (inv_l F)) y ∘ fmap (to F⁻¹) f ∘ to (eq_iso (inv_l F))⁻¹ x).
@@ -972,7 +972,7 @@ Proof.
   apply (inv_r (transform_iso (eq_iso (inv_r F)) (to F x))).
 Qed.
 
-Lemma iso_faithful {S T: Category} (F: S <~> T): faithful F.
+Lemma iso_faithful {S T: Category} (F: S <~> T): faithful (to F).
 Proof.
   intros x y f g H.
   change (fmap (id S) f = fmap (id S) g).
@@ -983,7 +983,7 @@ Proof.
   now do 2 f_equal.
 Qed.
 
-Lemma iso_fully_faithful {S T: Category} (F: S <~> T): fully_faithful F.
+Lemma iso_fully_faithful {S T: Category} (F: S <~> T): fully_faithful (to F).
 Proof.
   apply full_and_faithful.
   split.
@@ -991,7 +991,7 @@ Proof.
   apply iso_faithful.
 Qed.
 
-Lemma iso_esurj {S T: Category} (F: S <~> T): esurj F.
+Lemma iso_esurj {S T: Category} (F: S <~> T): esurj (to F).
 Proof.
   intros x.
   exists (to F⁻¹ x).

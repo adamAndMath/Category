@@ -228,16 +228,16 @@ Qed.
 Canonical Co: Cat <~> Cat :=
   Isomorphism.Pack Co' (Isomorphism.Mixin _ _ _ Co' Co' Co'_invol Co'_invol).
 
-Definition full {S T: Category} (F: S ~> T) :=
+Definition full {S T: Category} (F: Functor S T) :=
   forall (x y: S) (f: F x ~> F y), exists f': x ~> y, fmap F f' = f.
 
-Definition faithful {S T: Category} (F: S ~> T) :=
+Definition faithful {S T: Category} (F: Functor S T) :=
   forall (x y: S) (f g: x ~> y), fmap F f = fmap F g -> f = g.
 
-Definition fully_faithful {S T: Category} (F: S ~> T) :=
+Definition fully_faithful {S T: Category} (F: Functor S T) :=
   forall (x y: S) (f: F x ~> F y), exists! f': x ~> y, fmap F f' = f.
 
-Lemma full_and_faithful {S T: Category} (F: S ~> T): fully_faithful F <-> full F /\ faithful F.
+Lemma full_and_faithful {S T: Category} (F: Functor S T): fully_faithful F <-> full F /\ faithful F.
 Proof.
   split.
   1: intros H.
@@ -264,7 +264,7 @@ Proof.
     apply fa, H.
 Qed.
 
-Lemma fully_faithful_maps_iso {S T: Category} {x y: S} (F: S ~> T) (f: x ~> y): fully_faithful F -> is_iso f <-> is_iso (fmap F f).
+Lemma fully_faithful_maps_iso {S T: Category} {x y: S} (F: Functor S T) (f: x ~> y): fully_faithful F -> is_iso f <-> is_iso (fmap F f).
 Proof.
   intros Hf.
   apply full_and_faithful in Hf.
@@ -283,7 +283,7 @@ Proof.
   now exists g.
 Qed.
 
-Lemma fully_faithful_iso {S T: Category} (F: S ~> T) (x y: S): fully_faithful F -> x ≃ y <-> F x ≃ F y.
+Lemma fully_faithful_iso {S T: Category} (F: Functor S T) (x y: S): fully_faithful F -> x ≃ y <-> F x ≃ F y.
 Proof.
   intros Hf.
   apply full_and_faithful in Hf.
@@ -394,7 +394,7 @@ Proof.
   now apply faithful_cof'.
 Qed.
 
-Definition esurj {S T: Category} (F: S ~> T) :=
+Definition esurj {S T: Category} (F: Functor S T) :=
   forall y: T, exists x: S, F x ≃ y.
 
 Lemma esurj_id (C: Category): esurj (id C).

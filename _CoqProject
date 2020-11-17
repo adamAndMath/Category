@@ -19,6 +19,7 @@ Categories/Comma.v
 Categories/Typ.v
 Categories/Algebra.v
 Categories/Path.v
+Yoneda.v
 Structure/Terminal.v
 Structure/Initial.v
 Structure/Product.v

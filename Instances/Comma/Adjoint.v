@@ -38,7 +38,6 @@ Next Obligation.
   apply (f_equal (fun f => f (Comma.morph a))) in H.
   unfold comp in H.
   simpl in H.
-  unfold Typ.comp in H.
   rewrite fmap_id, !comp_id_r in H.
   etransitivity.
   symmetry.
@@ -51,7 +50,6 @@ Next Obligation.
   apply (f_equal (fun g => g (to φ (Comma.source b, Comma.target b) (Comma.morph b) ∘ Comma.smap f))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   change (Category.comp (Category.obj ?C) _ ?f ?g) with (@comp C _ _ _ f g) in H.
   etransitivity.
   2: exact H.
@@ -61,7 +59,6 @@ Next Obligation.
   apply (f_equal (fun g => g (Comma.morph b))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   etransitivity.
   apply (f_equal (fun f => f ∘ _)).
   symmetry.
@@ -72,7 +69,6 @@ Next Obligation.
   specialize (@ naturality _ _ _ _ (to φ⁻¹) (Comma.source b, Comma.target b) (Comma.source a, Comma.target b) (Comma.smap f, id (Comma.target b))) as H.
   apply (f_equal (fun f => f g)) in H.
   unfold comp in H; simpl in H.
-  unfold Typ.comp in H.
   rewrite fmap_id, !comp_id_l in H.
   symmetry.
   exact H.
@@ -100,7 +96,6 @@ Next Obligation.
   apply (f_equal (fun f => f (Comma.morph b))) in H.
   unfold comp in H.
   simpl in H.
-  unfold Typ.comp in H.
   rewrite fmap_id, !comp_id_l in H.
   etransitivity.
   2: exact H.
@@ -112,7 +107,6 @@ Next Obligation.
   apply (f_equal (fun g => g (Comma.tmap f ∘ to φ⁻¹ (Comma.source a, Comma.target a) (Comma.morph a)))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   change (Category.comp (Category.obj ?C) _ ?f ?g) with (@comp C _ _ _ f g) in H.
   etransitivity.
   symmetry.
@@ -123,7 +117,6 @@ Next Obligation.
   apply (f_equal (fun f => f (Comma.morph a))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   etransitivity.
   2: apply f_equal.
   2: exact H.
@@ -133,7 +126,6 @@ Next Obligation.
   specialize (@ naturality _ _ _ _ (to φ) (Comma.source a, Comma.target a) (Comma.source a, Comma.target b) (id (Comma.source a), Comma.tmap f)) as H.
   apply (f_equal (fun f => f g)) in H.
   unfold comp in H; simpl in H.
-  unfold Typ.comp in H.
   rewrite fmap_id, !comp_id_r in H.
   exact H.
 Qed.
@@ -158,7 +150,6 @@ Proof.
   apply (f_equal (fun f => f (Comma.morph x))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   exact H.
   apply Comma.hom_eq; simpl.
   split.
@@ -191,7 +182,6 @@ Proof.
   apply (f_equal (fun f => f (Comma.morph x))) in H.
   unfold comp, id in H; simpl in H.
   unfold comp, id in H; simpl in H.
-  unfold Typ.comp, Typ.id in H.
   exact H.
   apply Comma.hom_eq; simpl.
   split.
@@ -399,7 +389,7 @@ Proof.
   1: exists (fun p => φ' (fst p) (snd p)).
   2: exists (fun p => θ' (fst p) (snd p)).
   3, 4: natural_eq p.
-  1, 2: unfold comp; simpl; unfold Typ.comp.
+  1, 2: unfold comp; simpl.
   1, 2: intros [x1 y1] [x2 y2] [f1 f2].
   1, 2: simpl in f1, f2 |- *.
   1, 2: extensionality g.
@@ -484,7 +474,6 @@ Proof.
     simpl.
     extensionality f.
     unfold comp, id; simpl.
-    unfold Typ.comp, Typ.id.
     specialize (inv_l (Comma.Obj F (id D) x y f)) as H.
     simpl in H.
     apply Comma.obj_eq, proj2, proj2 in H.
@@ -496,7 +485,6 @@ Proof.
     simpl.
     extensionality f.
     unfold comp, id; simpl.
-    unfold Typ.comp, Typ.id.
     specialize (inv_r (Comma.Obj (id C) G x y f)) as H.
     simpl in H.
     apply Comma.obj_eq, proj2, proj2 in H.

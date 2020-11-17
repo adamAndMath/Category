@@ -120,7 +120,7 @@ Next Obligation.
   change (Category.hom _ _ ?x ?y) with (x ~> y) in f1, g1.
   symmetry.
   extensionality h.
-  unfold comp at 1; simpl; unfold Typ.comp.
+  unfold comp at 1; simpl.
   rewrite !comp_assoc, <- comp_assoc.
   f_equal.
   rewrite fprod_comp.
@@ -147,7 +147,6 @@ Next Obligation.
   red in f1, g1; simpl in f1, g1.
   change (Category.hom _ _ ?x ?y) with (x ~> y) in f1, g1.
   unfold comp; simpl; repeat change (Category.comp _ _ ?f ?g) with (f ∘ g).
-  unfold Typ.comp.
   symmetry.
   extensionality h.
   rewrite comp_assoc.
@@ -171,7 +170,6 @@ Next Obligation.
   simpl in *.
   change (A' ~> A) in f.
   unfold comp at 1 4; simpl.
-  unfold Typ.comp.
   extensionality h.
   apply transpose_inv_inj.
   rewrite transpose_inv_l.
@@ -192,7 +190,6 @@ Next Obligation.
   simpl in *.
   change (A' ~> A) in f.
   unfold comp at 1 4; simpl.
-  unfold Typ.comp.
   extensionality h.
   unfold transpose_inv at 1.
   setoid_rewrite <- (comp_id_l (id B)) at 1.
@@ -205,7 +202,7 @@ Qed.
 Lemma transpose_iso_inv_l: transpose_from ∘ transpose_to = id L.
 Proof.
   natural_eq p.
-  unfold comp; simpl; unfold Typ.comp.
+  unfold comp; simpl.
   extensionality f.
   apply transpose_inv_l.
 Qed.
@@ -213,7 +210,7 @@ Qed.
 Lemma transpose_iso_inv_r: transpose_to ∘ transpose_from = id R.
 Proof.
   natural_eq p.
-  unfold comp; simpl; unfold Typ.comp.
+  unfold comp; simpl.
   extensionality f.
   apply transpose_inv_r.
 Qed.

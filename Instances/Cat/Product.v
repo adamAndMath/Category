@@ -45,7 +45,9 @@ End Prod.
 Canonical Prod.cat.
 Notation Prod := Prod.cat.
 
-Definition Fork {C D E: Category} (F: C ~> D) (G: C ~> E): C ~> Prod D E := {|
+Section CatProd.
+
+Definition Fork {C D E: Category} (F: Functor C D) (G: Functor C E): Functor C (Prod D E) := {|
   fobj x := (F x, G x);
   fmap _ _ f := (fmap F f, fmap G f);
   fmap_id x := f_equal2 pair fmap_id fmap_id;
@@ -66,7 +68,7 @@ Definition Snd {C D: Category}: Prod C D ~> D := {|
   fmap_comp _ _ _ f g := eq_refl;
 |}.
 
-Lemma Fork_FstSnd {C D E: Category} (F: C ~> D) (G: C ~> E) (H: C ~> Prod D E): H = Fork F G <-> Fst ∘ H = F /\ Snd ∘ H = G.
+Lemma Fork_FstSnd {C D E: Category} (F: Functor C D) (G: Functor C E) (H: Functor C (Prod D E)): H = Fork F G <-> Fst ∘ H = F /\ Snd ∘ H = G.
 Proof.
   split.
   + intros ?.
@@ -96,6 +98,7 @@ Definition CatProd_mixin: ProdCategory.mixin_of Cat :=
 
 Canonical CatProd: ProdCategory :=
   ProdCategory.Pack Cat CatProd_mixin.
+End CatProd.
 
 Definition CatProd_Top_mixin (C D: TopCategory): TopCategory.mixin_of (C × D) :=
   TopCategory.Mixin _ (1, 1) (fun p => (!, !))

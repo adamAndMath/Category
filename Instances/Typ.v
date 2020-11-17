@@ -43,7 +43,7 @@ Proof.
   2: subst f g.
   split.
   all: extensionality x.
-  all: unfold comp; simpl; unfold Typ.comp, tfork.
+  all: unfold comp; simpl; unfold tfork.
   all: simpl.
   1, 2: reflexivity.
   now destruct (h x).
@@ -70,7 +70,7 @@ Proof.
   2: subst f g.
   split.
   all: extensionality x.
-  all: unfold comp; simpl; unfold Typ.comp, tmerge.
+  all: unfold comp; simpl; unfold tmerge.
   1, 2: reflexivity.
   now destruct x.
 Qed.
@@ -94,7 +94,7 @@ Proof.
   all: extensionality x.
   extensionality y.
   all: unfold fprod, fork, pi1, pi2, comp, id; simpl.
-  all: unfold Typ.id, Typ.comp, tfork, teval, ttranspose; simpl.
+  all: unfold tfork, teval, ttranspose; simpl.
   reflexivity.
   now destruct x.
 Qed.

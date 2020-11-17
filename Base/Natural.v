@@ -35,12 +35,12 @@ Ltac natural_eq x :=
 Section Fun.
 Context {C D: Category}.
 
-Definition nat_id (F: C ~> D): Natural F F := {|
+Definition nat_id (F: Functor C D): Natural F F := {|
   transform x := id (F x);
   naturality x y f := eq_trans (comp_id_l _) (eq_sym (comp_id_r _));
 |}.
 
-Program Definition nat_comp {F G H: C ~> D} (η: Natural G H) (ϵ: Natural F G): Natural F H := {|
+Program Definition nat_comp {F G H: Functor C D} (η: Natural G H) (ϵ: Natural F G): Natural F H := {|
   transform x := η x ∘ ϵ x;
 |}.
 Next Obligation.
@@ -51,19 +51,19 @@ Next Obligation.
   apply naturality.
 Qed.
 
-Lemma nat_comp_assoc (F G H I: C ~> D) (η: Natural H I) (μ: Natural G H) (ϵ: Natural F G): nat_comp η (nat_comp μ ϵ) = nat_comp (nat_comp η μ) ϵ.
+Lemma nat_comp_assoc (F G H I: Functor C D) (η: Natural H I) (μ: Natural G H) (ϵ: Natural F G): nat_comp η (nat_comp μ ϵ) = nat_comp (nat_comp η μ) ϵ.
 Proof.
   natural_eq x.
   apply comp_assoc.
 Qed.
 
-Lemma nat_comp_id_l (F G: C ~> D) (η: Natural F G): nat_comp (nat_id G) η = η.
+Lemma nat_comp_id_l (F G: Functor C D) (η: Natural F G): nat_comp (nat_id G) η = η.
 Proof.
   natural_eq x.
   apply comp_id_l.
 Qed.
 
-Lemma nat_comp_id_r (F G: C ~> D) (η: Natural F G): nat_comp η (nat_id F) = η.
+Lemma nat_comp_id_r (F G: Functor C D) (η: Natural F G): nat_comp η (nat_id F) = η.
 Proof.
   natural_eq x.
   apply comp_id_r.
@@ -593,7 +593,7 @@ Proof.
   now fun_eq x y f.
 Qed.
 
-Program Definition Hom: co Cat ~> Fun Cat Cat := {|
+Program Definition Hom: Functor (co Cat) (Fun Cat Cat) := {|
   fobj S := {|
     fobj T := Fun S T;
     fmap C D F := {|
@@ -771,7 +771,7 @@ Proof.
   rewrite <- comp_assoc.
   rewrite eq_iso_whisk_l.
   rewrite (comp_assoc (ρ G)).
-  f_equal.
+  f_equiv.
   apply unitor_whisk_r.
   1, 2, 4: apply eq_iso_is_eq.
   all: repeat apply is_eq_comp.
@@ -798,7 +798,7 @@ Proof.
   rewrite <- comp_assoc.
   rewrite eq_iso_whisk_l.
   rewrite (comp_assoc (ρ G)).
-  f_equal.
+  f_equiv.
   apply unitor_whisk_r.
   1, 2, 4: apply eq_iso_is_eq.
   all: repeat apply is_eq_comp.

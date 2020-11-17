@@ -16,73 +16,73 @@ Coercion fobj: Functor >-> Funclass.
 
 Theorem fun_eq {C D: Category} (F G: Functor C D): F = G <-> (forall x: C, F x = G x) /\ (forall (x y: C) (f: x ~> y) (ex: F x = G x) (ey: F y = G y), eq_iso ey ∘ fmap F f = fmap G f ∘ eq_iso ex).
 Proof.
-split.
-+ intros H.
-  subst G.
   split.
-  intros x.
-  reflexivity.
-  intros x y f ex ey.
-  rewrite !eq_iso_refl.
-  simpl.
-  rewrite comp_id_r.
-  apply comp_id_l.
-+ destruct F as [Fobj Fmap Fmap_id Fmap_comp], G as [Gobj Gmap Gmap_id Gmap_comp]; simpl.
-  intros [Hobj Hmap].
-  assert (Fobj = Gobj).
-  now extensionality x.
-  subst Gobj; clear Hobj.
-  assert (Fmap = Gmap).
-  extensionality x.
-  extensionality y.
-  extensionality f.
-  specialize (Hmap x y f eq_refl eq_refl).
-  simpl in Hmap.
-  rewrite comp_id_l, comp_id_r in Hmap.
-  exact Hmap.
-  subst Gmap; clear Hmap.
-  f_equal.
-  all: apply proof_irrelevance.
+  + intros H.
+    subst G.
+    split.
+    intros x.
+    reflexivity.
+    intros x y f ex ey.
+    rewrite !eq_iso_refl.
+    simpl.
+    rewrite comp_id_r.
+    apply comp_id_l.
+  + destruct F as [Fobj Fmap Fmap_id Fmap_comp], G as [Gobj Gmap Gmap_id Gmap_comp]; simpl.
+    intros [Hobj Hmap].
+    assert (Fobj = Gobj).
+    now extensionality x.
+    subst Gobj; clear Hobj.
+    assert (Fmap = Gmap).
+    extensionality x.
+    extensionality y.
+    extensionality f.
+    specialize (Hmap x y f eq_refl eq_refl).
+    simpl in Hmap.
+    rewrite comp_id_l, comp_id_r in Hmap.
+    exact Hmap.
+    subst Gmap; clear Hmap.
+    f_equal.
+    all: apply proof_irrelevance.
 Qed.
 
 Ltac fun_eq x y f :=
-match goal with
-| [ |- ?F = ?G] =>
-  apply (fun_eq F G); simpl;
-  split; [
-    intro;
-    try reflexivity
-  | let ex := fresh in
-    let ey := fresh in
-    intros x y f ex ey;
-    try (
-      rewrite (eq_iso_refl ex);
-      clear ex;
-      etransitivity; [ | symmetry; apply comp_id_r ]
-    );
-    try (
-      rewrite (eq_iso_refl ey);
-      clear ey;
-      etransitivity; [ apply comp_id_l | ]
-    );
-    simpl
-  ]
-end.
+  match goal with
+  | [ |- ?F = ?G] =>
+    apply (fun_eq F G); simpl;
+    split; [
+      intro;
+      try reflexivity
+    | let ex := fresh in
+      let ey := fresh in
+      intros x y f ex ey;
+      try (
+        rewrite (eq_iso_refl ex);
+        clear ex;
+        etransitivity; [ | symmetry; apply comp_id_r ]
+      );
+      try (
+        rewrite (eq_iso_refl ey);
+        clear ey;
+        etransitivity; [ apply comp_id_l | ]
+      );
+      simpl
+    ]
+  end.
 
 Section Cat.
 
 Definition fun_id (C: Category): Functor C C := {|
-fobj x := x;
-fmap a b f := f;
-fmap_id a := eq_refl;
-fmap_comp _ _ _ f g := eq_refl;
+  fobj x := x;
+  fmap a b f := f;
+  fmap_id a := eq_refl;
+  fmap_comp _ _ _ f g := eq_refl;
 |}.
 
 Definition fun_comp {C D E: Category} (F: Functor D E) (G: Functor C D): Functor C E := {|
-fobj x := F (G x);
-fmap a b f := fmap F (fmap G f);
-fmap_id a := eq_trans (f_equal _ (fmap_id)) fmap_id;
-fmap_comp _ _ _ f g := eq_trans (f_equal _ (fmap_comp f g)) (fmap_comp (fmap G f) (fmap G g));
+  fobj x := F (G x);
+  fmap a b f := fmap F (fmap G f);
+  fmap_id a := eq_trans (f_equal _ (fmap_id)) fmap_id;
+  fmap_comp _ _ _ f g := eq_trans (f_equal _ (fmap_comp f g)) (fmap_comp (fmap G f) (fmap G g));
 |}.
 
 Lemma fun_comp_assoc (A B C D: Category) (F: Functor C D) (G: Functor B C) (H: Functor A B): fun_comp F (fun_comp G H) = fun_comp (fun_comp F G) H.

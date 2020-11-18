@@ -113,9 +113,9 @@ Proof.
   assert (forall a b f, exists f', fmap F f' = (ɛ b)⁻¹ ∘ f ∘ ɛ a).
     intros a b f.
     apply fu.
-  generalize (fun a b => ex_forall _ (H a b)).
+  generalize (fun a b => proj1 (ex_forall _) (H a b)).
   clear H; intros H.
-  generalize (fun a => ex_forall _ (H a)).
+  generalize (fun a => proj1 (ex_forall _) (H a)).
   clear H; intros H.
   apply ex_forall in H.
   destruct H as [gmap gmap_spec].

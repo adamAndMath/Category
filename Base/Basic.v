@@ -50,23 +50,67 @@ Proof.
   now f_equiv.
 Qed.
 
-Lemma ex_forall {T} {F: T -> Type} (P: forall x, F x -> Prop): (forall x, exists y, P x y) -> exists (f: forall x, F x), forall x, P x (f x).
+Lemma inhabit_forall {T} (F: T -> Type): (forall x, inhabited (F x)) <-> inhabited (forall x, F x).
 Proof.
-  intros H.
-  assert (forall x, inhabited (F x)) as i.
+  split.
+  + intros H.
+    constructor.
     intros x.
-    now destruct (H x).
-  exists (fun x => epsilon (i x) (P x)).
-  intros x.
-  apply epsilon_spec, H.
+    exact (epsilon (H x) (fun _ => True)).
+  + intros [f] x.
+    constructor.
+    exact (f x).
 Qed.
 
-Lemma inhabit_forall {T} (F: T -> Type): (forall x, inhabited (F x)) -> inhabited (forall x, F x).
+Lemma ex_forall {T} {F: T -> Type} (P: forall x, F x -> Prop): (forall x, exists y, P x y) <-> exists (f: forall x, F x), forall x, P x (f x).
 Proof.
-  intros H.
-  constructor.
-  intros x.
-  exact (epsilon (H x) (fun _ => True)).
+  split.
+  + intros H.
+    assert (forall x, inhabited (F x)) as i.
+      intros x.
+      now destruct (H x).
+    exists (fun x => epsilon (i x) (P x)).
+    intros x.
+    apply epsilon_spec, H.
+  + intros [f] x.
+    now exists (f x).
+Qed.
+
+Lemma unique_forall {T} {F: T -> Type} (P: forall x, F x -> Prop) (f: forall x, F x): (forall x, unique (P x) (f x)) <-> unique (fun f => forall x, P x (f x)) f.
+Proof.
+  split.
+  + intros H.
+    split.
+    apply H.
+    intros f' H'.
+    extensionality x.
+    apply H, H'.
+  + intros H x.
+    split.
+    apply H.
+    intros y Hy.
+    enough (f = (fun x' =>
+      match dec (x = x') with
+      | left H => match H with eq_refl => y end
+      | right _ => f x'
+      end
+    )).
+    apply (f_equal (fun f => f x)) in H0.
+    destruct (dec (x = x)) in H0.
+    now destruct e.
+    contradiction.
+    apply H.
+    intros x'.
+    destruct (dec (x = x')).
+    now destruct e.
+    apply H.
+Qed.
+
+Lemma ex_unique_forall {T} {F: T -> Type} (P: forall x, F x -> Prop): (forall x, exists! y, P x y) <-> exists! (f: forall x, F x), forall x, P x (f x).
+Proof.
+  rewrite ex_forall.
+  f_equiv; intros f.
+  apply unique_forall.
 Qed.
 
 Lemma iff_and_l P Q1 Q2: (P /\ Q1 <-> P /\ Q2) <-> (P -> Q1 <-> Q2).

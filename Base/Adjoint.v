@@ -1,4 +1,4 @@
-Require Export Natural.
+Require Export Equivalence.
 
 Definition adjoint_by {C D: Category} (F: D ~> C) (G: C ~> D) (ɛ: F ∘ G ~> id C) (η: id D ~> G ∘ F) :=
   (ɛ |> F) ∘ α F G F ∘ (F <| η) = (ρ F)⁻¹ ∘ λ F /\
@@ -27,21 +27,32 @@ Definition adjoint {C D: Category} (F: D ~> C) (G: C ~> D) :=
 
 Infix "-|" := adjoint (at level 60, no associativity).
 
-Lemma iso_adjoint {C D: Category} (I: C <~> D): I -| I⁻¹.
+Lemma iso2_adjoint {C D: Category} (I: C <=> D): I -| I⁻.
 Proof.
   red.
-  exists (to (eq_iso (inv_r I))), (to (eq_iso (inv_l I))⁻¹).
+  exists (to (icounit I)), (to (iunit I)⁻¹).
   apply adjoint_by_alt.
   split; intros x.
-  all: apply is_eq_refl.
-  all: apply is_eq_comp.
-  1: apply (fmap_is_eq I).
-  4: apply (fmap_is_eq I⁻¹).
-  1, 3: apply (transform_is_eq (eq_iso (inv_l I))⁻¹).
-  3, 4: apply (transform_is_eq (eq_iso (inv_r I))).
-  1, 2: apply is_eq_inv.
-  all: apply eq_iso_is_eq.
+  rewrite <- (iunit_to I).
+  etransitivity.
+  symmetry.
+  apply (@fmap_comp _ _ I).
+  rewrite <- fmap_id.
+  f_equal.
+  change ((iunit I ∘ (iunit I)⁻¹) x = id (id C) x).
+  f_equal.
+  apply inv_r.
+  simpl.
+  etransitivity.
+  apply (f_equal (fun f => f ∘ _)).
+  apply iunit_from.
+  change ((iunit I ∘ (iunit I)⁻¹) (I⁻ x) = id (id C) (I⁻ x)).
+  f_equal.
+  apply inv_r.
 Qed.
+
+Lemma iso_adjoint {C D: Category} (I: C <~> D): I -| I⁻¹.
+Proof. apply (iso2_adjoint (iso_iso2 _ _ I)). Qed.
 
 Lemma adjoint_comp {A B C: Category} (F: C ~> B) (G: B ~> C) (F': B ~> A) (G': A ~> B): F -| G -> F' -| G' -> F' ∘ F -| G ∘ G'.
 Proof.

@@ -3,7 +3,7 @@ Require Export Base.
 Module Cone.
 
 Section category.
-Context {S T: Category} (F: S ~> T).
+Context {S T: Category} (F: Functor S T).
 
 Structure obj := Obj {
   vertex: T;
@@ -129,7 +129,7 @@ Notation Cone := Cone.cat.
 Module Cocone.
 
 Section category.
-Context {S T: Category} (F: S ~> T).
+Context {S T: Category} (F: Functor S T).
 
 Structure obj := Obj {
   vertex: T;

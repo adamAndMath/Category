@@ -329,19 +329,19 @@ Proof.
     intros g.
     apply H.
   + intros H.
-    generalize (fun a => ex_forall _ (H a)).
+    generalize (fun a => proj1 (ex_forall _) (H a)).
     clear H; intros H.
     apply ex_forall in H.
     destruct H as [E H].
-    generalize (fun a => ex_forall _ (H a)).
+    generalize (fun a => proj1 (ex_forall _) (H a)).
     clear H; intros H.
     apply ex_forall in H.
     destruct H as [e H].
-    generalize (fun a b z => ex_forall _ (H a b z)).
+    generalize (fun a b z => proj1 (ex_forall _) (H a b z)).
     clear H; intros H.
-    generalize (fun a b => ex_forall _ (H a b)).
+    generalize (fun a b => proj1 (ex_forall _) (H a b)).
     clear H; intros H.
-    generalize (fun a => ex_forall _ (H a)).
+    generalize (fun a => proj1 (ex_forall _) (H a)).
     clear H; intros H.
     apply ex_forall in H.
     destruct H as [t H].

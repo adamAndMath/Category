@@ -43,6 +43,7 @@ Instances/Comma/Slice.v
 Instances/Comma/Arrow.v
 Instances/Comma/Cone.v
 Instances/Comma/Adjoint.v
+Instances/Fun.v
 Instances.v
 Finite.v
 Limit.v

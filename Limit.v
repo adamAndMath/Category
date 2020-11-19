@@ -666,7 +666,7 @@ Definition has_limit (D C: Category) :=
 Definition has_colimit (D C: Category) :=
   forall F: Functor D C, ex_colimit F.
 
-Lemma has_limit_co (D C: Category): has_limit D C <-> has_colimit (co D) (co C).
+Lemma has_limit_co@{d1 d2 c1 c2 i} (D: Category@{d1 d2}) (C: Category@{c1 c2}): has_limit@{d1 d2 c1 c2 i} D C <-> has_colimit (co D) (co C).
 Proof.
   split.
   + intros H F'.

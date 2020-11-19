@@ -6,9 +6,10 @@ Require Export Limits.Product.
 Require Export Limits.Coproduct.
 
 Section ex1.
-Context {T: Type}.
+Universes i.
+Context {T: Type@{i}}.
 
-Lemma poset_equalizer (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_limit Parallel (Poset R).
+Lemma poset_equalizer (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_limit Parallel (Poset@{i Set} R).
 Proof.
   intros F.
   unshelve eexists.
@@ -31,10 +32,10 @@ Proof.
   apply Proset.hom_eq.
 Qed.
 
-Lemma poset_coequalizer (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_colimit Parallel (Poset R).
+Lemma poset_coequalizer@{j} (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_colimit@{Set Set i Set j} Parallel (Poset@{i Set} R).
 Proof.
   rewrite <- (co_invol Parallel), <- co_invol.
-  apply has_limit_co.
+  apply (has_limit_co@{Set Set i Set j}).
   rewrite dual_poset.
   generalize (@poset_equalizer (flip R) _ (PartialOrder_inverse po)).
   apply has_limit_iso.
@@ -51,7 +52,8 @@ Lemma iso_prod (C D: Category): C ≃ D -> inhabited (ProdCategory.mixin_of C) <
 Proof.
   intros H.
   rewrite <- !prod_limit.
-  now f_equiv.
+  f_equiv.
+  apply iso_cequiv, H.
 Qed.
 
 Lemma iso_coprod (C D: Category): C ≃ D -> inhabited (CoprodCategory.mixin_of C) <-> inhabited (CoprodCategory.mixin_of D).
@@ -59,7 +61,8 @@ Proof.
   intros H.
   rewrite <- !coprod_limit.
   rewrite <- !ex_lim_co.
-  now do 2 f_equiv.
+  do 2 f_equiv.
+  apply iso_cequiv, H.
 Qed.
 
 Lemma iso_equalizer (C D: Category): C ≃ D -> has_limit Parallel C <-> has_limit Parallel D.

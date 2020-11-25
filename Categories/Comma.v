@@ -3,7 +3,7 @@ Require Export Base.
 Module Comma.
 
 Section Category.
-Context {A B C: Category} (S: A ~> C) (T: B ~> C).
+Context {A B C: Category} (S: Functor A C) (T: Functor B C).
 
 Structure obj := Obj {
   source: A;
@@ -113,28 +113,28 @@ Arguments tmap {A B C S T x y} _.
 
 Local Infix "↓" := cat (at level 60, no associativity).
 
-Definition Source {A B C: Category} {S: A ~> C} {T: B ~> C}: S ↓ T ~> A := {|
+Definition Source {A B C: Category} {S: Functor A C} {T: Functor B C}: Functor (S ↓ T) A := {|
   fobj := source;
   fmap := @smap A B C S T;
   fmap_id _ := eq_refl;
   fmap_comp _ _ _ _ _ := eq_refl;
 |}.
 
-Definition Target {A B C: Category} {S: A ~> C} {T: B ~> C}: S ↓ T ~> B := {|
+Definition Target {A B C: Category} {S: Functor A C} {T: Functor B C}: Functor (S ↓ T) B := {|
   fobj := target;
   fmap := @tmap A B C S T;
   fmap_id _ := eq_refl;
   fmap_comp _ _ _ _ _ := eq_refl;
 |}.
 
-Lemma smap_is_eq {A B C: Category} (S: A ~> C) {T: B ~> C} (x y: S ↓ T) (f: x ~> y): is_eq f -> is_eq (smap f).
+Lemma smap_is_eq {A B C: Category} (S: Functor A C) {T: Functor B C} (x y: S ↓ T) (f: x ~> y): is_eq f -> is_eq (smap f).
 Proof.
   intros [e H].
   subst f y.
   apply is_eq_id.
 Qed.
 
-Lemma tmap_is_eq {A B C: Category} (S: A ~> C) {T: B ~> C} (x y: S ↓ T) (f: x ~> y): is_eq f -> is_eq (tmap f).
+Lemma tmap_is_eq {A B C: Category} (S: Functor A C) {T: Functor B C} (x y: S ↓ T) (f: x ~> y): is_eq f -> is_eq (tmap f).
 Proof.
   intros [e H].
   subst f y.

@@ -3,10 +3,14 @@ Base/Basic.v
 Base/Categories.v
 Base/Isomorphism.v
 Base/Functor.v
+Base/Bifunctor.v
 Base/Natural.v
 Base/Equivalence.v
 Base/Adjoint.v
 Base.v
+Poset/Basic.v
+Poset/Heyting.v
+Poset/CompleteHeyting.v
 Categories/Nat.v
 Categories/Cone.v
 Categories/Parallel.v

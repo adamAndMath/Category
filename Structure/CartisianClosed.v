@@ -70,7 +70,7 @@ Proof.
   do 2 apply f_equal.
   symmetry.
   apply comp_id_l.
-  setoid_rewrite <- fprod_comp.
+  setoid_rewrite fprod_comp.
   rewrite comp_assoc.
   setoid_rewrite eval_transpose.
   unfold fprod.

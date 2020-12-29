@@ -138,17 +138,44 @@ Definition CatProd_Prod_mixin (C D: ProdCategory): ProdCategory.mixin_of (C × D
 Canonical CatProd_Prod (C D: ProdCategory): ProdCategory :=
   ProdCategory.Pack (C × D) (CatProd_Prod_mixin C D).
 
-Program Definition FProd {C: ProdCategory}: C × C ~> C := {|
-  fobj p := fst p × snd p;
-  fmap p q f := fst f (×) snd f;
+Definition bf {S1 S2 T: Category} (F: Bifunctor S1 S2 T): Functor (Prod S1 S2) T := {|
+  fobj p := F (fst p) (snd p);
+  fmap p q f := bmap F (fst f) (snd f);
+  fmap_id p := bmap_id F;
+  fmap_comp p1 p2 p3 f g := bmap_comp F (fst f) (fst g) (snd f) (snd g);
 |}.
-Next Obligation.
-  simpl.
-  apply fprod_id.
+
+Definition fb {S1 S2 T: Category} (F: Functor (Prod S1 S2) T): Bifunctor S1 S2 T := {|
+  bobj x y := F (x, y);
+  bmap x1 x2 y1 y2 f g := @fmap _ _ F (x1, y1) (x2, y2) (f, g);
+  bmap_id x y := @fmap_id _ _ F (x, y);
+  bmap_comp x1 x2 x3 y1 y2 y3 f1 f2 g1 g2 := @fmap_comp _ _ F (x1, y1) (x2, y2) (x3, y3) (f1, g1) (f2, g2);
+|}.
+
+Lemma fb_bf {S1 S2 T: Category} (F: Bifunctor S1 S2 T): fb (bf F) = F.
+Proof.
+  apply bifun_eq.
+  split.
+  + intros x y.
+    reflexivity.
+  + intros x1 x2 y1 y2 f g e1 e2.
+    rewrite !eq_iso_refl; clear e1 e2.
+    simpl.
+    rewrite comp_id_r.
+    apply comp_id_l.
 Qed.
-Next Obligation.
-  symmetry.
-  apply fprod_comp.
+
+Lemma bf_fb {S1 S2 T: Category} (F: Functor (Prod S1 S2) T): bf (fb F) = F.
+Proof.
+  apply fun_eq.
+  split.
+  + intros [x y].
+    reflexivity.
+  + intros [x1 y1] [x2 y2] [f g] e1 e2.
+    rewrite !eq_iso_refl; clear e1 e2.
+    simpl.
+    rewrite comp_id_r.
+    apply comp_id_l.
 Qed.
 
 Section CoProd.

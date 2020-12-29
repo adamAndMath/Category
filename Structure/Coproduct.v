@@ -210,8 +210,9 @@ Proof.
   apply merge_in2.
 Qed.
 
-Lemma fcoprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (+) f') ∘ (g (+) g') = (f ∘ g) (+) (f' ∘ g').
+Lemma fcoprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f ∘ g) (+) (f' ∘ g') = (f (+) f') ∘ (g (+) g').
 Proof.
+  symmetry.
   unfold fcoprod at 2 3.
   rewrite !comp_assoc.
   apply merge_fcoprod.
@@ -219,14 +220,14 @@ Qed.
 
 Lemma fcoprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (+) g⁻¹) ∘ (f (+) g) = id (a + c).
 Proof.
-  rewrite fcoprod_comp, <- fcoprod_id.
+  rewrite <- fcoprod_comp, <- fcoprod_id.
   f_equal.
   all: apply inv_l.
 Qed.
 
 Lemma fcoprod_inv_r {a b c d: C} (f: a <~> b) (g: c <~> d): (f (+) g) ∘ (f⁻¹ (+) g⁻¹) = id (b + d).
 Proof.
-  rewrite fcoprod_comp, <- fcoprod_id.
+  rewrite <- fcoprod_comp, <- fcoprod_id.
   f_equal.
   all: apply inv_r.
 Qed.
@@ -238,7 +239,7 @@ Lemma is_iso_fcoprod {a b c d: C} (f: a ~> b) (g: c ~> d): is_iso f -> is_iso g 
 Proof.
   intros [f' [Hfl Hfr]] [g' [Hgl Hgr]].
   exists (f' (+) g'); split.
-  all: rewrite fcoprod_comp, <- fcoprod_id.
+  all: rewrite <- fcoprod_comp, <- fcoprod_id.
   all: now f_equal.
 Qed.
 
@@ -266,6 +267,13 @@ Proof.
   exists in1, in2.
   apply in_is_coproduct.
 Qed.
+
+Definition FCoprod: Bifunctor C C C := {|
+  bobj a b := a + b;
+  bmap a1 a2 b1 b2 f g := f (+) g;
+  bmap_id := fcoprod_id;
+  bmap_comp a1 a2 a3 b1 b2 b3 f1 f2 g1 g2 := fcoprod_comp f1 g1 f2 g2;
+|}.
 
 End Coproduct.
 

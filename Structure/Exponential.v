@@ -19,7 +19,7 @@ Proof.
   assert (exists f, i ∘ f ∘ (id z (×) j⁻¹) = f').
     exists (i⁻¹ ∘ f' ∘ (id z (×) j)).
     rewrite !comp_assoc, <- comp_assoc.
-    rewrite fprod_comp.
+    rewrite <- fprod_comp.
     rewrite !inv_r, !comp_id_l.
     rewrite fprod_id.
     apply comp_id_r.
@@ -31,7 +31,7 @@ Proof.
   exists (k ∘ g); split.
   rewrite <- !comp_assoc.
   do 2 f_equal.
-  rewrite !fprod_comp.
+  rewrite <- !fprod_comp.
   f_equal.
   rewrite comp_assoc, comp_id_r.
   rewrite inv_l.
@@ -41,7 +41,7 @@ Proof.
   intros h H.
   rewrite <- !comp_assoc in H.
   apply iso_monic in H.
-  rewrite !fprod_comp, !comp_id_r, comp_id_l in H.
+  rewrite <- !fprod_comp, !comp_id_r, comp_id_l in H.
   apply (iso_monic k⁻¹).
   rewrite comp_assoc.
   rewrite inv_l, comp_id_l.
@@ -49,7 +49,7 @@ Proof.
   rewrite <- (inv_l j).
   rewrite <- (comp_id_r (k⁻¹ ∘ h)).
   rewrite <- (comp_id_r g).
-  rewrite <- !fprod_comp.
+  rewrite !fprod_comp.
   rewrite !comp_assoc.
   now f_equal.
 Qed.
@@ -78,7 +78,7 @@ Proof.
     rewrite fprod_id.
     apply comp_id_r.
     rewrite <- (comp_id_l (id b)).
-    rewrite <- fprod_comp, comp_assoc.
+    rewrite fprod_comp, comp_assoc.
     now rewrite Hg.
   + specialize (Hq Q q).
     destruct Hq as [q' [Hq H]].
@@ -88,7 +88,7 @@ Proof.
     rewrite fprod_id.
     apply comp_id_r.
     rewrite <- (comp_id_l (id b)).
-    rewrite <- fprod_comp, comp_assoc.
+    rewrite fprod_comp, comp_assoc.
     now rewrite Hf.
 Qed.
 
@@ -219,14 +219,14 @@ Proof.
   rewrite transpose_inv_l.
   unfold transpose_inv.
   rewrite <- (comp_id_l (id x)).
-  rewrite <- fprod_comp, comp_assoc.
+  rewrite fprod_comp, comp_assoc.
   rewrite eval_transpose.
-  rewrite <- comp_assoc, fprod_comp.
+  rewrite <- comp_assoc, <- fprod_comp.
   rewrite comp_id_l, comp_id_r.
   rewrite <- (comp_id_l g), <- (comp_id_r (transpose _)).
-  rewrite <- fprod_comp, comp_assoc.
+  rewrite fprod_comp, comp_assoc.
   rewrite eval_transpose.
-  rewrite <- comp_assoc, fprod_comp.
+  rewrite <- comp_assoc, <- fprod_comp.
   now rewrite !comp_id_l.
 Qed.
 
@@ -237,7 +237,7 @@ Proof.
   rewrite transpose_inv_l.
   unfold transpose_inv.
   rewrite <- (comp_id_l (id s)).
-  rewrite <- fprod_comp, comp_assoc.
+  rewrite fprod_comp, comp_assoc.
   rewrite eval_transpose.
   rewrite <- !comp_assoc.
   f_equal.
@@ -312,6 +312,33 @@ Lemma exp_is_exp_obj (a b: C): is_exp_obj a b (a ^ b).
 Proof.
   exists (eval a b).
   apply eval_is_exp.
+Qed.
+
+Program Definition FExp: Bifunctor C (co C) C := {|
+  bobj a (b: co C) := a ^ b;
+  bmap a1 a2 b1 b2 f g := transpose (f ∘ eval a1 b1 ∘ (id (a1 ^ b1) (×) g));
+|}.
+Next Obligation.
+  rewrite comp_id_l.
+  now apply transpose_ump.
+Qed.
+Next Obligation.
+  apply transpose_ump.
+  rewrite <- (comp_id_l (id b3)).
+  rewrite fprod_comp, comp_assoc.
+  rewrite eval_transpose.
+  rewrite <- comp_assoc, <- fprod_comp.
+  rewrite comp_id_l, comp_id_r.
+  rewrite <- !(comp_assoc f1).
+  f_equal.
+  rewrite <- (comp_id_r (transpose _)), <- (@comp_id_l C _ _ g1) at 1.
+  rewrite fprod_comp, comp_assoc.
+  rewrite eval_transpose.
+  rewrite <- comp_assoc.
+  f_equal.
+  rewrite <- fprod_comp.
+  f_equal.
+  apply comp_id_l.
 Qed.
 
 End Exponential.

@@ -220,8 +220,9 @@ Proof.
   apply pi2_fork.
 Qed.
 
-Lemma fprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f (×) f') ∘ (g (×) g') = (f ∘ g) (×) (f' ∘ g').
+Lemma fprod_comp {a a' b b' c c': C} (f: b ~> c) (f': b' ~> c') (g: a ~> b) (g': a' ~> b'): (f ∘ g) (×) (f' ∘ g') = (f (×) f') ∘ (g (×) g').
 Proof.
+  symmetry.
   unfold fprod at 2 3.
   rewrite <- !comp_assoc.
   apply fprod_fork.
@@ -229,14 +230,14 @@ Qed.
 
 Lemma fprod_inv_l {a b c d: C} (f: a <~> b) (g: c <~> d): (f⁻¹ (×) g⁻¹) ∘ (f (×) g) = id (a × c).
 Proof.
-  rewrite fprod_comp, <- fprod_id.
+  rewrite <- fprod_comp, <- fprod_id.
   f_equal.
   all: apply inv_l.
 Qed.
 
 Lemma fprod_inv_r {a b c d: C} (f: a <~> b) (g: c <~> d): (f (×) g) ∘ (f⁻¹ (×) g⁻¹) = id (b × d).
 Proof.
-  rewrite fprod_comp, <- fprod_id.
+  rewrite <- fprod_comp, <- fprod_id.
   f_equal.
   all: apply inv_r.
 Qed.
@@ -248,7 +249,7 @@ Lemma is_iso_fprod {a b c d: C} (f: a ~> b) (g: c ~> d): is_iso f -> is_iso g ->
 Proof.
   intros [f' [Hfl Hfr]] [g' [Hgl Hgr]].
   exists (f' (×) g'); split.
-  all: rewrite fprod_comp, <- fprod_id.
+  all: rewrite <- fprod_comp, <- fprod_id.
   all: now f_equal.
 Qed.
 
@@ -371,6 +372,13 @@ Proof.
   exists π₁, π₂.
   apply pi_is_product.
 Qed.
+
+Definition FProd: Bifunctor C C C := {|
+  bobj a b := a × b;
+  bmap a1 a2 b1 b2 f g := f (×) g;
+  bmap_id := fprod_id;
+  bmap_comp a b c a' b' c' f g f' g' := fprod_comp f f' g g';
+|}.
 
 End Product.
 

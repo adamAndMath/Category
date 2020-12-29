@@ -10,18 +10,6 @@ Canonical CatCart: CartCategory :=
 Canonical CatCCC: CCC :=
   CCC.Pack Cat (CCC.Class Cat (CartCategory.class CatCart) CatExp_mixin).
 
-Program Definition FCoprod (C: CoprodCategory): C × C ~> C := {|
-  fobj p := fst p + snd p;
-  fmap p q f := fst f (+) snd f;
-|}.
-Next Obligation.
-  apply fcoprod_id.
-Qed.
-Next Obligation.
-  symmetry.
-  apply fcoprod_comp.
-Qed.
-
 Section Fun_0_l.
 Lemma Fun0C_inv_l (C: Category): Δ (¡: 0 ~> C) ∘ ! = id (Fun 0 C).
 Proof.

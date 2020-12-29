@@ -75,7 +75,7 @@ Next Obligation.
   all: apply fmap_id.
 Qed.
 Next Obligation.
-  rewrite fprod_comp.
+  rewrite <- fprod_comp.
   f_equal.
   all: apply fmap_comp.
 Qed.
@@ -140,7 +140,7 @@ Next Obligation.
   all: apply fmap_id.
 Qed.
 Next Obligation.
-  rewrite fcoprod_comp.
+  rewrite <- fcoprod_comp.
   f_equal.
   all: apply fmap_comp.
 Qed.

@@ -96,6 +96,21 @@ Definition Cat: Cat := T.
 
 End ClassDef.
 
+Lemma mixin_eq {C: Category} (m n: mixin_of C): m = n <-> zero C m = zero C n.
+Proof.
+  split.
+  intros H.
+  now subst n.
+  destruct m as [a f Hf], n as [b g Hg]; simpl.
+  intros H.
+  subst b.
+  enough (f = g).
+  subst g.
+  f_equal; apply proof_irrelevance.
+  extensionality x.
+  apply Hf.
+Qed.
+
 Module Exports.
 
 Coercion sort: type >-> Category.

@@ -70,7 +70,7 @@ Proof.
     rewrite transpose_inv_l.
     unfold transpose_inv.
     setoid_rewrite <- (comp_id_l (id B)).
-    setoid_rewrite <- fprod_comp.
+    setoid_rewrite fprod_comp.
     rewrite comp_assoc.
     rewrite eval_transpose.
     rewrite <- comp_assoc.
@@ -90,7 +90,7 @@ Proof.
   rewrite transpose_inv_l.
   unfold transpose_inv.
   setoid_rewrite <- (comp_id_l (id B)) at 1.
-  setoid_rewrite <- fprod_comp.
+  setoid_rewrite fprod_comp.
   rewrite comp_assoc.
   f_equal.
   apply eval_transpose.
@@ -123,7 +123,7 @@ Next Obligation.
   unfold comp at 1; simpl.
   rewrite !comp_assoc, <- comp_assoc.
   f_equal.
-  rewrite fprod_comp.
+  rewrite <- fprod_comp.
   f_equal.
   apply comp_id_l.
 Qed.
@@ -155,7 +155,7 @@ Next Obligation.
   rewrite transpose_inv_l.
   unfold transpose_inv at 1 3.
   setoid_rewrite <- (comp_id_l (id B)).
-  setoid_rewrite <- fprod_comp.
+  setoid_rewrite fprod_comp.
   rewrite !(comp_assoc (eval _ _)).
   rewrite !eval_transpose.
   now rewrite !comp_assoc.
@@ -175,7 +175,7 @@ Next Obligation.
   rewrite transpose_inv_l.
   unfold transpose_inv.
   setoid_rewrite <- (comp_id_l (id B)) at 3.
-  setoid_rewrite <- fprod_comp.
+  setoid_rewrite fprod_comp.
   rewrite comp_assoc.
   rewrite !eval_transpose.
   reflexivity.
@@ -193,7 +193,7 @@ Next Obligation.
   extensionality h.
   unfold transpose_inv at 1.
   setoid_rewrite <- (comp_id_l (id B)) at 1.
-  setoid_rewrite <- fprod_comp.
+  setoid_rewrite fprod_comp.
   rewrite comp_assoc.
   f_equal.
   apply eval_transpose.

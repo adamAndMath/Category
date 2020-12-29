@@ -10,17 +10,7 @@ Definition FreeProd {C: Category}: C ~> C × C := {|
 Section Prod2Limit.
 Context (C: ProdCategory).
 
-Program Definition ProdLim: C × C ~> C := {|
-  fobj p := fst p × snd p;
-  fmap p q f := fst f (×) snd f;
-|}.
-Next Obligation.
-  apply fprod_id.
-Qed.
-Next Obligation.
-  symmetry.
-  apply fprod_comp.
-Qed.
+Definition ProdLim := bf (@FProd C).
 
 Program Definition ProdUnit: id C ~> ProdLim ∘ FreeProd := {|
   transform x := ⟨id x, id x⟩;
@@ -57,15 +47,8 @@ Proof.
   apply pi1_fork.
   apply pi2_fork.
   intros [x y]; simpl.
-  rewrite <- fprod_id at 3.
-  unfold fprod.
-  rewrite fork_comp.
-  f_equal.
-  all: rewrite comp_id_l, <- comp_id_r.
-  all: rewrite <- comp_assoc.
-  all: f_equal.
-  apply pi1_fork.
-  apply pi2_fork.
+  rewrite fprod_fork, !comp_id_r.
+  apply fork_id.
 Qed.
 
 Lemma prod_adjoint: FreeProd -| ProdLim.
@@ -162,7 +145,7 @@ Proof.
     assert (exists Lim: C × C ~> C, Lim ∘ (Fun1C C (×) Fun1C C) ∘ FunPlusC 1 1 C = L).
     exists (L ∘ (FunPlusC 1 1 C)⁻¹ ∘ ((Fun1C C)⁻¹ (×) (Fun1C C)⁻¹)).
     rewrite <- (comp_assoc (L ∘ _)).
-    rewrite fprod_comp.
+    rewrite <- fprod_comp.
     rewrite inv_l, fprod_id, comp_id_r.
     rewrite <- comp_assoc.
     rewrite inv_l.

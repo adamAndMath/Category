@@ -115,6 +115,46 @@ Structure mixin_of (C: ProdCategory) := Mixin {
   transpose_ump (t s x: C) (f: x × s ~> t) (g: x ~> exp t s): eval t s ∘ (g (×) id s) = f <-> transpose t s x f = g;
 }.
 
+Lemma mixin_eq {C: ProdCategory.type} (m n: mixin_of C): m = n <-> forall x y, exp C m x y = exp C n x y /\ forall (e: exp C m x y = exp C n x y), eval C m x y = eval C n x y ∘ (eq_iso e (×) id y).
+Proof.
+  split.
+  + intros H.
+    subst n.
+    intros x y.
+    split.
+    reflexivity.
+    intros e.
+    rewrite eq_iso_refl; clear e.
+    simpl.
+    symmetry.
+    rewrite fprod_id.
+    apply comp_id_r.
+  + destruct m as [p ep tp Hp], n as [q eq tq Hq]; simpl.
+    intros H.
+    enough (p = q).
+    subst q.
+    enough (ep = eq).
+    subst eq.
+    enough (tp = tq).
+    subst tq.
+    f_equal; apply proof_irrelevance.
+    - extensionality x.
+      extensionality y.
+      extensionality z.
+      extensionality f.
+      now apply Hp, Hq.
+    - extensionality x.
+      extensionality y.
+      specialize (H x y).
+      apply proj2 in H.
+      specialize (H eq_refl).
+      simpl in H.
+      now rewrite fprod_id, comp_id_r in H.
+    - extensionality x.
+      extensionality y.
+      apply H.
+Qed.
+
 Section ClassDef.
 
 Structure class_of (C: Category) := Class {
@@ -122,6 +162,41 @@ Structure class_of (C: Category) := Class {
   mixin: mixin_of (ProdCategory.Pack C base);
 }.
 Local Coercion base: class_of >-> ProdCategory.mixin_of.
+Local Coercion mixin: class_of >-> mixin_of.
+
+Lemma class_eq {C: Category} (m n: class_of C): m = n <-> forall x y, ProdCategory.prod _ m x y = ProdCategory.prod _ n x y /\ exp _ m x y = exp _ n x y /\ (forall (e: ProdCategory.prod _ m x y = ProdCategory.prod _ n x y), @ProdCategory.pi1 _ m x y = @ProdCategory.pi1 _ n x y ∘ eq_iso e /\ @ProdCategory.pi2 _ m x y = @ProdCategory.pi2 _ n x y ∘ eq_iso e) /\ forall (e: ProdCategory.prod _ m (exp _ m x y) y = ProdCategory.prod _ n (exp _ n x y) y), eval _ m x y = eval _ n x y ∘ eq_iso e.
+Proof.
+  split.
+  + intros H.
+    subst n.
+    intros x y.
+    repeat split.
+    3: intros e.
+    all: rewrite eq_iso_refl; clear e.
+    all: symmetry.
+    all: apply comp_id_r.
+  + destruct m as [m1 m2], n as [n1 n2].
+    simpl.
+    intros H.
+    enough (m1 = n1).
+    subst n1.
+    f_equal.
+    1: apply mixin_eq.
+    2: apply ProdCategory.mixin_eq.
+    all: intros x y.
+    all: specialize (H x y).
+    all: split.
+    1, 3, 4: apply H.
+    intros e.
+    destruct H as [_ [_ [_ H]]].
+    specialize (H (f_equal (fun x => ProdCategory.prod C m1 x y) e)).
+    rewrite H.
+    f_equal.
+    apply is_eq_unique.
+    2: apply (is_eq_fprod (eq_iso e) (id y)).
+    1, 2: apply eq_iso_is_eq.
+    apply is_eq_id.
+Qed.
 
 Structure type := Pack { sort: Category; _: class_of sort }.
 Local Coercion sort: type >-> Category.

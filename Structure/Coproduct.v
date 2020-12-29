@@ -124,6 +124,46 @@ Definition Cat: Cat := T.
 
 End ClassDef.
 
+Lemma mixin_eq {C: Category} (m n: mixin_of C): m = n <-> forall x y, coprod C m x y = coprod C n x y /\ forall (e: coprod C m x y = coprod C n x y), eq_iso e ∘ @in1 C m x y = @in1 C n x y /\ eq_iso e ∘ @in2 C m x y = @in2 C n x y.
+Proof.
+  split.
+  + intros H.
+    subst n.
+    intros x y.
+    split.
+    reflexivity.
+    intros e.
+    rewrite eq_iso_refl; clear e.
+    split.
+    all: apply comp_id_l.
+  + destruct m as [p fp p1 p2 Hp], n as [q fq q1 q2 Hq]; simpl.
+    intros H.
+    enough (p = q).
+    subst q.
+    enough (p1 = q1 /\ p2 = q2) as [].
+    subst q1 q2.
+    enough (fp = fq).
+    subst fq.
+    f_equal; apply proof_irrelevance.
+    - extensionality x.
+      extensionality y.
+      extensionality z.
+      extensionality f.
+      extensionality g.
+      now apply Hq, Hp.
+    - split.
+      all: extensionality x.
+      all: extensionality y.
+      all: specialize (H x y).
+      all: apply proj2 in H.
+      all: specialize (H eq_refl).
+      all: simpl in H.
+      all: now rewrite !comp_id_l in H.
+    - extensionality x.
+      extensionality y.
+      apply H.
+Qed.
+
 Module Exports.
 
 Coercion sort: type >-> Category.

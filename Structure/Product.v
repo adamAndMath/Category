@@ -124,6 +124,47 @@ Definition Cat: Cat := T.
 
 End ClassDef.
 
+Lemma mixin_eq {C: Category} (m n: mixin_of C): m = n <-> forall x y, prod C m x y = prod C n x y /\ forall (e: prod C m x y = prod C n x y), @pi1 C m x y = @pi1 C n x y ∘ eq_iso e /\ @pi2 C m x y = @pi2 C n x y ∘ eq_iso e.
+Proof.
+  split.
+  + intros H.
+    subst n.
+    intros x y.
+    split.
+    reflexivity.
+    intros e.
+    rewrite eq_iso_refl; clear e.
+    split.
+    all: symmetry.
+    all: apply comp_id_r.
+  + destruct m as [p fp p1 p2 Hp], n as [q fq q1 q2 Hq]; simpl.
+    intros H.
+    enough (p = q).
+    subst q.
+    enough (p1 = q1 /\ p2 = q2) as [].
+    subst q1 q2.
+    enough (fp = fq).
+    subst fq.
+    f_equal; apply proof_irrelevance.
+    - extensionality x.
+      extensionality y.
+      extensionality z.
+      extensionality f.
+      extensionality g.
+      now apply Hq, Hp.
+    - split.
+      all: extensionality x.
+      all: extensionality y.
+      all: specialize (H x y).
+      all: apply proj2 in H.
+      all: specialize (H eq_refl).
+      all: simpl in H.
+      all: now rewrite !comp_id_r in H.
+    - extensionality x.
+      extensionality y.
+      apply H.
+Qed.
+
 Module Exports.
 
 Coercion sort: type >-> Category.
@@ -251,6 +292,16 @@ Proof.
   exists (f' (×) g'); split.
   all: rewrite <- fprod_comp, <- fprod_id.
   all: now f_equal.
+Qed.
+
+Lemma is_eq_fprod {a b c d: C} (f: a ~> b) (g: c ~> d): is_eq f -> is_eq g -> is_eq (f (×) g).
+Proof.
+  intros [e1 H1] [e2 H2].
+  subst f g.
+  destruct e1, e2.
+  simpl.
+  rewrite fprod_id.
+  apply is_eq_id.
 Qed.
 
 Global Instance prod_iso: Proper (isomorphic C ==> isomorphic C ==> isomorphic C) prod.

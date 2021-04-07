@@ -2,6 +2,8 @@ Require Export Sets.FinSet.
 Require Export Structure.
 Local Open Scope fset.
 
+Definition list_sum (l: list nat) := List.fold_right plus 0%nat l.
+
 Program Definition finset_from_zero (X: FinSet): Ø ~> X := {|
   FinSet.rel := Ø;
 |}.
@@ -928,7 +930,7 @@ Proof.
     apply le_n_S.
     apply IHxs.
     now inversion_clear Hxs.
-    apply List.NoDup_filter, Hys.
+    apply List_NoDup_filter, Hys.
     intros x Hx.
     apply List.filter_In.
     split.
@@ -951,7 +953,7 @@ Proof.
     destruct (dec (f a = f a)).
     discriminate Ha.
     contradiction.
-    apply List.NoDup_filter, Hys.
+    apply List_NoDup_filter, Hys.
     intros y Hy.
     simpl in Hy.
     destruct Hy as [Hy | Hy].
@@ -1048,7 +1050,7 @@ Proof.
     f_equal.
     apply IHxs.
     - now inversion_clear Hxs.
-    - apply List.NoDup_filter, Hys.
+    - apply List_NoDup_filter, Hys.
     - intros x Hx.
       apply List.filter_In.
       split.
@@ -1086,7 +1088,7 @@ Proof.
       apply List.filter_In in H.
       apply proj2 in H.
       now destruct (dec (f a = f a)) in H.
-      apply List.NoDup_filter, Hys.
+      apply List_NoDup_filter, Hys.
       2: exact Hys.
       all: red; simpl.
       all: intros y Hy.
@@ -1353,7 +1355,7 @@ Proof.
   all: apply in_findex_nd.
 Qed.
 
-Lemma fsize_flat_map_inj X f: (forall x y e, x ∈ X -> y ∈ X -> e ∈ f x -> e ∈ f y -> x = y) -> fsize (∪ {f x | x ⋴ X}) = List.list_sum (List.map fsize (List.map f (findex_nd X))).
+Lemma fsize_flat_map_inj X f: (forall x y e, x ∈ X -> y ∈ X -> e ∈ f x -> e ∈ f y -> x = y) -> fsize (∪ {f x | x ⋴ X}) = list_sum (List.map fsize (List.map f (findex_nd X))).
 Proof.
   intros H.
   transitivity (fsize (List.fold_right binunion Ø (List.map f (findex_nd X)))).
@@ -1432,7 +1434,7 @@ Proof.
   now right.
 Qed.
 
-Lemma fsize_disjoint_union X: (forall x y e, x ∈ X -> y ∈ X -> e ∈ x -> e ∈ y -> x = y) -> fsize (∪ X) = List.list_sum (List.map fsize (findex_nd X)).
+Lemma fsize_disjoint_union X: (forall x y e, x ∈ X -> y ∈ X -> e ∈ x -> e ∈ y -> x = y) -> fsize (∪ X) = list_sum (List.map fsize (findex_nd X)).
 Proof.
   intros H.
   rewrite <- (map_id X) at 1.
@@ -1662,7 +1664,7 @@ Proof.
     now subst a'.
   }
   rewrite List.map_map.
-  transitivity (List.list_sum (List.map (fun _ => PeanoNat.Nat.pow (fsize Y) (length xs)) (findex_nd Y))).
+  transitivity (list_sum (List.map (fun _ => PeanoNat.Nat.pow (fsize Y) (length xs)) (findex_nd Y))).
   f_equal.
   apply List.map_ext_in.
   intros b Hb.
@@ -1726,8 +1728,21 @@ Proof.
   now subst g.
   intros H.
   apply hom_eq.
-  apply (List.nth_ext _ _ 0%nat 0%nat).
-  all: now rewrite !repr_from.
+  destruct f as [f Hn Hf], g as [g e Hg]; simpl in H |- *.
+  subst n; clear Hf Hg m.
+  induction f in g, e, H |- *.
+  now apply List.length_zero_iff_nil in e.
+  destruct g as [|b g]; simpl in e, IHf.
+  discriminate e.
+  apply eq_add_S in e.
+  f_equal.
+  apply (H 0%nat).
+  apply PeanoNat.Nat.lt_0_succ.
+  apply IHf.
+  exact e.
+  intros i Hi.
+  apply (H (S i)); simpl.
+  now apply Lt.lt_n_S.
 Qed.
 
 Program Definition id n: hom n n := {|
@@ -1786,10 +1801,9 @@ Proof.
   destruct f as [f H H0]; simpl.
   clear H0.
   subst n.
-  induction f.
+  induction f; simpl.
   reflexivity.
-  simpl length.
-  rewrite <- List.cons_seq, <- List.seq_shift.
+  rewrite <- List.seq_shift.
   change (a :: List.map (fun x => List.nth x (a :: f) 0%nat) (List.map S (List.seq 0 (length f))) = a :: f)%list.
   f_equal.
   rewrite List.map_map.

@@ -1,4 +1,4 @@
-Require Export Equivalence.
+Require Export Base.Equivalence.
 
 Definition adjoint_by {C D: Category} (F: D ~> C) (G: C ~> D) (ɛ: F ∘ G ~> id C) (η: id D ~> G ∘ F) :=
   (ɛ |> F) ∘ α F G F ∘ (F <| η) = (ρ F)⁻¹ ∘ λ F /\

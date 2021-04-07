@@ -8,7 +8,7 @@ Lemma ex1 (C: Category): is_proset C -> exists D, is_poset D /\ C ≈ D.
 Proof.
   intros H.
   assert (exists T (R: T -> T -> Prop) (po: PreOrder R), Proset R ≃ C).
-    exists C, connected, _.
+    exists C, connected, (connected_preorder _).
     apply proset_ex, H.
   destruct H0 as [T [R [HR HC]]].
   clear H.

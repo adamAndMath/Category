@@ -8,9 +8,6 @@ Base/Natural.v
 Base/Equivalence.v
 Base/Adjoint.v
 Base.v
-Poset/Basic.v
-Poset/Heyting.v
-Poset/CompleteHeyting.v
 Categories/Nat.v
 Categories/Cone.v
 Categories/Parallel.v

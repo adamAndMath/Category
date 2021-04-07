@@ -669,41 +669,11 @@ Definition sep (P: fset -> Prop) (X: fset): fset :=
 
 Notation "{ x ⋴ X | P }" := (sep (fun x => P) X) (at level 0, x, X at level 99, P at level 99): fset_scope.
 
-Lemma list_in_filter {A} (P: A -> bool) (x: A) (l: list A): List.In x (List.filter P l) <-> P x = true /\ List.In x l.
-Proof.
-  induction l.
-  all: simpl.
-  easy.
-  split.
-  + intros H.
-    remember (P a).
-    rename Heqb into Ha.
-    symmetry in Ha.
-    destruct b.
-    simpl in H |- *.
-    destruct H.
-    split.
-    now subst a.
-    now left.
-    all: apply IHl in H.
-    all: split.
-    1, 3: easy.
-    all: now right.
-  + intros [Hx [H | H]].
-    subst a.
-    rewrite Hx.
-    now left.
-    destruct (P a).
-    right.
-    all: now apply IHl.
-Qed.
-
 Lemma in_sep (z: fset) (P: fset -> Prop) (X: fset): z ∈ { x ⋴ X | P x } <-> z ∈ X /\ P z.
 Proof.
   unfold sep.
   rewrite in_fset_of.
-  rewrite list_in_filter.
-  rewrite and_comm.
+  rewrite List.filter_In.
   f_equiv.
   symmetry.
   apply in_indexf.

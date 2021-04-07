@@ -1,4 +1,4 @@
-Require Export Functor.
+Require Export Base.Functor.
 
 Structure Bifunctor (S1 S2 T: Category) := {
   bobj: S1 -> S2 -> T;

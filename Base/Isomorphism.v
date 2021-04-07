@@ -1,4 +1,4 @@
-Require Export Categories.
+Require Export Base.Categories.
 
 Section monoepi.
 Context {C: Category}.

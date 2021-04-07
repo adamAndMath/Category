@@ -1,4 +1,4 @@
-Require Export Functor.
+Require Export Base.Functor.
 
 Module Bicategory.
 

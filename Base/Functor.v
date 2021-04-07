@@ -1,4 +1,4 @@
-Require Export Isomorphism.
+Require Export Base.Isomorphism.
 
 Structure Functor (C D: Category) := {
   fobj: C -> D;

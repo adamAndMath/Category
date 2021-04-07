@@ -305,3 +305,15 @@ Proof.
     now exists xs.
     now apply Hf.
 Qed.
+
+Lemma List_NoDup_filter {A} (f: A -> bool) (l: list A): List.NoDup l -> List.NoDup (List.filter f l).
+Proof.
+  intros H.
+  induction H; simpl.
+  left.
+  destruct (f x).
+  right.
+  contradict H.
+  now apply List.filter_In in H.
+  all: exact IHNoDup.
+Qed.

@@ -1,4 +1,4 @@
-Require Export Functor.
+Require Export Base.Functor.
 
 Structure Natural {C D: Category} (F G: Functor C D) := {
   transform (x: C): F x ~> G x;

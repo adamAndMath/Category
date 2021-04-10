@@ -201,3 +201,73 @@ Canonical CartFun: CartCategory :=
   CartCategory.Pack (Fun S T) (CartCategory.Class (Fun S T) (TopFun_mixin S T) (ProdFun_mixin S T)).
 
 End Cartisian.
+
+Section Equalizer.
+Context (S: Category) (T: EqCategory).
+
+Program Definition FunEqz {F G: Functor S T} (η μ: F ~> G): Functor S T := {|
+  fobj X := Eqz (η X) (μ X);
+  fmap X Y f := eqz_med (η Y) (μ Y) (fmap F f ∘ eqz (η X) (μ X)) _;
+|}.
+Next Obligation.
+  rewrite !comp_assoc, !naturality, <- !comp_assoc.
+  f_equal.
+  apply eqz_comm.
+Qed.
+Next Obligation.
+  apply eqz_med_unique.
+  rewrite fmap_id, comp_id_l.
+  apply comp_id_r.
+Qed.
+Next Obligation.
+  apply eqz_monic.
+  rewrite comp_assoc, !eqz_med_comm, <- comp_assoc.
+  rewrite eqz_med_comm, comp_assoc.
+  f_equal.
+  apply fmap_comp.
+Qed.
+
+Program Definition Fun_eqz {F G: Functor S T} (η μ: F ~> G): FunEqz η μ ~> F := {|
+  transform x := eqz (η x) (μ x);
+|}.
+Next Obligation.
+  apply eqz_med_comm.
+Qed.
+
+Lemma Fun_eqz_comm {F G: Functor S T} (η μ: F ~> G): η ∘ Fun_eqz η μ = μ ∘ Fun_eqz η μ.
+Proof.
+  natural_eq x.
+  apply eqz_comm.
+Qed.
+
+Program Definition Fun_eqz_med {F G H: Functor S T} (η μ: G ~> H) (e: F ~> G) (He: η ∘ e = μ ∘ e): F ~> FunEqz η μ := {|
+  transform x := eqz_med (η x) (μ x) (e x) (f_equal (fun f => transform f x) He);
+|}.
+Next Obligation.
+  apply eqz_monic.
+  rewrite !comp_assoc, !eqz_med_comm.
+  rewrite <- comp_assoc, eqz_med_comm.
+  apply naturality.
+Qed.
+
+Lemma Fun_eqz_med_comm {F G H: Functor S T} (η μ: G ~> H) (e: F ~> G) (He: η ∘ e = μ ∘ e): Fun_eqz η μ ∘ (Fun_eqz_med η μ e He) = e.
+Proof.
+  natural_eq x.
+  apply eqz_med_comm.
+Qed.
+
+Lemma Fun_eqz_med_unique {F G H: Functor S T} (η μ: G ~> H) (e: F ~> G) (u: F ~> FunEqz η μ) (He: η ∘ e = μ ∘ e): Fun_eqz η μ ∘ u = e -> Fun_eqz_med η μ e He = u.
+Proof.
+  intros H1.
+  subst e.
+  natural_eq x.
+  now apply eqz_med_unique.
+Qed.
+
+Definition EqFun_mixin: EqCategory.mixin_of (Fun S T) :=
+  EqCategory.Mixin (Fun S T) (@FunEqz) (@Fun_eqz) (@Fun_eqz_comm) (@Fun_eqz_med) (@Fun_eqz_med_comm) (@Fun_eqz_med_unique).
+
+Canonical EqFun: EqCategory :=
+  EqCategory.Pack (Fun S T) EqFun_mixin.
+
+End Equalizer.

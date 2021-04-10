@@ -112,4 +112,16 @@ Proof. apply EqCategory.eqz_med_comm. Qed.
 Lemma eqz_med_unique {x y z: C} (f g: y ~> z) (e: x ~> y) (u: x ~> Eqz f g) (H: f ∘ e = g ∘ e): eqz f g ∘ u = e -> eqz_med f g e H = u.
 Proof. apply EqCategory.eqz_med_unique. Qed.
 
+Lemma eqz_monic {x y: C} (f g: x ~> y): monic (eqz f g).
+Proof.
+  intros z p1 p2 H.
+  assert (f ∘ (eqz f g ∘ p2) = g ∘ (eqz f g ∘ p2)) as Hp.
+    rewrite !comp_assoc.
+    f_equal.
+    apply eqz_comm.
+  transitivity (eqz_med f g (eqz f g ∘ p2) Hp).
+  symmetry.
+  all: now apply eqz_med_unique.
+Qed.
+
 End Equalizer.

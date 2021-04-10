@@ -111,6 +111,34 @@ Canonical TypCart: CartCategory :=
 Canonical TypCCC: CCC :=
   CCC.Pack Typ (CCC.Class Typ (CartCategory.class TypCart) TypExp_mixin).
 
+Definition teqz {A B: Type} (f g: A -> B) (x: { x | f x = g x }): A := proj1_sig x.
+
+Lemma teqz_comm {A B: Type} (f g: A -> B): @comp Typ _ _ _ f (teqz f g) = @comp Typ _ _ _ g (teqz f g).
+Proof.
+  extensionality x.
+  exact (proj2_sig x).
+Qed.
+
+Definition teqz_med {A B C: Type} (f g: B -> C) (e: A -> B) (H: @comp Typ _ _ _ f e = @comp Typ _ _ _ g e) (x: A): { x | f x = g x} :=
+  exist _ (e x) (f_equal (fun f => f x) H).
+
+Lemma teqz_med_comm {A B C: Type} (f g: B -> C) (e: A -> B) (H: @comp Typ _ _ _ f e = @comp Typ _ _ _ g e): @comp Typ _ _ _ (teqz f g) (teqz_med f g e H) = e.
+Proof. now extensionality x. Qed.
+
+Lemma teqz_med_unique {A B C: Type} (f g: B -> C) (e: A -> B) (u: A -> { x | f x = g x}) (H: @comp Typ _ _ _ f e = @comp Typ _ _ _ g e): @comp Typ _ _ _ (teqz f g) u = e -> teqz_med f g e H = u.
+Proof.
+  intros He.
+  subst e.
+  extensionality x.
+  now apply eq_sig.
+Qed.
+
+Definition TypEq_mixin: EqCategory.mixin_of Typ :=
+  EqCategory.Mixin Typ _ (@teqz) (@teqz_comm) (@teqz_med) (@teqz_med_comm) (@teqz_med_unique).
+
+Canonical TypEq: EqCategory :=
+  EqCategory.Pack Typ TypEq_mixin.
+
 End Typ.
 
 Lemma typ_iso_0 A: A ≃ 0 <-> ~inhabited A.

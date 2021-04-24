@@ -17,26 +17,6 @@ Notation class_of := mixin_of (only parsing).
 
 Section ClassDef.
 
-Lemma t: True.
-Print mixin_of.
-
-Universes i j k l m.
-Lemma t: True.
-set (obj := unit: Type@{i}).
-clearbody obj.
-set (bihom := (fun _ _: obj =>  ))
-
-set mixin_of@{i j k l m}.
-set bihom@{i j k l m}.
-set biid@{i j k l m}.
-set hcomp@{i j k l m}.
-set unitor_l@{i j k l m}.
-set unitor_r@{i j k l m}.
-set associator@{i j k l m}.
-set pentagon@{i j k l m}.
-set unit_triang@{i j k l m}.
-Set Printing Universes.
-
 Structure type := Pack { obj: Type; _: class_of obj }.
 Local Coercion obj: type >-> Sortclass.
 
@@ -105,6 +85,7 @@ Qed.
 
 End BicategoryTheory.
 
+(* Hangs
 Structure PseudoFunctor (S T: Bicategory) := {
   pfobj: S -> T;
   pfmap {x y: S}: Functor (x ~~> y) (pfobj x ~~> pfobj y);
@@ -117,3 +98,4 @@ Arguments pfmap {S T} _ {_ _}.
 Arguments pfid {S T} _ _.
 Arguments pfcomp {S T} _ {_ _ _} _ _.
 Coercion pfobj: PseudoFunctor >-> Funclass.
+*)

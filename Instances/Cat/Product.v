@@ -141,7 +141,7 @@ Canonical CatProd_Prod (C D: ProdCategory): ProdCategory :=
 Definition bf {S1 S2 T: Category} (F: Bifunctor S1 S2 T): Functor (Prod S1 S2) T := {|
   fobj p := F (fst p) (snd p);
   fmap p q f := bmap F (fst f) (snd f);
-  fmap_id p := bmap_id F;
+  fmap_id p := bmap_id F (fst p) (snd p);
   fmap_comp p1 p2 p3 f g := bmap_comp F (fst f) (fst g) (snd f) (snd g);
 |}.
 

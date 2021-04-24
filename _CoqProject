@@ -5,6 +5,8 @@ Base/Isomorphism.v
 Base/Functor.v
 Base/Bifunctor.v
 Base/Natural.v
+Base/Binatural.v
+Base/Bicategory.v
 Base/Equivalence.v
 Base/Adjoint.v
 Base.v

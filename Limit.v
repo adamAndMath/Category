@@ -1,4 +1,4 @@
-Require Export Instances Comma.Cone.
+Require Export Instances.Comma.Cone.
 Require Export Finite.
 
 Definition is_limit {D C: Category} (F: Functor D C) (L: Cone F) :=

@@ -1,4 +1,4 @@
-Require Export Cat.
+Require Export Instances.Cat.Terminal.
 Require Export Categories.Cone.
 Require Export Categories.Comma.
 

@@ -126,6 +126,22 @@ Proof.
   apply is_eq_id.
 Qed.
 
+Lemma nat_is_eq {C D: Category} {F G: C ~> D} (η: F ~> G): (forall x, is_eq (η x)) -> is_eq η.
+Proof.
+  intros H.
+  enough (F = G); [subst G|].
+  exists (eq_refl); simpl.
+  natural_eq x.
+  now apply is_eq_refl.
+  fun_eq X Y f.
+  now specialize (H x) as [].
+  rewrite (is_eq_unique (eq_iso H0) (η X)).
+  rewrite (is_eq_unique (eq_iso H1) (η Y)).
+  apply naturality.
+  1, 3: apply eq_iso_is_eq.
+  all: apply H.
+Qed.
+
 Theorem fun_iso {C D: Category} (F G: Functor C D): F ≃ G <-> exists I: forall x: C, F x <~> G x, forall x y (f: x ~> y), I y ∘ fmap F f = fmap G f ∘ I x.
 Proof.
   split.

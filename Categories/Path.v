@@ -394,7 +394,7 @@ Next Obligation.
   apply comm.
 Qed.
 
-Program Definition const {C: Category}: C ~> cat C := {|
+Program Definition const {C: Category}: Functor C (cat C) := {|
   fobj x := {|
     objs _ := x;
     step _ := Categories.id x;
@@ -439,7 +439,7 @@ Coercion Past.pnat: Past.hom >-> Natural.
 Section Future_iso.
 Context (C: Category).
 
-Program Definition Future_to: Future C ~> Fun Nat C := {|
+Program Definition Future_to: Functor (Future C) (Fun Nat C) := {|
   fobj p := p;
   fmap p q f := f;
 |}.
@@ -450,7 +450,7 @@ Next Obligation.
   now natural_eq n.
 Qed.
 
-Program Definition Future_from: Fun Nat C ~> Future C := {|
+Program Definition Future_from: Functor (Fun Nat C) (Future C) := {|
   fobj F := {|
     Future.objs := F;
     Future.step n := fmap F (Nat.step n);

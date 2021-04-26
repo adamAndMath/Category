@@ -507,7 +507,7 @@ Proof.
     intros f _.
     apply to_one_unique.
     destruct H as [[_ H] _].
-    absurd (@cone_nat ZERO SET (Δ 1) 1 (id _) = @cone_nat ZERO SET (Δ 1) 0 (fmap Δ !)).
+    absurd (@cone_nat ZERO SET (Δ 1) 1 (id _) = @cone_nat ZERO SET (Δ 1) 0 (∇ !)).
     intros e.
     apply (f_equal Cone.vertex) in e.
     simpl in e.

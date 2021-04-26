@@ -79,15 +79,15 @@ Proof.
 Qed.
 
 Definition is_limit' {D C: Category} (F: Functor D C) (l: C) (η: Δ l ~> F) :=
-  forall n (ϵ: Δ n ~> F), exists! f: n ~> l, η ∘ fmap Δ f = ϵ.
+  forall n (ϵ: Δ n ~> F), exists! f: n ~> l, η ∘ ∇ f = ϵ.
 
 Definition is_colimit' {D C: Category} (F: Functor D C) (l: C) (η: F ~> Δ l) :=
-  forall (n: C) (ϵ: F ~> Δ n), exists! f: l ~> n, fmap Δ f ∘ η = ϵ.
+  forall (n: C) (ϵ: F ~> Δ n), exists! f: l ~> n, ∇ f ∘ η = ϵ.
 
 Lemma is_limit'_co {D C: Category} (F: Functor D C) (l: C) (η: Δ l ~> F): is_limit' F l η <-> is_colimit' (cof F) l (eq_iso (cof_diag_c l) ∘ fmap (to (CoFun D C)) η).
 Proof.
-  enough (forall (n: C) (ϵ: Δ n ~> F) (f: n ~> l), η ∘ fmap Δ f = ϵ <->
-    fmap Δ (f: @hom (co C) l n) ∘ (eq_iso (cof_diag_c l) ∘ fmap (to (CoFun D C)) η) =
+  enough (forall (n: C) (ϵ: Δ n ~> F) (f: n ~> l), η ∘ ∇ f = ϵ <->
+    ∇ (f: @hom (co C) l n) ∘ (eq_iso (cof_diag_c l) ∘ fmap (to (CoFun D C)) η) =
     eq_iso (cof_diag_c n) ∘ fmap (to (CoFun D C)) ϵ
   ).
   split.
@@ -173,8 +173,8 @@ Qed.
 
 Lemma is_limit'_co' {D C: Category} (F: Functor D C) (l: C) (η: F ~> Δ l): is_colimit' F l η <-> is_limit' (cof F) l (fmap (to (CoFun D C)) η ∘ (eq_iso (cof_diag_c l))⁻¹).
 Proof.
-  enough (forall (n: C) (ϵ: F ~> Δ n) (f: l ~> n), fmap Δ f ∘ η = ϵ <->
-    @comp (Fun (co D) (co C)) _ _ _ (fmap (to (CoFun D C)) η) (eq_iso (cof_diag_c l))⁻¹ ∘ fmap Δ (f: @hom (co C) n l) =
+  enough (forall (n: C) (ϵ: F ~> Δ n) (f: l ~> n), ∇ f ∘ η = ϵ <->
+    @comp (Fun (co D) (co C)) _ _ _ (fmap (to (CoFun D C)) η) (eq_iso (cof_diag_c l))⁻¹ ∘ ∇ (f: @hom (co C) n l) =
     fmap (to (CoFun D C)) ϵ ∘ (eq_iso (cof_diag_c n))⁻¹
   ).
   split.
@@ -257,7 +257,7 @@ Proof.
     clear Hu; intros Hu.
     simpl in Hu.
     apply Hu; clear Hu.
-    exact (proj1 (natural_eq (nat_cone L ∘ fmap Δ u') ϵ) H).
+    exact (proj1 (natural_eq (nat_cone L ∘ ∇ u') ϵ) H).
   + intros H N.
     specialize (H (Cone.vertex N) (nat_cone N)).
     destruct H as [u Hu].
@@ -265,7 +265,7 @@ Proof.
     exists u.
     2: intros u'.
     2: Cone.hom_eq.
-    exact (proj1 (natural_eq (nat_cone L ∘ fmap Δ u) (nat_cone N)) (proj1 Hu)).
+    exact (proj1 (natural_eq (nat_cone L ∘ ∇ u) (nat_cone N)) (proj1 Hu)).
     apply Hu.
     natural_eq x.
     apply Cone.mediator_comm.
@@ -313,7 +313,7 @@ Proof.
     2: intros u'.
     2: Cone.hom_eq.
     simpl.
-    exact (proj1 (natural_eq (η ∘ fmap Δ u) (nat_cone N)) (proj1 Hu)).
+    exact (proj1 (natural_eq (η ∘ ∇ u) (nat_cone N)) (proj1 Hu)).
     apply Hu.
     natural_eq x.
     apply (Cone.mediator_comm u').
@@ -329,7 +329,7 @@ Proof.
     clear Hu; intros Hu.
     simpl in Hu.
     apply Hu; clear Hu.
-    exact (proj1 (natural_eq (η ∘ fmap Δ u') ϵ) H).
+    exact (proj1 (natural_eq (η ∘ ∇ u') ϵ) H).
 Qed.
 
 Lemma is_colimit_alt' {D C: Category} (F: Functor D C) (l: C) (η: F ~> Δ l): is_colimit' F l η <-> is_colimit F (cocone_nat l η).
@@ -343,7 +343,7 @@ Proof.
     2: intros u'.
     2: Cocone.hom_eq.
     simpl.
-    exact (proj1 (natural_eq (fmap Δ u ∘ η) (nat_cocone N)) (proj1 Hu)).
+    exact (proj1 (natural_eq (∇ u ∘ η) (nat_cocone N)) (proj1 Hu)).
     apply Hu.
     natural_eq x.
     apply (Cocone.mediator_comm u').
@@ -359,7 +359,7 @@ Proof.
     clear Hu; intros Hu.
     simpl in Hu.
     apply Hu; clear Hu.
-    exact (proj1 (natural_eq (fmap Δ u' ∘ η) ϵ) H).
+    exact (proj1 (natural_eq (∇ u' ∘ η) ϵ) H).
 Qed.
 
 Definition is_limit_obj {D C: Category} (F: Functor D C) (l: C) :=
@@ -678,19 +678,19 @@ Proof.
     apply ex_limit_co, H.
 Qed.
 
-Definition is_lim {D C: Category} (F: Functor (Fun D C) C) := Δ -| F.
+Definition is_lim {D C: Category} (F: Functor (Fun D C) C) := Δ' -| F.
 Definition ex_lim (D C: Category) := exists F: Functor (Fun D C) C, is_lim F.
 
-Definition is_colim {D C: Category} (F: Functor (Fun D C) C) := F -| Δ.
+Definition is_colim {D C: Category} (F: Functor (Fun D C) C) := F -| Δ'.
 Definition ex_colim (D C: Category) := exists F: Functor (Fun D C) C, is_colim F.
 
 Definition Colim {D C: Category}: co (Fun (Fun D C) C) <~> Fun (Fun (co D) (co C)) (co C) := Comp_r_iso (CoFun D C)⁻¹ · CoFun (Fun D C) C.
 
 Lemma is_lim_co {D C: Category} (F: Functor (Fun D C) C): is_lim (to Colim F) <-> is_colim F.
 Proof.
-  change (Δ -| to (CoFun (Fun D C) C) F ∘ (CoFun D C)⁻¹ <-> F -| Δ).
-  replace (@Δ (co C) (co D)) with (to (CoFun D C) ∘ to (CoFun C (Fun D C)) (@Δ C D)).
-  rewrite (adjoint_co F Δ).
+  change (Δ' -| to (CoFun (Fun D C) C) F ∘ (CoFun D C)⁻¹ <-> F -| Δ').
+  replace (@Δ' (co C) (co D)) with (to (CoFun D C) ∘ to (CoFun C (Fun D C)) (@Δ' C D)).
+  rewrite (adjoint_co F Δ').
   apply (adjoint_comp_iso_r _ _ ((CoFun D C) ⁻¹)).
   clear.
   fun_eq x y f.
@@ -738,16 +738,17 @@ Proof.
     exists (fmap L ϵ ∘ η n).
     split.
     - rewrite fmap_comp, comp_assoc.
-      change (ɛ F ∘ fmap (Δ ∘ L) ϵ ∘ fmap Δ (η n) = ϵ).
+      change (ɛ F ∘ fmap (Δ' ∘ L) ϵ ∘ ∇ (η n) = ϵ).
       rewrite naturality.
       simpl fmap at 1.
       rewrite <- comp_assoc.
+      simpl in adj1.
       rewrite adj1.
       apply comp_id_r.
     - intros f Hf.
       subst ϵ.
       rewrite fmap_comp.
-      change (fmap L (ɛ F) ∘ fmap (L ∘ Δ) f ∘ η n = f).
+      change (fmap L (ɛ F) ∘ fmap (L ∘ Δ') f ∘ η n = f).
       rewrite <- comp_assoc.
       setoid_rewrite <- (naturality η f).
       rewrite comp_assoc.
@@ -766,7 +767,7 @@ Proof.
     clear H; intros H.
     apply ex_forall in H.
     destruct H as [λ H].
-    assert ((forall F x η, l F ∘ fmap Δ (λ F x η) = η) /\ (forall F x η g, l F ∘ fmap Δ g = η -> λ F x η = g)).
+    assert ((forall F x η, l F ∘ ∇ (λ F x η) = η) /\ (forall F x η g, l F ∘ ∇ g = η -> λ F x η = g)).
       split; apply H.
     clear H; destruct H0 as [H Hu].
     assert (exists Lim: Fun D C ~> C, fobj Lim = L /\ forall F G η (eF: Lim F = L F) (eG: Lim G = L G), eq_iso eG ∘ fmap Lim η = λ G (L F) (η ∘ l F) ∘ eq_iso eF).
@@ -783,6 +784,7 @@ Proof.
         apply Hu.
         rewrite fmap_comp.
         rewrite comp_assoc.
+        simpl.
         rewrite H.
         rewrite <- comp_assoc.
         rewrite H.
@@ -804,30 +806,31 @@ Proof.
       exact H1.
     clear H1.
     exists Lim.
-    assert (exists ɛ: Δ ∘ Lim ~> id (Fun D C), transform ɛ = l).
+    assert (exists ɛ: Δ' ∘ Lim ~> id (Fun D C), transform ɛ = l).
     1: {
       unshelve eexists.
       exists l.
       2: reflexivity.
       intros F G η.
-      change (l G ∘ fmap Δ (fmap Lim η) = η ∘ l F).
+      change (l G ∘ ∇ (fmap Lim η) = η ∘ l F).
       rewrite H0.
       apply H.
     }
     destruct H1 as [ɛ].
     subst l.
-    assert (exists η: id C ~> Lim ∘ Δ, forall x, η x = λ (Δ x) x (id (Δ x))).
+    assert (exists η: id C ~> Lim ∘ Δ', forall x, η x = λ (Δ x) x (id (Δ x))).
     1: {
       unshelve eexists.
       exists (fun x => λ (Δ x) x (id (Δ x))).
       2: reflexivity.
       intros x y f.
-      change (λ (Δ y) y (id (Δ y)) ∘ f = fmap Lim (fmap Δ f) ∘ λ (Δ x) x (id (Δ x))).
+      change (λ (Δ y) y (id (Δ y)) ∘ f = fmap Lim (∇ f) ∘ λ (Δ x) x (id (Δ x))).
       rewrite H0.
-      transitivity (λ (Δ y) x (fmap Δ f)).
+      transitivity (λ (Δ y) x (∇ f)).
       symmetry.
       all: apply Hu.
       all: rewrite fmap_comp, comp_assoc.
+      all: simpl.
       all: rewrite H.
       apply comp_id_l.
       rewrite <- comp_assoc.
@@ -848,6 +851,7 @@ Proof.
       apply Hu.
       rewrite fmap_comp.
       rewrite comp_assoc.
+      simpl.
       rewrite H.
       rewrite <- comp_assoc.
       rewrite H.
@@ -948,8 +952,8 @@ Proof.
     exists (I l).
     exists (I <| ι ∘ (eq_iso (comp_diag I l))⁻¹).
     intros n δ.
-    assert (exists δ', δ' ∘ fmap Δ (to (icounit I)⁻¹ n) = δ).
-      exists (δ ∘ fmap Δ (to (icounit I) n)).
+    assert (exists δ', δ' ∘ ∇ (to (icounit I)⁻¹ n) = δ).
+      exists (δ ∘ ∇ (to (icounit I) n)).
       rewrite <- comp_assoc, <- fmap_comp.
       change (to (icounit I) n ∘ _) with ((icounit I ∘ (icounit I)⁻¹) n).
       rewrite inv_r.

@@ -566,19 +566,25 @@ Proof.
   apply comp_id_l.
 Qed.
 
-Program Definition diagonal {T S: Category}: T ~> Fun S T := {|
-  fobj c := {|
-    fobj _ := c;
-    fmap _ _ _ := id c;
-    fmap_id _ := eq_refl;
-    fmap_comp _ _ _ _ _ := eq_sym (comp_id_l (id c));
-  |};
-  fmap x y f := {|
-    transform _ := f;
-    naturality _ _ _ := eq_trans (comp_id_r f) (eq_sym (comp_id_l f));
-  |};
-  fmap_id _ := _;
-  fmap_comp _ _ _ _ _ := _;
+Definition diag {T S: Category} (c: T): Functor S T := {|
+  fobj _ := c;
+  fmap _ _ _ := id c;
+  fmap_id _ := eq_refl;
+  fmap_comp _ _ _ _ _ := eq_sym (comp_id_l (id c));
+|}.
+
+Notation Δ := diag.
+
+Definition diag_map {T S: Category} {x y: T} (f: x ~> y): Δ x ~> Δ y :=
+  Build_Natural S T (Δ x) (Δ y)
+  (fun _ => f)
+  (fun _ _ _ => eq_trans (comp_id_r f) (eq_sym (comp_id_l f))).
+
+Notation "∇" := diag_map.
+
+Program Canonical diagonal {T S: Category}: T ~> Fun S T := {|
+  fobj := diag;
+  fmap := @diag_map T S;
 |}.
 Next Obligation.
   now natural_eq x.
@@ -587,21 +593,25 @@ Next Obligation.
   now natural_eq x.
 Qed.
 
-Notation Δ := diagonal.
+Notation Δ' := diagonal.
 
-Lemma diag_comp {A B C: Category} (c: C) (F: A ~> B): Δ c ∘ F = Δ c.
+Lemma diag_comp {A B C: Category} (c: C) (F: Functor A B): Δ c ∘ F = Δ c.
 Proof. now fun_eq x y f. Qed.
 
-Lemma comp_diag {A B C: Category} (F: B ~> C) (c: B): F ∘ @Δ B A c = Δ (F c).
+Lemma comp_diag {A B C: Category} (F: Functor B C) (c: B): F ∘ @Δ B A c = Δ (F c).
 Proof.
   fun_eq x y f.
+  rewrite !eq_iso_refl; simpl.
+  rewrite comp_id_l, comp_id_r.
   apply fmap_id.
 Qed.
 
-Lemma cof_diag_c {S T: Category} (c: T): cof (@Δ T S c) = Δ (c: co T).
+Lemma cof_diag_c {S T: Category} (c: T): cof (@Δ T S c) = @Δ (co T) (co S) c.
 Proof.
   fun_eq x y f.
-  now rewrite !eq_iso_refl.
+  rewrite !eq_iso_refl; simpl.
+  rewrite comp_id_l, comp_id_r.
+  reflexivity.
 Qed.
 
 Lemma cof'_diag_c {S T: Category} (c: T): cof' (@Δ (co T) (co S) c) = Δ c.
@@ -856,7 +866,7 @@ Proof.
 Qed.
 End CoFun.
 
-Lemma cof_diag (S T: Category): cof (@Δ T S) ≃ (CoFun S T)⁻¹ ∘ @Δ (co T) (co S).
+Lemma cof_diag (S T: Category): cof (@Δ' T S) ≃ (CoFun S T)⁻¹ ∘ @Δ' (co T) (co S).
 Proof.
   apply fun_iso.
   unshelve eexists.

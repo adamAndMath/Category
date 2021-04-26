@@ -16,7 +16,7 @@ Definition ONE_mixin: Category.mixin_of unit :=
 Canonical ONE: Category :=
   Category.Pack unit ONE_mixin.
 
-Lemma to_ONE_unique (C: Category) (F: C ~> ONE): Δ tt = F.
+Lemma to_ONE_unique (C: Category) (F: Functor C ONE): Δ tt = F.
 Proof.
   fun_eq x y f.
   apply unit_unique.
@@ -29,7 +29,7 @@ Definition CatTop_mixin: TopCategory.mixin_of Cat :=
 Canonical CatTop: TopCategory :=
   TopCategory.Pack Cat CatTop_mixin.
 
-  Definition CoOne_from: 1 ~> co 1 := {|
+Definition CoOne_from: Functor ONE (co ONE) := {|
   fobj x := x;
   fmap x y f := f;
   fmap_id _ := eq_refl;

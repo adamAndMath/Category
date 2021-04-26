@@ -244,7 +244,7 @@ Proof.
   apply is_colimit_obj_alt.
   now exists η.
   assert (
-    (fun f: F l ~> l => fmap Δ f ∘ (eq_iso (comp_diag F l) ∘ (F <| η)) = ϵ) =
+    (fun f: F l ~> l => ∇ f ∘ (eq_iso (comp_diag F l) ∘ (F <| η)) = ϵ) =
     (fun f: F l ~> l => forall n, f ∘ fmap F (η n) = η (S n))
   ).
   1: {
@@ -276,20 +276,20 @@ Proof.
   intros A.
   destruct (H A (rec_alg A)) as [f Hf].
   assert (
-    (fun f: l ~> A => fmap Δ f ∘ η = rec_alg A) =
+    (fun f: l ~> A => ∇ f ∘ η = rec_alg A) =
     (fun f: l ~> A => forall n, f ∘ η n = rec_alg_tr A n)
   ).
   1: {
     clear f Hf.
     extensionality f.
     apply propositional_extensionality.
-    apply (natural_eq (fmap Δ f ∘ η)).
+    apply (natural_eq (∇ f ∘ η)).
   }
   rewrite H0 in Hf; clear H0.
   destruct (HF A (eq_iso (diag_comp (Algebra.carrier A) Nat.Step) ∘ (rec_alg A |> Nat.Step) ∘ eq_iso Hstep)) as [f' Hf'].
   assert (
     (fun f: F l ~> A =>
-      fmap Δ f ∘ (eq_iso (comp_diag F l) ∘ (F <| η)) =
+      ∇ f ∘ (eq_iso (comp_diag F l) ∘ (F <| η)) =
       eq_iso (diag_comp (Algebra.carrier A) Nat.Step) ∘ (rec_alg A |> Nat.Step) ∘ eq_iso Hstep) =
     (fun f: F l ~> A => forall n, f ∘ fmap F (η n) = rec_alg_tr A (S n))
   ).

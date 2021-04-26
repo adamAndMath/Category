@@ -25,7 +25,7 @@ Next Obligation.
   now apply Slice.hom_eq.
 Qed.
 
-Program Definition Slice2Comma {C: Category} (c: C): C / c ~> id C ↓ @Δ _ 1 c := {|
+Program Definition Slice2Comma {C: Category} (c: C): Functor (C / c) (id C ↓ @Δ _ 1 c) := {|
   fobj x := {|
     Comma.source := Slice.dom x;
     Comma.target := tt;
@@ -105,7 +105,7 @@ Next Obligation.
   now apply Slice.hom_eq.
 Qed.
 
-Program Definition Coslice2Comma {C: Category} (c: C): C \ c ~> @Δ _ 1 c ↓ id C := {|
+Program Definition Coslice2Comma {C: Category} (c: C): Functor (C \ c) (@Δ _ 1 c ↓ id C) := {|
   fobj x := {|
     Comma.source := tt;
     Comma.target := Slice.dom x;

@@ -111,7 +111,7 @@ Ltac hom_eq :=
     simpl
   end.
 
-Lemma mediator_is_eq {S T: Category} {F: S ~> T} {x y: cat F} (f: x ~> y): is_eq f -> is_eq (mediator f).
+Lemma mediator_is_eq {S T: Category} {F: Functor S T} {x y: cat F} (f: x ~> y): is_eq f -> is_eq (mediator f).
 Proof.
   intros [e H].
   subst f y.
@@ -240,7 +240,7 @@ Ltac hom_eq :=
     simpl
   end.
 
-Lemma mediator_is_eq {S T: Category} {F: S ~> T} {x y: cat F} (f: x ~> y): is_eq f -> is_eq (mediator f).
+Lemma mediator_is_eq {S T: Category} {F: Functor S T} {x y: cat F} (f: x ~> y): is_eq f -> is_eq (mediator f).
 Proof.
   intros [e H].
   subst f y.
@@ -256,9 +256,9 @@ Canonical Cocone.cat.
 Notation Cocone := Cocone.cat.
 
 Section cocone.
-Context {S T: Category} (F: S ~> T).
+Context {S T: Category} (F: Functor S T).
 
-Program Definition cocone_to: co (Cone F) ~> Cocone (cof F) := {|
+Program Definition cocone_to: Functor (co (Cone F)) (Cocone (cof F)) := {|
   fobj X := {|
     Cocone.vertex := Cone.vertex X;
     Cocone.edge := Cone.edge X;
@@ -276,7 +276,7 @@ Next Obligation.
   now Cocone.hom_eq.
 Qed.
 
-Program Definition cocone_from: Cocone (cof F) ~> co (Cone F) := {|
+Program Definition cocone_from: Functor (Cocone (cof F)) (co (Cone F)) := {|
   fobj X := {|
     Cone.vertex := Cocone.vertex X;
     Cone.edge := Cocone.edge X;
@@ -329,29 +329,29 @@ Qed.
 
 End cocone.
 
-Definition nat_cone {S T: Category} {F: S ~> T} (c: Cone F): Δ (Cone.vertex c) ~> F := {|
+Definition nat_cone {S T: Category} {F: Functor S T} (c: Cone F): Δ (Cone.vertex c) ~> F := {|
   transform := Cone.edge c: forall x, Δ (Cone.vertex c) x ~> F x;
   naturality x y f := eq_trans (comp_id_r _) (eq_sym (Cone.edge_comm c f));
 |}.
 
-Definition nat_cocone {S T: Category} {F: S ~> T} (c: Cocone F): F ~> Δ (Cocone.vertex c) := {|
+Definition nat_cocone {S T: Category} {F: Functor S T} (c: Cocone F): F ~> Δ (Cocone.vertex c) := {|
   transform := Cocone.edge c: forall x: S, F x ~> Δ (Cocone.vertex c) x;
   naturality x y f := eq_sym (eq_trans (comp_id_l _) (eq_sym (Cocone.edge_comm c f)));
 |}.
 
-Definition cone_nat {S T: Category} {F: S ~> T} (c: T) (η: Δ c ~> F): Cone F := {|
+Definition cone_nat {S T: Category} {F: Functor S T} (c: T) (η: Δ c ~> F): Cone F := {|
   Cone.vertex := c;
   Cone.edge := transform η;
   Cone.edge_comm x y f := eq_trans (eq_sym (naturality η f)) (comp_id_r _);
 |}.
 
-Definition cocone_nat {S T: Category} {F: S ~> T} (c: T) (η: F ~> Δ c): Cocone F := {|
+Definition cocone_nat {S T: Category} {F: Functor S T} (c: T) (η: F ~> Δ c): Cocone F := {|
   Cocone.vertex := c;
   Cocone.edge := transform η;
   Cocone.edge_comm x y f := eq_trans (naturality η f) (comp_id_l _);
 |}.
 
-Lemma nat_cone_inv {S T: Category} {F: S ~> T} (c: Cone F): cone_nat (Cone.vertex c) (nat_cone c) = c.
+Lemma nat_cone_inv {S T: Category} {F: Functor S T} (c: Cone F): cone_nat (Cone.vertex c) (nat_cone c) = c.
 Proof.
   destruct c as [c edge Hc]; simpl.
   unfold nat_cone; simpl.
@@ -360,7 +360,7 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Lemma nat_cocone_inv {S T: Category} {F: S ~> T} (c: Cocone F): cocone_nat (Cocone.vertex c) (nat_cocone c: F ~> Δ (Cocone.vertex c)) = c.
+Lemma nat_cocone_inv {S T: Category} {F: Functor S T} (c: Cocone F): cocone_nat (Cocone.vertex c) (nat_cocone c: F ~> Δ (Cocone.vertex c)) = c.
 Proof.
   destruct c as [c edge Hc]; simpl.
   unfold nat_cocone; simpl.
@@ -369,13 +369,13 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Lemma cone_nat_inv {S T: Category} {F: S ~> T} (c: T) (η: Δ c ~> F): nat_cone (cone_nat c η) = η.
+Lemma cone_nat_inv {S T: Category} {F: Functor S T} (c: T) (η: Δ c ~> F): nat_cone (cone_nat c η) = η.
 Proof. now natural_eq x. Qed.
 
-Lemma cocone_nat_inv {S T: Category} {F: S ~> T} (c: T) (η: F ~> Δ c): nat_cocone (cocone_nat c η) = η.
+Lemma cocone_nat_inv {S T: Category} {F: Functor S T} (c: T) (η: F ~> Δ c): nat_cocone (cocone_nat c η) = η.
 Proof. now natural_eq x. Qed.
 
-Lemma cone_iso_ex {S T: Category} {F: S ~> T} (X: Cone F) (y: T): Cone.vertex X ≃ y -> exists Y, Cone.vertex Y = y /\ X ≃ Y.
+Lemma cone_iso_ex {S T: Category} {F: Functor S T} (X: Cone F) (y: T): Cone.vertex X ≃ y -> exists Y, Cone.vertex Y = y /\ X ≃ Y.
 Proof.
   intros [i].
   unshelve eexists.
@@ -402,7 +402,7 @@ Proof.
   + apply inv_r.
 Qed.
 
-Lemma cocone_iso_ex {S T: Category} {F: S ~> T} (X: Cocone F) (y: T): Cocone.vertex X ≃ y -> exists Y, Cocone.vertex Y = y /\ X ≃ Y.
+Lemma cocone_iso_ex {S T: Category} {F: Functor S T} (X: Cocone F) (y: T): Cocone.vertex X ≃ y -> exists Y, Cocone.vertex Y = y /\ X ≃ Y.
 Proof.
   intros [i].
   unshelve eexists.
@@ -429,7 +429,7 @@ Proof.
   + apply inv_r.
 Qed.
 
-Program Definition cone_lift {S T: Category} (F G: S ~> T) (η: F ~> G): Cone F ~> Cone G := {|
+Program Definition cone_lift {S T: Category} (F G: Functor S T) (η: F ~> G): Cone F ~> Cone G := {|
   fobj C := {|
     Cone.vertex := Cone.vertex C;
     Cone.edge i := η i ∘ Cone.edge C i;
@@ -457,7 +457,7 @@ Next Obligation.
   now Cone.hom_eq.
 Qed.
 
-Program Definition cocone_lift {S T: Category} (F G: S ~> T) (η: F ~> G): Cocone G ~> Cocone F := {|
+Program Definition cocone_lift {S T: Category} (F G: Functor S T) (η: F ~> G): Cocone G ~> Cocone F := {|
   fobj C := {|
     Cocone.vertex := Cocone.vertex C;
     Cocone.edge i := Cocone.edge C i ∘ η i;
@@ -485,7 +485,7 @@ Next Obligation.
   now Cocone.hom_eq.
 Qed.
 
-Program Definition cone_whisk_l {A B C: Category} (F: B ~> C) (G: A ~> B): Cone G ~> Cone (F ∘ G) := {|
+Program Definition cone_whisk_l {A B C: Category} (F: Functor B C) (G: Functor A B): Cone G ~> Cone (F ∘ G) := {|
   fobj X := {|
     Cone.vertex := F (Cone.vertex X);
     Cone.edge i := fmap F (Cone.edge X i);
@@ -513,7 +513,7 @@ Next Obligation.
   apply fmap_comp.
 Qed.
 
-Program Definition cocone_whisk_l {A B C: Category} (F: B ~> C) (G: A ~> B): Cocone G ~> Cocone (F ∘ G) := {|
+Program Definition cocone_whisk_l {A B C: Category} (F: Functor B C) (G: Functor A B): Cocone G ~> Cocone (F ∘ G) := {|
   fobj X := {|
     Cocone.vertex := F (Cocone.vertex X);
     Cocone.edge i := fmap F (Cocone.edge X i);
@@ -541,7 +541,7 @@ Next Obligation.
   apply fmap_comp.
 Qed.
 
-Program Definition cone_whisk_r {A B C: Category} (F: B ~> C) (G: A ~> B): Cone F ~> Cone (F ∘ G) := {|
+Program Definition cone_whisk_r {A B C: Category} (F: Functor B C) (G: Functor A B): Cone F ~> Cone (F ∘ G) := {|
   fobj X := {|
     Cone.vertex := Cone.vertex X;
     Cone.edge i := Cone.edge X (G i);
@@ -563,7 +563,7 @@ Next Obligation.
   now Cone.hom_eq.
 Qed.
 
-Program Definition cocone_whisk_r {A B C: Category} (F: B ~> C) (G: A ~> B): Cocone F ~> Cocone (F ∘ G) := {|
+Program Definition cocone_whisk_r {A B C: Category} (F: Functor B C) (G: Functor A B): Cocone F ~> Cocone (F ∘ G) := {|
   fobj X := {|
     Cocone.vertex := Cocone.vertex X;
     Cocone.edge i := Cocone.edge X (G i);

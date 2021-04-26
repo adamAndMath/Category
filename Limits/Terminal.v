@@ -38,7 +38,7 @@ Lemma top_ex_lim: ex_lim 0 C.
 Proof.
   exists (TopLim ∘ Fun0C C).
   red.
-  replace (@Δ C 0) with ((Fun0C C)⁻¹ ∘ @to_one _ C).
+  replace (@Δ' C 0) with ((Fun0C C)⁻¹ ∘ @to_one _ C).
   apply adjoint_comp.
   exact top_adjoint.
   apply iso_adjoint.
@@ -92,7 +92,7 @@ Proof.
     clear adj; intros adj.
     rewrite <- comp_assoc in adj.
     rewrite inv_r, comp_id_r in adj.
-    rewrite <- (to_one_unique (Fun0C C ∘ @Δ C 0)) in adj.
+    rewrite <- (to_one_unique (Fun0C C ∘ @Δ' C 0)) in adj.
     destruct adj as [η [ɛ adj]].
     constructor.
     exact (Limit2Top_mixin C Lim η ɛ adj).

@@ -44,7 +44,7 @@ Section Fun_1_r.
 Context (C: Category).
 
 Definition FunC1_to: Fun C 1 ~> 1 := Δ tt.
-Definition FunC1_from: 1 ~> Fun C 1 := Δ.
+Definition FunC1_from: 1 ~> Fun C 1 := Δ'.
 
 Lemma FunC1_inv_l: FunC1_from ∘ FunC1_to = id (Fun C 1).
 Proof.

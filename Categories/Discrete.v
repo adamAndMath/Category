@@ -1,4 +1,4 @@
-Require Export Typ.
+Require Export Categories.Typ.
 
 Module Discrete.
 Section category.
@@ -30,6 +30,30 @@ Definition cat_mixin: Category.mixin_of obj :=
 Definition cat := Category.Pack obj cat_mixin.
 
 End category.
+
+Program Definition func {T} {C: Category} (f: T -> C) := {|
+  fobj (x: cat T) := f x;
+  fmap x y e := eq_iso (f_equal f e);
+|}.
+Next Obligation.
+  apply is_eq_unique, is_eq_comp.
+  all: apply eq_iso_is_eq.
+Qed.
+
+Lemma func_fobj {T} {C: Category} (F: Functor (cat T) C): func F = F.
+Proof.
+  fun_eq x y H.
+  destruct H; simpl.
+  symmetry.
+  apply (@fmap_id _ _ F x).
+Qed.
+
+Lemma func_surj {T} {C: Category} (F: Functor (cat T) C): exists f, func f = F.
+Proof.
+  exists F.
+  apply func_fobj.
+Qed.
+
 End Discrete.
 
 Notation Discrete := Discrete.cat.

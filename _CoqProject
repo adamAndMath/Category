@@ -29,6 +29,8 @@ Structure/Terminal.v
 Structure/Initial.v
 Structure/Product.v
 Structure/Coproduct.v
+Structure/SmallProd.v
+Structure/SmallCoprod.v
 Structure/Equalizer.v
 Structure/Coequalizer.v
 Structure/Pullback.v
@@ -54,6 +56,8 @@ Instances/Comma/Cone.v
 Instances/Comma/Adjoint.v
 Instances/Fun.v
 Instances.v
+Categories/Topology.v
+Sheaf.v
 Finite.v
 Limit.v
 Limits/Terminal.v

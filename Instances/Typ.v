@@ -139,6 +139,44 @@ Definition TypEq_mixin: EqCategory.mixin_of Typ :=
 Canonical TypEq: EqCategory :=
   EqCategory.Pack Typ TypEq_mixin.
 
+Program Definition TypSProd_mixin := SProdCategory.Mixin Typ
+  (fun I F => forall i, F i)
+  (fun I T F f x i => f i x)
+  (fun I F i x => x i)
+  _.
+Next Obligation.
+  split.
+  + intros H.
+    now subst g.
+  + intros H.
+    extensionality x.
+    extensionality i.
+    specialize (H i).
+    now apply (f_equal (fun f => f x)) in H.
+Qed.
+
+Canonical TypSProd: SProdCategory :=
+  SProdCategory.Pack Typ TypSProd_mixin.
+
+Program Definition TypSCoprod_mixin := SCoprodCategory.Mixin Typ
+  sigT
+  (fun I T F f x => f (projT1 x) (projT2 x))
+  existT
+  _.
+Next Obligation.
+  split.
+  + intros H.
+    now subst g.
+  + intros H.
+    extensionality x.
+    destruct x as [i x]; simpl.
+    specialize (H i).
+    now apply (f_equal (fun f => f x)) in H.
+Qed.
+
+Canonical TypSCoprod: SCoprodCategory :=
+  SCoprodCategory.Pack Typ TypSCoprod_mixin.
+
 End Typ.
 
 Lemma typ_iso_0 A: A ≃ 0 <-> ~inhabited A.

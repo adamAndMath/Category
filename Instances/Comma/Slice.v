@@ -5,10 +5,10 @@ Require Export Categories.Comma.
 Program Definition Comma2Slice {C: Category} (c: C): id C ↓ @Δ _ 1 c ~> C / c := {|
   fobj x := {|
     Slice.dom := Comma.source x;
-    Slice.oarr := Comma.morph x;
+    Slice.arr := Comma.morph x;
   |};
   fmap x y f := {|
-    Slice.arr := Comma.smap f;
+    Slice.map := Comma.smap f;
   |};
 |}.
 Next Obligation.
@@ -29,10 +29,10 @@ Program Definition Slice2Comma {C: Category} (c: C): Functor (C / c) (id C ↓ @
   fobj x := {|
     Comma.source := Slice.dom x;
     Comma.target := tt;
-    Comma.morph := Slice.oarr x;
+    Comma.morph := Slice.arr x;
   |};
   fmap x y f := {|
-    Comma.smap := Slice.arr f;
+    Comma.smap := Slice.map f;
     Comma.tmap := id tt;
   |};
 |}.
@@ -84,11 +84,11 @@ Canonical CommaSlice {C: Category} (c: C): id C ↓ @Δ _ 1 c <~> C / c :=
 
 Program Definition Comma2Coslice {C: Category} (c: C): @Δ _ 1 c ↓ id C ~> C \ c := {|
   fobj (x: @Δ _ 1 c ↓ id C) := {|
-    Slice.dom := Comma.target x: co C;
-    Slice.oarr := Comma.morph x;
+    Coslice.cod := Comma.target x;
+    Coslice.arr := Comma.morph x;
   |};
   fmap x y f := {|
-    Slice.arr := Comma.tmap f;
+    Coslice.map := Comma.tmap f;
   |};
 |}.
 Next Obligation.
@@ -99,26 +99,26 @@ Next Obligation.
   apply Comma.comm.
 Qed.
 Next Obligation.
-  now apply Slice.hom_eq.
+  now apply Coslice.hom_eq.
 Qed.
 Next Obligation.
-  now apply Slice.hom_eq.
+  now apply Coslice.hom_eq.
 Qed.
 
 Program Definition Coslice2Comma {C: Category} (c: C): Functor (C \ c) (@Δ _ 1 c ↓ id C) := {|
   fobj x := {|
     Comma.source := tt;
-    Comma.target := Slice.dom x;
-    Comma.morph := Slice.oarr x;
+    Comma.target := Coslice.cod x;
+    Comma.morph := Coslice.arr x;
   |};
   fmap x y f := {|
     Comma.smap := id tt;
-    Comma.tmap := Slice.arr f;
+    Comma.tmap := Coslice.map f;
   |};
 |}.
 Next Obligation.
   rewrite comp_id_r.
-  exact (Slice.comm f).
+  exact (Coslice.comm f).
 Qed.
 Next Obligation.
   now apply Comma.hom_eq.
@@ -137,7 +137,7 @@ Proof.
   simpl.
   clear H H0.
   rewrite comp_id_l, comp_id_r.
-  apply Slice.hom_eq; simpl.
+  apply Coslice.hom_eq; simpl.
   reflexivity.
 Qed.
 

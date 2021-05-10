@@ -2,24 +2,25 @@ Require Export Base.
 
 Module Slice.
 
-Section category.
-Context (C: Category) (c: C).
-
-Structure obj := Obj {
+Structure obj (C: Category) (c: C) := Obj {
   dom: C;
-  oarr: dom ~> c;
+  arr: dom ~> c;
 }.
 
-Structure hom (f g: obj) := Morph {
-  arr: dom f ~> dom g;
-  comm: oarr g ∘ arr = oarr f;
+Arguments dom {C c} o.
+Arguments arr {C c} o.
+
+Structure hom {C: Category} {c: C} (f g: obj C c) := Hom {
+  map: dom f ~> dom g;
+  comm: arr g ∘ map = arr f;
 }.
 
-Local Arguments arr {f g} _.
-Local Arguments comm {f g} _.
-Local Coercion arr: hom >-> Categories.hom.
+Arguments Hom {C c f g} map comm.
+Arguments map {C c f g} _.
+Arguments comm {C c f g} _.
+Coercion map: hom >-> Categories.hom.
 
-Lemma obj_eq {f g: obj}: f = g <-> dom f = dom g /\ (forall e: dom f = dom g, oarr f = oarr g ∘ eq_iso e).
+Lemma obj_eq {C: Category} {c: C} {f g: obj C c}: f = g <-> dom f = dom g /\ (forall e: dom f = dom g, arr f = arr g ∘ eq_iso e).
 Proof.
   split.
   + intros H.
@@ -38,7 +39,7 @@ Proof.
     exact (H eq_refl).
 Qed.
 
-Lemma hom_eq {f g: obj} (a b: hom f g): a = b <-> arr a = arr b.
+Lemma hom_eq {C: Category} {c: C} {f g: obj C c} (a b: hom f g): a = b <-> map a = map b.
 Proof.
   split.
   intros H.
@@ -51,59 +52,131 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Definition id (f: obj): hom f f := {|
-  arr := id (dom f);
-  comm := comp_id_r (oarr f)
-|}.
-
-Definition comp {f g h: obj} (a: hom g h) (b: hom f g): hom f h := {|
-  arr := a ∘ b;
-  comm := eq_trans (comp_assoc _ _ _) (eq_trans (f_equal (fun f => f ∘ _) (comm a)) (comm b))
-|}.
-
-Lemma comp_assoc (f g h i: obj) (F: hom h i) (G: hom g h) (H: hom f g): comp F (comp G H) = comp (comp F G) H.
-Proof.
+Program Definition cat_mixin (C: Category) (c: C) := Category.Mixin (obj C c) hom
+  (fun f => {|
+    map := id (dom f);
+    comm := comp_id_r (arr f);
+  |})
+  (fun f g h a b => {|
+    map := a ∘ b;
+    comm := eq_trans (comp_assoc _ _ _) (eq_trans (f_equal (fun f => f ∘ _) (comm a)) (comm b));
+  |})
+  _ _ _.
+Next Obligation.
   apply hom_eq; simpl.
   apply comp_assoc.
 Qed.
-
-Lemma comp_id_l (f g: obj) (a: hom f g): comp (id g) a = a.
-Proof.
+Next Obligation.
   apply hom_eq; simpl.
   apply comp_id_l.
 Qed.
-
-Lemma comp_id_r (f g: obj) (a: hom f g): comp a (id f) = a.
-Proof.
+Next Obligation.
   apply hom_eq; simpl.
   apply comp_id_r.
 Qed.
 
-Definition cat_mixin: Category.mixin_of obj :=
-  Category.Mixin obj hom id (@comp) comp_assoc comp_id_l comp_id_r.
+Canonical cat (C: Category) (c: C): Category :=
+  Category.Pack (obj C c) (cat_mixin C c).
 
-Canonical cat: Category :=
-  Category.Pack obj cat_mixin.
-
-End category.
-
-Arguments dom {C c} _.
-Arguments oarr {C c} _.
-Arguments arr {C c f g} _.
-Arguments comm {C c f g} _.
-
-Definition Dom (C: Category) (c: C): cat C c ~> C := {|
+Program Canonical Dom (C: Category) (c: C): cat C c ~> C := {|
   fobj := dom;
-  fmap := @arr C c;
-  fmap_id _ := eq_refl;
-  fmap_comp _ _ _ _ _ := eq_refl;
+  fmap := @map C c;
 |}.
 
 End Slice.
 
 Canonical Slice.cat.
+Canonical Slice.Dom.
+Coercion Slice.map: Slice.hom >-> hom.
 Notation Slice := Slice.cat.
 Infix "/" := Slice.
 
-Definition Coslice (C: Category) (c: C) := co (co C / c).
+Module Coslice.
+
+Structure obj (C: Category) (c: C) := Obj {
+  cod: C;
+  arr: c ~> cod;
+}.
+
+Arguments cod {C c} o.
+Arguments arr {C c} o.
+
+Structure hom {C: Category} {c: C} (f g: obj C c) := Hom {
+  map: cod f ~> cod g;
+  comm: map ∘ arr f = arr g;
+}.
+
+Arguments Hom {C c f g} map comm.
+Arguments map {C c f g} _.
+Arguments comm {C c f g} _.
+Coercion map: hom >-> Categories.hom.
+
+Lemma obj_eq {C: Category} {c: C} {f g: obj C c}: f = g <-> cod f = cod g /\ (forall e: cod f = cod g, eq_iso e ∘ arr f = arr g).
+Proof.
+  split.
+  + intros H.
+    subst g.
+    repeat split.
+    intros e.
+    rewrite eq_iso_refl.
+    apply comp_id_l.
+  + destruct f as [x f], g as [x' g].
+    simpl.
+    intros [Hx H].
+    subst x'.
+    f_equal.
+    rewrite <- (comp_id_l f).
+    exact (H eq_refl).
+Qed.
+
+Lemma hom_eq {C: Category} {c: C} {f g: obj C c} (a b: hom f g): a = b <-> map a = map b.
+Proof.
+  split.
+  intros H.
+  now subst b.
+  destruct a as [a Ha], b as [b Hb].
+  simpl.
+  intros H.
+  subst b.
+  f_equal.
+  apply proof_irrelevance.
+Qed.
+
+Program Definition cat_mixin (C: Category) (c: C) := Category.Mixin (obj C c) hom
+  (fun f => {|
+    map := id (cod f);
+    comm := comp_id_l (arr f);
+  |})
+  (fun f g h a b => {|
+    map := a ∘ b;
+    comm := eq_trans (eq_sym (comp_assoc _ _ _)) (eq_trans (f_equal (fun f => _ ∘ f) (comm b)) (comm a));
+  |})
+  _ _ _.
+Next Obligation.
+  apply hom_eq; simpl.
+  apply comp_assoc.
+Qed.
+Next Obligation.
+  apply hom_eq; simpl.
+  apply comp_id_l.
+Qed.
+Next Obligation.
+  apply hom_eq; simpl.
+  apply comp_id_r.
+Qed.
+
+Canonical cat (C: Category) (c: C): Category :=
+  Category.Pack (obj C c) (cat_mixin C c).
+
+Program Canonical Cod (C: Category) (c: C): cat C c ~> C := {|
+  fobj := cod;
+  fmap := @map C c;
+|}.
+
+End Coslice.
+
+Canonical Coslice.cat.
+Canonical Coslice.Cod.
+Coercion Coslice.map: Coslice.hom >-> hom.
+Notation Coslice := Coslice.cat.
 Infix "\" := Coslice (at level 40, left associativity).

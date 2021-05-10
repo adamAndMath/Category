@@ -90,12 +90,12 @@ Context (C: Category) (X: C).
 
 Definition slice_one: C / X := {|
   Slice.dom := X;
-  Slice.oarr := id X;
+  Slice.arr := id X;
 |}.
 
 Definition slice_to_one (a: C / X): a ~> slice_one := {|
-  Slice.arr := Slice.oarr a: Slice.dom a ~> Slice.dom slice_one;
-  Slice.comm := comp_id_l (Slice.oarr a);
+  Slice.map := Slice.arr a: Slice.dom a ~> Slice.dom slice_one;
+  Slice.comm := comp_id_l (Slice.arr a);
 |}.
 
 Lemma slice_to_one_unique (a: C / X) (f: a ~> slice_one): slice_to_one a = f.
@@ -120,11 +120,11 @@ Context (C: BotCategory) (X: C).
 
 Definition slice_zero: C / X := {|
   Slice.dom := 0;
-  Slice.oarr := ¡;
+  Slice.arr := ¡;
 |}.
 
 Definition slice_from_zero (a: C / X): slice_zero ~> a := {|
-  Slice.arr := ¡: Slice.dom slice_zero ~> Slice.dom a;
+  Slice.map := ¡: Slice.dom slice_zero ~> Slice.dom a;
   Slice.comm := eq_sym (from_zero_unique _);
 |}.
 
@@ -146,16 +146,16 @@ Section ex3_3.
 Context (C: EqCategory) (X: C).
 
 Definition slice_Eqz {x y: C / X} (f g: x ~> y): C / X := {|
-  Slice.dom := Eqz (Slice.arr f) (Slice.arr g);
-  Slice.oarr := Slice.oarr x ∘ eqz (Slice.arr f) (Slice.arr g);
+  Slice.dom := Eqz (Slice.map f) (Slice.map g);
+  Slice.arr := Slice.arr x ∘ eqz (Slice.map f) (Slice.map g);
 |}.
 
 Program Definition slice_eqz {x y: C / X} (f g: x ~> y): slice_Eqz f g ~> x := {|
-  Slice.arr := eqz (Slice.arr f) (Slice.arr g);
+  Slice.map := eqz (Slice.map f) (Slice.map g);
 |}.
 
 Program Definition slice_eqz_med {x y z: C / X} (f g: y ~> z) (e: x ~> y) (He: f ∘ e = g ∘ e): x ~> slice_Eqz f g := {|
-  Slice.arr := (eqz_med (Slice.arr f) (Slice.arr g) (Slice.arr e)) (proj1 (Slice.hom_eq _ _ _ _) He);
+  Slice.map := (eqz_med (Slice.map f) (Slice.map g) (Slice.map e)) (proj1 (Slice.hom_eq _ _) He);
 |}.
 Next Obligation.
   rewrite <- comp_assoc.

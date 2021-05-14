@@ -138,6 +138,28 @@ Definition CatProd_Prod_mixin (C D: ProdCategory): ProdCategory.mixin_of (C × D
 Canonical CatProd_Prod (C D: ProdCategory): ProdCategory :=
   ProdCategory.Pack (C × D) (CatProd_Prod_mixin C D).
 
+Program Definition CatProd_Exp_mixin (C D: ExpCategory) :=
+  ExpCategory.Mixin (CatProd_Prod C D)
+  (fun p q => (fst p ^ fst q, snd p ^ snd q))
+  (fun p q => (eval (fst p) (fst q), eval (snd p) (snd q)))
+  (fun p q x f => (transpose (fst f), transpose (snd f)))
+  _.
+Next Obligation.
+  split.
+  + intros H.
+    subst f; simpl.
+    destruct g; simpl.
+    now f_equal; apply transpose_ump.
+  + intros H.
+    subst g; simpl.
+    destruct f; simpl.
+    unfold comp; simpl.
+    now f_equal; apply transpose_ump.
+Qed.
+
+Definition CatProd_Exp_class (C D: ExpCategory) := ExpCategory.Class (Prod C D) (CatProd_Prod_mixin C D) (CatProd_Exp_mixin C D).
+Canonical CatProd_Exp (C D: ExpCategory) := ExpCategory.Pack (Prod C D) (CatProd_Exp_class C D).
+
 Definition bf {S1 S2 T: Category} (F: Bifunctor S1 S2 T): Functor (Prod S1 S2) T := {|
   fobj p := F (fst p) (snd p);
   fmap p q f := bmap F (fst f) (snd f);

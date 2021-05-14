@@ -67,7 +67,25 @@ Proof. now apply sfork_ump. Qed.
 Lemma pi_spmap {I} {F G: I -> C} (η: forall i, F i ~> G i) (i: I): π i ∘ spmap η = η i ∘ π i.
 Proof. exact (pi_sfork (fun i => η i ∘ π i) i). Qed.
 
-Lemma spmap_id {I} {F: I -> C}: (∏) i, id (F i) = id (sprod F).
+Lemma sfork_comp {I} {X Y: C} {F: I -> C} (f: forall i, Y ~> F i) (g: X ~> Y): ∏' i, (f i ∘ g) = sfork f ∘ g.
+Proof.
+  apply to_sprod_eq.
+  intros i.
+  rewrite comp_assoc.
+  now rewrite !pi_sfork.
+Qed.
+
+Lemma spmap_sfork {I} {F G: I -> C} {X: C} (f: forall i, F i ~> G i) (g: forall i, X ~> F i): spmap f ∘ sfork g = ∏' i, (f i ∘ g i).
+Proof.
+  apply to_sprod_eq.
+  intros i.
+  rewrite comp_assoc.
+  rewrite pi_spmap.
+  rewrite <- comp_assoc.
+  now rewrite !pi_sfork.
+Qed.
+
+Lemma spmap_id {I} (F: I -> C): (∏) i, id (F i) = id (sprod F).
 Proof.
   apply to_sprod_eq.
   intros i.
@@ -94,3 +112,17 @@ Notation "∏ i .. j , x" := (sprod (fun i => .. (sprod (fun j => x)) ..)) (at l
 Notation "∏' i .. j , f" := (sfork (fun i => .. (sfork (fun j => f)) ..)) (at level 40, i binder).
 Notation π := pi.
 Notation "(∏) i .. j , f" := (spmap (fun i => .. (spmap (fun j => f)) ..)) (at level 40, i binder).
+
+Instance sfork_pw C I X F: Proper (forall_relation (fun _ => eq) ==> eq) (@sfork C I X F).
+Proof.
+  intros f g H.
+  f_equal.
+  now extensionality i.
+Qed.
+
+Instance spmap_pw C I F G: Proper (forall_relation (fun _ => eq) ==> eq) (@spmap C I F G).
+Proof.
+  intros f g H.
+  f_equal.
+  now extensionality i.
+Qed.

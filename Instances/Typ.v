@@ -179,6 +179,234 @@ Canonical TypSCoprod: SCoprodCategory :=
 
 End Typ.
 
+Module TypComp.
+
+Structure obj {C: Category} (F: Functor C Typ) := Obj {
+  family x: F x;
+  family_comm {x y} f: fmap F f (family x) = family y;
+}.
+
+Arguments family {C F} o x.
+Arguments family_comm {C F} o {x y} f.
+Coercion family: obj >-> Funclass.
+
+Lemma obj_eq {C: Category} {F: Functor C Typ} (X Y: obj F): X = Y <-> forall x, X x = Y x.
+Proof.
+  split.
+  now intros [].
+  destruct X as [X HX], Y as [Y HY]; simpl.
+  intros H.
+  enough (X = Y); [subst Y|].
+  f_equal; apply proof_irrelevance.
+  now extensionality x.
+Qed.
+
+Program Definition Proj {C: Category} {F: Functor C Typ}: @Δ Typ C (obj F) ~> F := {|
+  transform x X := X x;
+|}.
+Next Obligation.
+  extensionality X.
+  unfold comp, id; simpl.
+  symmetry.
+  apply family_comm.
+Qed.
+
+Program Definition map {C: Category} {F: Functor C Typ} {T: Type} (η: @Δ Typ C T ~> F) (t: T): obj F := {|
+  family x := η x t;
+|}.
+Next Obligation.
+  change ((fmap F f ∘ η x) t = η y t).
+  apply (f_equal (fun f => f t)).
+  rewrite <- (naturality η).
+  exact (comp_id_r (η y)).
+Qed.
+
+Lemma Proj_map {C: Category} {F: Functor C Typ} {T: Type} (η: @Δ Typ C T ~> F) (X: T) (x: C): Proj x (map η X) = η x X.
+Proof. reflexivity. Qed.
+
+End TypComp.
+
+Coercion TypComp.family: TypComp.obj >-> Funclass.
+
+Program Definition TypComp_mixin := Complete.Mixin Typ (@TypComp.obj) (@TypComp.Proj) (@TypComp.map) _ _.
+Next Obligation.
+  rename X into T.
+  natural_eq X.
+  now extensionality x.
+Qed.
+Next Obligation.
+  rename X into T.
+  extensionality t.
+  now apply TypComp.obj_eq.
+Qed.
+
+Canonical TypComp := Complete.Pack Typ TypComp_mixin.
+
+Module TypCocomp.
+
+Structure preObj {C: Category} (F: Functor C Typ) := PreObj {
+  lobj: C;
+  lelm: F lobj;
+}.
+
+Arguments PreObj {C F} lobj lelm.
+Arguments lobj {C F} _.
+Arguments lelm {C F} _.
+
+Inductive equiv {C: Category} {F: Functor C Typ}: preObj F -> preObj F -> Prop :=
+  | equiv_path {X Y Z: C} (f: X ~> Y) (g: X ~> Z) (x: F X): equiv (PreObj Y (fmap F f x)) (PreObj Z (fmap F g x))
+  | equiv_trans X Y Z: equiv X Y -> equiv Y Z -> equiv X Z.
+
+Instance equiv_inst (C: Category) (F: Functor C Typ): Equivalence (@equiv C F).
+Proof.
+  split.
+  + intros [X x].
+    change x with (id (F X) x).
+    rewrite <- fmap_id.
+    apply equiv_path.
+  + intros X Y H.
+    induction H.
+    apply equiv_path.
+    now apply (equiv_trans _ Y).
+  + exact equiv_trans.
+Qed.
+
+Lemma equiv_step {C: Category} {X Y: C} (F: Functor C Typ) (f: X ~> Y) (x: F X): equiv (PreObj Y (fmap F f x)) (PreObj X x).
+Proof.
+  change x with (id (F X) x) at 2.
+  rewrite <- fmap_id.
+  apply equiv_path.
+Qed.
+
+Structure obj {C: Category} (F: Functor C Typ) := {
+  class: preObj F -> Prop;
+  class_inhabited: exists X, forall Y, class Y <-> equiv X Y;
+}.
+
+Arguments class {C F} _ _.
+Arguments class_inhabited {C F} _.
+Coercion class: obj >-> Funclass.
+
+Instance class_proper (C: Category) (F: Functor C Typ): Proper (eq ==> @equiv C F ==> iff) class.
+Proof.
+  intros P Q e X Y H.
+  subst Q.
+  destruct (class_inhabited P) as [Z HZ].
+  rewrite !HZ.
+  now f_equiv.
+Qed.
+
+Program Definition Obj {C: Category} {F: Functor C Typ} (X: C) (x: F X) := {|
+  class := equiv {| lobj := X; lelm := x |};
+|}.
+Next Obligation.
+  now exists {| lobj := X; lelm := x |}.
+Qed.
+
+Lemma obj_eq {C: Category} {F: Functor C Typ} (X Y: obj F): X = Y <-> forall p, X p <-> Y p.
+Proof.
+  split.
+  now intros [].
+  destruct X as [X HX], Y as [Y HY]; simpl.
+  intros H.
+  enough (X = Y); [subst Y|].
+  f_equal; apply proof_irrelevance.
+  extensionality p.
+  now apply propositional_extensionality.
+Qed.
+
+Lemma Obj_eq {C: Category} {F: Functor C Typ} (X: C) (x: F X) (Y: obj F): Obj X x = Y <-> Y (PreObj X x).
+Proof.
+  destruct (class_inhabited Y) as [y H].
+  rewrite obj_eq; simpl; split.
+  intros Hp.
+  now apply Hp.
+  intros Hx p.
+  apply H in Hx.
+  rewrite H.
+  now f_equiv.
+Qed.
+
+Lemma Obj_surj {C: Category} {F: Functor C Typ} (X: obj F): exists Y (y: F Y), Obj Y y = X.
+Proof.
+  enough (exists Y (y: F Y), X {| lobj := Y; lelm := y |}) as [Y [y H]].
+  exists Y, y.
+  now apply Obj_eq.
+  destruct X as [P HP]; simpl.
+  destruct HP as [[X x] H].
+  exists X, x.
+  now apply H.
+Qed.
+
+Program Definition Into {C: Category} {F: Functor C Typ}: F ~> @Δ Typ C (obj F) := {|
+  transform := Obj;
+|}.
+Next Obligation.
+  rename x into X, y into Y.
+  rewrite comp_id_l.
+  extensionality x.
+  unfold comp; simpl.
+  apply Obj_eq; simpl.
+  change x with (id (F X) x) at 1.
+  rewrite <- fmap_id.
+  apply equiv_path.
+Qed.
+
+Lemma preObj_inhab {C: Category} {F: Functor C Typ} (X: obj F): inhabited (preObj F).
+Proof. now destruct (class_inhabited X) as [x _]. Qed.
+
+Definition map {C: Category} {F: Functor C Typ} {T: Type} (η: F ~> @Δ Typ C T) (X: obj F): T :=
+  η (lobj (epsilon (preObj_inhab X) X)) (lelm (epsilon (preObj_inhab X) X)).
+
+Lemma map_Obj {C: Category} {F: Functor C Typ} {T: Type} (η: F ~> @Δ Typ C T) (X: C) (x: F X): map η (Obj X x) = η X x.
+Proof.
+  unfold map.
+  generalize (epsilon (preObj_inhab (Obj X x)) (Obj X x)), (epsilon_spec (preObj_inhab (Obj X x)) (Obj X x)).
+  intros p H.
+  assert (exists Y, Obj X x Y) by now exists (PreObj X x); simpl.
+  specialize (H H0); clear H0.
+  simpl in H.
+  set (PreObj X x) in H.
+  change X with (lobj p0).
+  change x with (lelm p0).
+  clearbody p0; clear X x.
+  induction H; simpl.
+  transitivity (η X x).
+  2: symmetry.
+  1: change ((η Z ∘ fmap F g) x = (fmap (Δ T) g ∘ η X) x).
+  2: change ((η Y ∘ fmap F f) x = (fmap (Δ T) f ∘ η X) x).
+  1, 2: apply (f_equal (fun f => f _)).
+  1, 2: apply (naturality η).
+  now transitivity (η (lobj Y) (lelm Y)).
+Qed.
+
+End TypCocomp.
+
+Program Definition TypCocomp_mixin := Cocomplete.Mixin Typ (@TypCocomp.obj) (@TypCocomp.Into) (@TypCocomp.map) _ _.
+Next Obligation.
+  rename X into T.
+  natural_eq X.
+  extensionality x.
+  unfold comp; simpl.
+  apply TypCocomp.map_Obj.
+Qed.
+Next Obligation.
+  rename X into T.
+  extensionality P.
+  destruct (TypCocomp.Obj_surj P) as [X [x H]].
+  subst P.
+  apply TypCocomp.map_Obj.
+Qed.
+
+Canonical TypCocomp := Cocomplete.Pack Typ TypCocomp_mixin.
+
+Lemma Colim_map_TypObj {D} (F G: Functor D Typ) (η: F ~> G) (X: D) (x: F X): Colim_map η (TypCocomp.Obj X x) = TypCocomp.Obj X (η X x).
+Proof.
+  change ((Colim_map η ∘ Colim F X) x = (Colim G X ∘ η X) x).
+  apply (f_equal (fun f => f x)).
+  exact (Colim_map_Colim η X).
+Qed.
+
 Lemma typ_iso_0 A: A ≃ 0 <-> ~inhabited A.
 Proof.
   split.

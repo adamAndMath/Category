@@ -8,6 +8,8 @@ Require Export Structure.Equalizer.
 Require Export Structure.Coequalizer.
 Require Export Structure.Pullback.
 Require Export Structure.Exponential.
+Require Export Structure.Complete.
+Require Export Structure.Cocomplete.
 
 Require Export Structure.Cartisian.
 Require Export Structure.CartisianClosed.

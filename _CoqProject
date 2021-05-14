@@ -38,6 +38,8 @@ Structure/Exponential.v
 Structure/Cartisian.v
 Structure/CartisianClosed.v
 Structure/FiniteCompleteClosed.v
+Structure/Cocomplete.v
+Structure/Complete.v
 Structure/Topos.v
 Structure.v
 Congruence.v

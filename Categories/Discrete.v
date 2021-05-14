@@ -83,7 +83,7 @@ Definition forget: Cat ~> Typ := {|
   fmap_comp _ _ _ _ _ := eq_refl;
 |}.
 
-Program Definition disc_unit: disc ∘ forget ~> id Cat := {|
+Program Definition disc_counit: disc ∘ forget ~> id Cat := {|
   transform C := {|
     fobj x := x;
     fmap x y e := eq_iso e;
@@ -102,7 +102,7 @@ Next Obligation.
   apply fmap_id.
 Qed.
 
-Program Definition disc_counit: id Typ ~> forget ∘ disc := {|
+Program Definition disc_unit: id Typ ~> forget ∘ disc := {|
   transform T x := x;
 |}.
 

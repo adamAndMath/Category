@@ -50,7 +50,7 @@ Next Obligation.
 Qed.
 
 Section Adjoint2hom.
-Context {C D: Category} (F: C ~> D) (G: D ~> C) ɛ η (adj: adjoint_by F G ɛ η).
+Context {C D: Category} (F: C ~> D) (G: D ~> C) η ɛ (adj: adjoint_by F G η ɛ).
 
 Program Definition adjoint_hom_iso_to: Hom D ∘ ⟨cof F ∘ π₁, π₂⟩ ~> Hom C ∘ ⟨π₁, G ∘ π₂⟩ := {|
   transform x f := fmap G f ∘ η (fst x);
@@ -210,7 +210,7 @@ Proof.
   exact H.
 Qed.
 
-Lemma hom_adjoint_by: adjoint_by F G hom_counit hom_unit.
+Lemma hom_adjoint_by: adjoint_by F G hom_unit hom_counit.
 Proof.
   apply adjoint_by_alt.
   split; intros x.
@@ -231,10 +231,10 @@ End Hom2Adjoint.
 Lemma adjoint_hom {C D: Category} (F: C ~> D) (G: D ~> C): F -| G <-> Hom D ∘ ⟨cof F ∘ π₁, π₂⟩ ≃ Hom C ∘ ⟨π₁, G ∘ π₂⟩.
 Proof.
   split.
-  + intros [ɛ [η adj]].
+  + intros [η [ɛ adj]].
     constructor.
-    exact (adjoint_hom_iso F G ɛ η adj).
+    exact (adjoint_hom_iso F G η ɛ adj).
   + intros [i].
-    exists (hom_counit F G i), (hom_unit F G i).
+    exists (hom_unit F G i), (hom_counit F G i).
     exact (hom_adjoint_by F G i).
 Qed.

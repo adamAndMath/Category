@@ -729,7 +729,7 @@ Qed.
 Lemma ex_lim_correct (D C: Category): ex_lim D C <-> has_limit D C.
 Proof.
   split.
-  + intros [L [ɛ [η adj]]] F.
+  + intros [L [η [ɛ adj]]] F.
     apply adjoint_by_alt in adj.
     destruct adj as [adj1 adj2].
     apply ex_limit_alt.
@@ -838,7 +838,7 @@ Proof.
       apply comp_id_r.
     }
     destruct H1 as [η].
-    exists ɛ, η.
+    exists η, ɛ.
     apply adjoint_by_alt.
     split.
     - intros x.

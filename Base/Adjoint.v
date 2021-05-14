@@ -1,11 +1,11 @@
 Require Export Base.Equivalence.
 
-Definition adjoint_by {C D: Category} (F: D ~> C) (G: C ~> D) (ɛ: F ∘ G ~> id C) (η: id D ~> G ∘ F) :=
+Definition adjoint_by {C D: Category} (F: D ~> C) (G: C ~> D) (η: id D ~> G ∘ F) (ɛ: F ∘ G ~> id C) :=
   (ɛ |> F) ∘ α F G F ∘ (F <| η) = (ρ F)⁻¹ ∘ λ F /\
   (G <| ɛ) ∘ (α G F G)⁻¹ ∘ (η |> G) = (ρ G)⁻¹ ∘ λ G.
 
-Lemma adjoint_by_alt {C D: Category} (F: D ~> C) (G: C ~> D) (ɛ: F ∘ G ~> id C) (η: id D ~> G ∘ F):
-  adjoint_by F G ɛ η <->
+Lemma adjoint_by_alt {C D: Category} (F: D ~> C) (G: C ~> D) (η: id D ~> G ∘ F) (ɛ: F ∘ G ~> id C):
+  adjoint_by F G η ɛ <->
   (forall x, ɛ (F x) ∘ fmap F (η x) = id (F x)) /\
   (forall x, fmap G (ɛ x) ∘ η (G x) = id (G x)).
 Proof.
@@ -23,14 +23,14 @@ Proof.
 Qed.
 
 Definition adjoint {C D: Category} (F: D ~> C) (G: C ~> D) :=
-  exists ɛ η, adjoint_by F G ɛ η.
+  exists η ɛ, adjoint_by F G η ɛ.
 
 Infix "-|" := adjoint (at level 60, no associativity).
 
 Lemma iso2_adjoint {C D: Category} (I: C <=> D): I -| I⁻.
 Proof.
   red.
-  exists (to (icounit I)), (to (iunit I)⁻¹).
+  exists (to (iunit I)⁻¹), (to (icounit I)).
   apply adjoint_by_alt.
   split; intros x.
   rewrite <- (iunit_to I).
@@ -56,9 +56,9 @@ Proof. apply (iso2_adjoint (iso_iso2 _ _ I)). Qed.
 
 Lemma adjoint_comp {A B C: Category} (F: C ~> B) (G: B ~> C) (F': B ~> A) (G': A ~> B): F -| G -> F' -| G' -> F' ∘ F -| G ∘ G'.
 Proof.
-  intros [ɛ [η adj]] [ɛ' [η' adj']].
-  exists (ɛ' ∘ ((ρ F' ∘ (F' <| ɛ) ∘ (α F' F G)⁻¹) |> G') ∘ α (F' ∘ F) G G').
+  intros [η [ɛ adj]] [η' [ɛ' adj']].
   exists ((α (G ∘ G') F' F)⁻¹ ∘ ((α G G' F' ∘ (G <| η') ∘ (ρ G)⁻¹) |> F) ∘ η).
+  exists (ɛ' ∘ ((ρ F' ∘ (F' <| ɛ) ∘ (α F' F G)⁻¹) |> G') ∘ α (F' ∘ F) G G').
   apply adjoint_by_alt in adj.
   apply adjoint_by_alt in adj'.
   apply adjoint_by_alt.
@@ -133,8 +133,8 @@ Proof.
   transitivity (F' -| G).
   1: clear G' J; destruct I as [I].
   2: clear F I; rename F' into F; destruct J as [I].
-  + intros [ɛ [η adj]].
-    exists (ɛ ∘ (I⁻¹ |> G)), ((G <| I) ∘ η).
+  + intros [η [ɛ adj]].
+    exists ((G <| I) ∘ η), (ɛ ∘ (I⁻¹ |> G)).
     apply adjoint_by_alt in adj.
     apply adjoint_by_alt.
     split; [apply proj1 in adj | apply proj2 in adj].
@@ -165,8 +165,8 @@ Proof.
       simpl.
       rewrite comp_id_r.
       apply adj.
-  + intros [ɛ [η adj]].
-    exists (ɛ ∘ (F <| I⁻¹)), ((I |> F) ∘ η).
+  + intros [η [ɛ adj]].
+    exists ((I |> F) ∘ η), (ɛ ∘ (F <| I⁻¹)).
     apply adjoint_by_alt in adj.
     apply adjoint_by_alt.
     split; [apply proj1 in adj | apply proj2 in adj].
@@ -202,7 +202,7 @@ Lemma adjoint_co {C D: Category} (F: D ~> C) (G: C ~> D): F -| G <-> to (CoFun C
 Proof.
   split.
   intros [η [ɛ adj]].
-  exists (fmap (to (CoFun D D)) ɛ), (fmap (to (CoFun C C)) η).
+  exists (fmap (to (CoFun C C)) ɛ), (fmap (to (CoFun D D)) η).
   apply adjoint_by_alt in adj.
   apply adjoint_by_alt.
   easy.
@@ -215,8 +215,62 @@ Proof.
   rewrite !cof_inv_l in adj.
   exact adj.
   intros [η [ɛ adj]].
-  exists (fmap (to (CoFun D D)⁻¹) ɛ), (fmap (to (CoFun C C)⁻¹) η).
+  exists (fmap (to (CoFun C C)⁻¹) ɛ), (fmap (to (CoFun D D)⁻¹) η).
   apply adjoint_by_alt in adj.
   apply adjoint_by_alt.
   easy.
+Qed.
+
+Lemma left_adjoint_unique {C D: Category} (F1 F2: D ~> C) (G: C ~> D): F1 -| G -> F2 -| G -> F1 ≃ F2.
+Proof.
+  intros [η1 [ɛ1 H1]] [η2 [ɛ2 H2]].
+  rewrite adjoint_by_alt in H1, H2.
+  constructor.
+  exists (λ F2 ∘ (ɛ1 |> F2) ∘ α F1 G F2 ∘ (F1 <| η2) ∘ (ρ F1)⁻¹).
+  exists (λ F1 ∘ (ɛ2 |> F1) ∘ α F2 G F1 ∘ (F2 <| η1) ∘ (ρ F2)⁻¹).
+  all: natural_eq x.
+  all: rewrite !comp_id_l, !comp_id_r.
+  all: rewrite comp_assoc.
+  all: change (?f ∘ ?g ∘ ?h = ?i) with (fmap (id C) f ∘ g ∘ h = i).
+  all: rewrite <- naturality.
+  all: simpl.
+  all: rewrite <- comp_assoc.
+  all: rewrite fmap_comp, <- fmap_comp.
+  all: rewrite <- comp_assoc.
+  all: change (fmap ?F (fmap ?G ?f) ∘ ?η x) with (fmap (F ∘ G) f ∘ η (id D x)).
+  all: rewrite <- naturality.
+  all: simpl.
+  all: rewrite comp_assoc.
+  1: setoid_rewrite (proj2 H2).
+  2: setoid_rewrite (proj2 H1).
+  all: rewrite comp_id_l.
+  apply H1.
+  apply H2.
+Qed.
+
+Lemma right_adjoint_unique {C D: Category} (F: D ~> C) (G1 G2: C ~> D): F -| G1 -> F -| G2 -> G1 ≃ G2.
+Proof.
+  intros [η1 [ɛ1 H1]] [η2 [ɛ2 H2]].
+  rewrite adjoint_by_alt in H1, H2.
+  constructor.
+  exists (ρ G2 ∘ (G2 <| ɛ1) ∘ (α G2 F G1)⁻¹ ∘ (η2 |> G1) ∘ (λ G1)⁻¹).
+  exists (ρ G1 ∘ (G1 <| ɛ2) ∘ (α G1 F G2)⁻¹ ∘ (η1 |> G2) ∘ (λ G2)⁻¹).
+  all: natural_eq x.
+  all: rewrite !comp_id_l, !comp_id_r.
+  all: rewrite <- comp_assoc.
+  all: change (?f ∘ (?g ∘ ?h) = ?i) with (f ∘ (g ∘ fmap (id D) h) = i).
+  all: rewrite naturality.
+  all: simpl.
+  all: rewrite comp_assoc.
+  all: rewrite fmap_comp, <- fmap_comp.
+  all: rewrite comp_assoc.
+  all: change (?η x ∘ fmap ?F (fmap ?G ?f)) with (η (id C x) ∘ fmap (F ∘ G) f).
+  all: rewrite naturality.
+  all: simpl.
+  all: rewrite <- comp_assoc.
+  1: setoid_rewrite (proj1 H2 (G1 x)).
+  2: setoid_rewrite (proj1 H1 (G2 x)).
+  all: rewrite comp_id_r.
+  apply H1.
+  apply H2.
 Qed.

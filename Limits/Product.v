@@ -38,7 +38,7 @@ Next Obligation.
   apply pi2_fork.
 Qed.
 
-Lemma prod_adjoint_by: adjoint_by FreeProd ProdLim ProdCounit ProdUnit.
+Lemma prod_adjoint_by: adjoint_by FreeProd ProdLim ProdUnit ProdCounit.
 Proof.
   apply adjoint_by_alt; simpl; split.
   intros x.
@@ -53,7 +53,7 @@ Qed.
 
 Lemma prod_adjoint: FreeProd -| ProdLim.
 Proof.
-  exists ProdCounit, ProdUnit.
+  exists ProdUnit, ProdCounit.
   exact prod_adjoint_by.
 Qed.
 
@@ -91,10 +91,10 @@ Qed.
 End Prod2Limit.
 
 Section Limit2Prod.
-Context (C: Category) (Lim: C × C ~> C) (η: FreeProd ∘ Lim ~> id (C × C)) (ɛ: id C ~> Lim ∘ FreeProd) (adj: adjoint_by FreeProd Lim η ɛ).
+Context (C: Category) (Lim: C × C ~> C) (η: id C ~> Lim ∘ FreeProd) (ɛ: FreeProd ∘ Lim ~> id (C × C)) (adj: adjoint_by FreeProd Lim η ɛ).
 
 Program Definition Limit2Prod_mixin: ProdCategory.mixin_of C :=
-  ProdCategory.Mixin C (fun x y => Lim (x, y)) (fun x y z f g => fmap Lim (f, g) ∘ ɛ x) (fun x y => fst (η (x, y))) (fun x y => snd (η (x, y))) _.
+  ProdCategory.Mixin C (fun x y => Lim (x, y)) (fun x y z f g => fmap Lim (f, g) ∘ η x) (fun x y => fst (ɛ (x, y))) (fun x y => snd (ɛ (x, y))) _.
 Next Obligation.
   apply adjoint_by_alt in adj.
   simpl in adj.
@@ -107,26 +107,26 @@ Next Obligation.
   2: subst f g.
   split.
   + rewrite comp_assoc.
-    change (fst (η (b, c) ∘ fmap (FreeProd ∘ Lim) ((f, g): (_, _) ~> (_, _))) ∘ ɛ a = f).
+    change (fst (ɛ (b, c) ∘ fmap (FreeProd ∘ Lim) ((f, g): (_, _) ~> (_, _))) ∘ η a = f).
     rewrite naturality.
     simpl.
     rewrite <- comp_assoc.
-    change (f ∘ fst (η (a, a) ∘ ((ɛ a, ɛ a): (_, _) ~> (_, _))) = f).
+    change (f ∘ fst (ɛ (a, a) ∘ ((η a, η a): (_, _) ~> (_, _))) = f).
     rewrite adj1.
     apply comp_id_r.
   + rewrite comp_assoc.
-    change (snd (η (b, c) ∘ fmap (FreeProd ∘ Lim) ((f, g): (_, _) ~> (_, _))) ∘ ɛ a = g).
+    change (snd (ɛ (b, c) ∘ fmap (FreeProd ∘ Lim) ((f, g): (_, _) ~> (_, _))) ∘ η a = g).
     rewrite naturality.
     simpl.
     rewrite <- comp_assoc.
-    change (g ∘ snd (η (a, a) ∘ ((ɛ a, ɛ a): (_, _) ~> (_, _))) = g).
+    change (g ∘ snd (ɛ (a, a) ∘ ((η a, η a): (_, _) ~> (_, _))) = g).
     rewrite adj1.
     apply comp_id_r.
-  + change (h = fmap Lim (η (b, c) ∘ fmap FreeProd h) ∘ ɛ a).
+  + change (h = fmap Lim (ɛ (b, c) ∘ fmap FreeProd h) ∘ η a).
     rewrite fmap_comp.
-    change (h = fmap Lim (η (b, c)) ∘ fmap (Lim ∘ FreeProd) h ∘ ɛ a).
+    change (h = fmap Lim (ɛ (b, c)) ∘ fmap (Lim ∘ FreeProd) h ∘ η a).
     rewrite <- comp_assoc.
-    setoid_rewrite <- (naturality ɛ h).
+    setoid_rewrite <- (naturality η h).
     rewrite comp_assoc.
     setoid_rewrite (adj2 (b, c)).
     symmetry.

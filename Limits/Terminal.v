@@ -19,7 +19,7 @@ Program Definition TopCounit: ! ∘ TopLim ~> id (1: Cat) := {|
   naturality _ _ _ := eq_refl;
 |}.
 
-Lemma top_adjoint_by: adjoint_by ! TopLim TopCounit TopUnit.
+Lemma top_adjoint_by: adjoint_by ! TopLim TopUnit TopCounit.
 Proof.
   apply adjoint_by_alt; simpl; split.
   all: intros _.
@@ -30,7 +30,7 @@ Qed.
 
 Lemma top_adjoint: ! -| TopLim.
 Proof.
-  exists TopCounit, TopUnit.
+  exists TopUnit, TopCounit.
   exact top_adjoint_by.
 Qed.
 
@@ -50,10 +50,10 @@ Qed.
 End Top2Limit.
 
 Section Limit2Top.
-Context (C: Category) (Lim: 1 ~> C) (η: ! ∘ Lim ~> id (1: Cat)) (ɛ: id C ~> Lim ∘ !) (adj: adjoint_by ! Lim η ɛ).
+Context (C: Category) (Lim: 1 ~> C) (η: id C ~> Lim ∘ !) (ɛ: ! ∘ Lim ~> id (1: Cat)) (adj: adjoint_by ! Lim η ɛ).
 
 Program Definition Limit2Top_mixin: TopCategory.mixin_of C :=
-  TopCategory.Mixin C (Lim tt) (transform ɛ) _.
+  TopCategory.Mixin C (Lim tt) (transform η) _.
 Next Obligation.
   apply adjoint_by_alt in adj.
   simpl in adj.
@@ -65,7 +65,7 @@ Next Obligation.
   rewrite adj1 in adj2.
   rewrite fmap_id, comp_id_l in adj2.
   symmetry.
-  specialize (naturality ɛ f) as H.
+  specialize (naturality η f) as H.
   simpl in H.
   rewrite fmap_id, adj2 in H.
   rewrite !comp_id_l in H.

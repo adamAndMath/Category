@@ -868,14 +868,16 @@ Program Canonical existT {I} (F: I -> obj) (i: I) := {|
   map := existT F i;
 |}.
 
-Program Definition scoprodCat_mixin := SCoprodCategory.Mixin cat (@sigT)
-  (fun I T F f => {|
-    map x := f (projT1 x) (projT2 x);
-  |}) (@existT) _.
+Program Canonical sigT_map {I T F} (f: forall i: I, hom (F i) T) := {|
+  map := sigT_rect (fun _ => T) f;
+|}.
 Next Obligation.
   intros i; simpl.
   now apply continue.
 Qed.
+
+Program Definition scoprodCat_mixin := SCoprodCategory.Mixin cat (@sigT)
+  (@sigT_map) (@existT) _.
 Next Obligation.
   split.
   + intros H.

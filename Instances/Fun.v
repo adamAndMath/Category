@@ -202,6 +202,87 @@ Canonical CartFun: CartCategory :=
 
 End Cartisian.
 
+Section SProduct.
+Context (S: Category) (T: SProdCategory).
+
+Program Definition SProdFun_mixin := SProdCategory.Mixin (Fun S T)
+  (fun I F => {|
+    fobj x := ∏ i, F i x;
+    fmap x y f := (∏) i, fmap (F i) f;
+  |})
+  (fun I F G η => {|
+    transform x := ∏' i, η i x;
+  |})
+  (fun I F i => {|
+    transform x := @π T I (fun i => F i x) i;
+  |})
+  _.
+Next Obligation.
+  setoid_rewrite fmap_id.
+  apply spmap_id.
+Qed.
+Next Obligation.
+  setoid_rewrite fmap_comp.
+  apply spmap_comp.
+Qed.
+Next Obligation.
+  rewrite spmap_sfork, <- sfork_comp.
+  f_equiv.
+  intros i.
+  apply naturality.
+Qed.
+Next Obligation.
+  apply (pi_spmap (fun i => fmap (F i) f)).
+Qed.
+Next Obligation.
+  setoid_rewrite natural_eq; simpl.
+  now setoid_rewrite sfork_ump.
+Qed.
+Canonical SProdFun := SProdCategory.Pack (Fun S T) SProdFun_mixin.
+
+End SProduct.
+
+Section SCoproduct.
+Context (S: Category) (T: SCoprodCategory).
+
+Program Definition SCoprodFun_mixin := SCoprodCategory.Mixin (Fun S T)
+  (fun I F => {|
+    fobj x := ∑ i, F i x;
+    fmap x y f := (∑) i, fmap (F i) f;
+  |})
+  (fun I F G η => {|
+    transform x := ∑' i, η i x;
+  |})
+  (fun I F i => {|
+    transform x := @ι T I (fun i => F i x) i;
+  |})
+  _.
+Next Obligation.
+  setoid_rewrite fmap_id.
+  apply scpmap_id.
+Qed.
+Next Obligation.
+  setoid_rewrite fmap_comp.
+  apply scpmap_comp.
+Qed.
+Next Obligation.
+  rewrite smerge_scpmap, <- comp_smerge.
+  f_equiv.
+  intros i.
+  apply naturality.
+Qed.
+Next Obligation.
+  symmetry.
+  apply (scpmap_sinto (fun i => fmap (F i) f)).
+Qed.
+Next Obligation.
+  setoid_rewrite natural_eq; simpl.
+  now setoid_rewrite smerge_ump.
+Qed.
+Canonical SCoprodFun := SCoprodCategory.Pack (Fun S T) SCoprodFun_mixin.
+
+End SCoproduct.
+
 Section Equalizer.
 Context (S: Category) (T: EqCategory).
 

@@ -7,58 +7,24 @@ Require Export Categories.Typ.
 Lemma ex1 (C: Category): is_proset C -> exists D, is_poset D /\ C ≈ D.
 Proof.
   intros H.
-  assert (exists T (R: T -> T -> Prop) (po: PreOrder R), Proset R ≃ C).
-    exists C, connected, (connected_preorder _).
-    apply proset_ex, H.
-  destruct H0 as [T [R [HR HC]]].
-  clear H.
-  apply iso_cequiv in HC.
-  setoid_rewrite <- HC.
-  clear C HC.
-  set (E x y := R x y /\ R y x).
-  assert (Equivalence E) as HE.
-    unfold E.
-    split; red; intros; split.
-    1, 2: reflexivity.
-    1, 2: apply H.
-    1, 2: now transitivity y.
-  set (Rq (x y: Quotient E) := R (elm x) (elm y)).
-  assert (PreOrder Rq) as HRq.
-    unfold Rq.
-    split; red; intros.
-    reflexivity.
-    now transitivity (elm y).
-  assert (PartialOrder eq Rq).
-    unfold Rq.
-    intros x y.
-    split.
-    intros H.
-    now subst y.
-    intros [H1 H2].
-    now apply (Quotient_eq E).
-  exists (Poset Rq).
-  split.
-  apply Poset_correct.
+  exists (Poset.strict_pro (Proset.conn C)); split.
+  exact (Poset_correct (Poset.strict_po (Proset.conn C))).
+  transitivity (Proset.conn C).
+  apply iso_cequiv.
   symmetry.
-  red.
-  unshelve eexists.
-  unshelve eexists.
-  exact elm.
-  exact (fun x y f => f).
-  3: apply is_equiv_alt.
-  3: split.
-  3, 4: red.
-  all: simpl.
-  all: intros.
-  1, 2: apply Proset.hom_eq.
-  now exists f.
-  exists (quotient E y).
-  constructor.
-  1: unshelve eexists.
-  2: unshelve eexists.
-  3, 4: apply Proset.hom_eq.
-  all: red; simpl.
-  all: apply (repr_correct E y).
+  now apply proset_ex.
+  generalize (Proset.conn C); clear C H.
+  intros P.
+  exists (Proset.hom_func (Poset.strict_unit P)).
+  apply is_equiv_alt; split.
+  + intros x y f.
+    unshelve eexists.
+    2: split; intros; apply Proset.chom_eq.
+    now apply f; simpl.
+  + intros X.
+    destruct (Poset.strictObj_surj X) as [x HX].
+    subst X.
+    now exists x.
 Qed.
 
 Lemma ex3_1 {C: CCC} {X Y: C} (g: X ~> Y) (B: C): exists! g': X^B ~> Y^B, forall A (f: A × B ~> X), g' ∘ transpose f = transpose (g ∘ f).

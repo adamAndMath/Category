@@ -6,10 +6,8 @@ Require Export Limits.Product.
 Require Export Limits.Coproduct.
 
 Section ex1.
-Universes i.
-Context {T: Type@{i}}.
 
-Lemma poset_equalizer (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_limit Parallel (Poset@{i Set} R).
+Lemma poset_equalizer (P: Poset): has_limit Parallel P.
 Proof.
   intros F.
   unshelve eexists.
@@ -19,25 +17,25 @@ Proof.
   exact (fmap F (Parallel.arr false)).
   exact (id (F false)).
   intros x y f.
-  apply Proset.hom_eq.
+  apply Proset.chom_eq.
   intros N.
   unshelve eexists.
   exists (Cone.edge N false).
   simpl.
   intros x.
-  apply Proset.hom_eq.
+  apply Proset.chom_eq.
   intros [f Hf].
   simpl in f, Hf.
   Cone.hom_eq.
-  apply Proset.hom_eq.
+  apply Proset.chom_eq.
 Qed.
 
-Lemma poset_coequalizer@{j} (R: T -> T -> Prop) {pre: PreOrder R} (po: PartialOrder eq R): has_colimit@{Set Set i Set j} Parallel (Poset@{i Set} R).
+Lemma poset_coequalizer (P: Poset): has_colimit Parallel P.
 Proof.
   rewrite <- (co_invol Parallel), <- co_invol.
-  apply (has_limit_co@{Set Set i Set j}).
+  apply has_limit_co.
   rewrite dual_poset.
-  generalize (@poset_equalizer (flip R) _ (PartialOrder_inverse po)).
+  generalize (@poset_equalizer (Poset.dual P)).
   apply has_limit_iso.
   symmetry.
   exact Parallel.dual_iso.

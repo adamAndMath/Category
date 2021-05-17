@@ -1,4 +1,5 @@
 Require Export Structure.
+Require Export Categories.Typ.
 
 Module Topology.
 
@@ -983,6 +984,128 @@ Next Obligation.
     now apply hom_eq.
 Qed.
 Canonical sprodCat := SProdCategory.Pack cat sprodCat_mixin.
+
+Program Canonical Forget: Functor cat Typ := {|
+  fobj := obj.sort;
+  fmap := @map;
+|}.
+
+Program Definition discrete_mixin T := obj.Mixin T (fun _ => True) _ _ _.
+Definition discrete T := obj.Pack T (discrete_mixin T).
+
+Program Definition discrete_map {S T} (f: S -> T): discrete S ~> discrete T := {|
+  map := f;
+|}.
+
+Program Canonical Discrete: Functor Typ cat := {|
+  fobj := discrete;
+  fmap := @discrete_map;
+|}.
+
+Program Definition discreteU: id Typ ~> Forget ∘ Discrete := {|
+  transform T x := x;
+|}.
+
+Program Definition discrete_unit (T: obj): discrete T ~> T := {|
+  map x := x;
+  continue P H := I;
+|}.
+
+Program Canonical discreteCU: Discrete ∘ Forget ~> id cat := {|
+  transform := discrete_unit;
+|}.
+
+Lemma discrete_adjoint: adjoint_by Discrete Forget discreteU discreteCU.
+Proof.
+  apply adjoint_by_alt.
+  split.
+  + intros T.
+    now apply hom_eq.
+  + intros T.
+    now extensionality x.
+Qed.
+
+Program Definition indiscrete_mixin T := obj.Mixin T (fun P => (fun _ => False) = P \/ (fun _ => True) = P) _ _ _.
+Next Obligation.
+  destruct (classic (forall i, (fun _ => False) = F i)).
+  apply functional_extensionality_dep in H0.
+  subst F.
+  left.
+  extensionality x.
+  apply propositional_extensionality.
+  split.
+  intros [].
+  intros [_ []].
+  apply not_all_ex_not in H0.
+  destruct H0 as [i Hi].
+  destruct (H i).
+  contradiction.
+  right.
+  extensionality x.
+  apply propositional_extensionality.
+  split; intros _.
+  exists i.
+  now rewrite <- H0.
+  constructor.
+Qed.
+Next Obligation.
+  destruct H, H0.
+  all: subst A B.
+  all: [> left..| right].
+  all: extensionality x.
+  all: now apply propositional_extensionality.
+Qed.
+Definition indiscrete T := obj.Pack T (indiscrete_mixin T).
+
+Program Definition indiscrete_map {S T} (f: S -> T): indiscrete S ~> indiscrete T := {|
+  map := f;
+|}.
+Next Obligation.
+  destruct H; subst P.
+  apply open_never.
+  apply open_all.
+Qed.
+
+Program Canonical Indiscrete: Functor Typ cat := {|
+  fobj := indiscrete;
+  fmap := @indiscrete_map;
+|}.
+Next Obligation.
+  now apply hom_eq.
+Qed.
+Next Obligation.
+  now apply hom_eq.
+Qed.
+
+Program Definition indiscrete_unit (T: obj): T ~> indiscrete T := {|
+  map x := x;
+|}.
+Next Obligation.
+  destruct H; subst P.
+  apply open_never.
+  apply open_all.
+Qed.
+
+Program Canonical indiscreteU: id cat ~> Indiscrete ∘ Forget := {|
+  transform := indiscrete_unit;
+|}.
+Next Obligation.
+  now apply hom_eq.
+Qed.
+
+Program Definition indiscreteCU: Forget ∘ Indiscrete ~> id Typ := {|
+  transform T x := x;
+|}.
+
+Lemma indiscrete_adjoint: adjoint_by Forget Indiscrete indiscreteU indiscreteCU.
+Proof.
+  apply adjoint_by_alt.
+  split.
+  + intros T.
+    now extensionality x.
+  + intros T.
+    now apply hom_eq.
+Qed.
 
 End Topology.
 

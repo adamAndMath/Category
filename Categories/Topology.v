@@ -1143,4 +1143,9 @@ Canonical Topology.coprodCat.
 Canonical Topology.prodCat.
 Canonical Topology.scoprodCat.
 Canonical Topology.sprodCat.
+Canonical Topology.Forget.
+Canonical Topology.Discrete.
+Canonical Topology.discreteCU.
+Canonical Topology.Indiscrete.
+Canonical Topology.indiscreteU.
 Notation Topology := Topology.cat.

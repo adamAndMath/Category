@@ -57,8 +57,10 @@ Instances/Comma/Arrow.v
 Instances/Comma/Cone.v
 Instances/Comma/Adjoint.v
 Instances/Fun.v
+Instances/Presheave.v
 Instances.v
 Categories/Topology.v
+Categories/Presheave.v
 Sheaf.v
 Finite.v
 Limit.v

@@ -139,6 +139,26 @@ Definition TypEq_mixin: EqCategory.mixin_of Typ :=
 Canonical TypEq: EqCategory :=
   EqCategory.Pack Typ TypEq_mixin.
 
+Program Definition TypPull_mixin := PullCategory.Mixin Typ (@PullTyp)
+  (@pfst) (@psnd)
+  _
+  (fun X Y Z V f g p1 p2 H x => {|
+    pfst := p1 x;
+    psnd := p2 x;
+  |}) _ _ _.
+Next Obligation.
+  extensionality t.
+  apply PullTyp.comm.
+Qed.
+Next Obligation.
+  exact (f_equal (fun f => f x) H).
+Qed.
+Next Obligation.
+  extensionality t.
+  now apply PullTyp.t_eq.
+Qed.
+Canonical TypPull := PullCategory.Pack Typ TypPull_mixin.
+
 Program Definition TypSProd_mixin := SProdCategory.Mixin Typ
   (fun I F => forall i, F i)
   (fun I T F f x i => f i x)

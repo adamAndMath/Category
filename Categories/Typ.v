@@ -1,5 +1,31 @@
 Require Export Base.
 
+Module PullTyp.
+Structure t {A B C} (f: A -> C) (g: B -> C) := {
+  pfst: A;
+  psnd: B;
+  comm: f pfst = g psnd;
+}.
+
+Arguments pfst {A B C f g} t.
+Arguments psnd {A B C f g} t.
+Arguments comm {A B C f g} t.
+
+Lemma t_eq {A B C} {f: A -> C} {g: B -> C} (x y: t f g): x = y <-> pfst x = pfst y /\ psnd x = psnd y.
+Proof.
+  split.
+  now intros [].
+  destruct x as [x1 x2 Hx], y as [y1 y2 Hy]; simpl.
+  intros [].
+  subst y1 y2.
+  f_equal; apply proof_irrelevance.
+Qed.
+
+End PullTyp.
+Notation PullTyp := PullTyp.t.
+Notation pfst := PullTyp.pfst.
+Notation psnd := PullTyp.psnd.
+
 Module Typ.
 Section category.
 Universe i j.

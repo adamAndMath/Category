@@ -317,3 +317,27 @@ Proof.
   now apply List.filter_In in H.
   all: exact IHNoDup.
 Qed.
+
+Lemma List_Forall_cons {A} (P: A -> Prop) (x: A) (l: list A): List.Forall P (x :: l) <-> P x /\ List.Forall P l.
+Proof.
+  split.
+  intros H.
+  now inversion_clear H.
+  intros [].
+  now constructor.
+Qed.
+
+Lemma List_Forall_app {A} (P: A -> Prop) (l1 l2: list A): List.Forall P (l1 ++ l2) <-> List.Forall P l1 /\ List.Forall P l2.
+Proof.
+  induction l1; simpl.
+  easy.
+  rewrite !List_Forall_cons, and_assoc.
+  now f_equiv.
+Qed.
+
+Lemma List_Forall_and {A} (P Q: A -> Prop) (l: list A): List.Forall (fun x => P x /\ Q x) l <-> List.Forall P l /\ List.Forall Q l.
+Proof.
+  induction l; simpl.
+  easy.
+  now rewrite !List_Forall_cons, IHl.
+Qed.

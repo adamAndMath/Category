@@ -91,6 +91,19 @@ Proof.
     now intros [].
 Qed.
 
+Lemma open_filter (T: type) (P: Prop) (A: T -> Prop): (P -> open T A) -> open T (fun x => P /\ A x).
+Proof.
+  intros HA.
+  destruct (classic P).
+  specialize (HA H).
+  revert HA.
+  change (?P -> ?Q) with (impl P Q).
+  f_equiv.
+  extensionality x.
+  now apply propositional_extensionality.
+  now apply open_never'.
+Qed.
+
 Lemma open_union' (T: type) (F: (T -> Prop) -> Prop): (forall P, F P -> open T P) -> open T (fun x => exists P, F P /\ P x).
 Proof.
   intros H.
@@ -106,6 +119,14 @@ Proof.
     now exists P.
   + intros [P [HP Hx]].
     now exists (exist _ P HP).
+Qed.
+
+Instance open_iff (T: type): Proper (pointwise_relation T iff ==> iff) (open T).
+Proof.
+  intros P Q H.
+  f_equiv.
+  extensionality x.
+  now apply propositional_extensionality.
 Qed.
 
 End Exports.
@@ -153,174 +174,120 @@ Qed.
 
 Canonical cat := Category.Pack obj cat_mixin.
 
-Definition is_basis {T} (F: (T -> Prop) -> Prop) :=
-  (forall x, exists P, F P /\ P x) /\
-  (forall L R x, F L -> F R -> L x -> R x -> exists P, F P /\ P x /\ (forall x, P x -> L x /\ R x)).
+Class Basis {I T} (F: I -> T -> Prop) :=
+  basis: (forall x, exists i, F i x) /\
+  (forall i j x, F i x -> F j x -> exists k, F k x /\ (forall x, F k x -> F i x /\ F j x)).
 
-Program Definition basis_mixin {T} (F: (T -> Prop) -> Prop) (H: is_basis F) := obj.Mixin T (fun P => exists G: (T -> Prop) -> Prop, (forall P, G P -> F P) /\ (fun x => exists P, G P /\ P x) = P) _ _ _.
+Program Definition basis_mixin {I T} (F: I -> T -> Prop) (H: Basis F) := obj.Mixin T (fun P => exists G: I -> Prop, (fun x => exists i, G i /\ F i x) = P) _ _ _.
 Next Obligation.
-  exists F; split.
-  easy.
+  exists (fun _ => True).
   extensionality x.
   apply propositional_extensionality.
   split; intros _.
-  exact I.
-  apply H.
+  constructor.
+  destruct (proj1 H x) as [i Hi].
+  now exists i.
 Qed.
 Next Obligation.
+  rename I0 into J.
   apply ex_forall in H0.
   destruct H0 as [G HG].
-  exists (fun P => exists i, G i P); split.
-  intros P [i HP].
-  now apply (HG i).
+  apply functional_extensionality_dep in HG.
+  subst F0.
+  exists (fun i => exists j, G j i).
   extensionality x.
   apply propositional_extensionality.
   split.
-  + intros [P [[i HP] Hx]].
-    exists i.
-    rewrite <- (proj2 (HG i)).
-    now exists P.
-  + intros [i Hx].
-    rewrite <- (proj2 (HG i)) in Hx.
-    destruct Hx as [P [HP Hx]].
-    exists P; split.
-    now exists i.
-    exact Hx.
+  + intros [i [[j Hj] Hi]].
+    now exists j, i.
+  + intros [j [i [Hj Hi]]].
+    exists i; split.
+    now exists j.
+    exact Hi.
 Qed.
 Next Obligation.
-  rename H0 into L, H4 into HL, H1 into R, H2 into HR.
-  exists (fun P => F P /\ exists l r, L l /\ R r /\ forall x, P x -> l x /\ r x); split.
-  now intros P [HP _].
+  rename H0 into L, H1 into R.
+  exists (fun i => exists l r, (L l /\ R r) /\ forall x, F i x -> F l x /\ F r x).
   extensionality x.
   apply propositional_extensionality.
   split.
-  + intros [P [[HP [l [r [Hl [Hr Hp]]]]] Hx]].
-    specialize (Hp x Hx).
+  + intros [i [[l [r [[Hl Hr] Hi]]] Hx]].
+    apply Hi in Hx.
     split.
     now exists l.
     now exists r.
-  + intros [[l [Hl lx]] [r [Hr rx]]].
-    apply proj2 in H.
-    specialize (H l r x (HL l Hl) (HR r Hr) lx rx) as [P [HP [Px Hx]]].
-    exists P; repeat split.
-    exact HP.
+  + intros [[l [Hl H1]] [r [Hr H2]]].
+    destruct (proj2 H l r x H1 H2) as [i [Hx Hi]].
+    exists i; split.
     now exists l, r.
-    exact Px.
+    exact Hx.
 Qed.
 
-Lemma open_basis (T: obj): is_basis (open T).
+Lemma basis_open {I T} (F: I -> T -> Prop) (HF: Basis F) (P: T -> Prop): (exists i, forall x, F i x <-> P x) -> obj.open T (basis_mixin F HF) P.
+Proof.
+  intros [i Hi].
+  exists (eq i).
+  extensionality x.
+  apply propositional_extensionality.
+  rewrite <- Hi.
+  split.
+  now intros [_ [[] Hx]].
+  intros Hx.
+  now exists i.
+Qed.
+
+Lemma basis_continue {S: obj} {I T} (F: I -> T -> Prop) (HF: Basis F) (f: S -> T): (forall P: T -> Prop, obj.open T (basis_mixin F HF) P -> open S (fun x => P (f x))) <-> (forall i, open S (fun x => F i (f x))).
+Proof.
+  split.
+  + intros H i.
+    apply H, basis_open.
+    now exists i.
+  + intros H _ [P []].
+    apply open_union.
+    intros i.
+    now apply open_filter.
+Qed.
+
+Instance open_basis (T: obj): Basis (fun P x => open T P /\ P x).
 Proof.
   split.
   + intros x.
     exists (fun _ => True); split.
     apply open_all.
     exact I.
-  + intros L R x HL HR Lx Rx.
+  + intros L R x [HL Lx] [HR Rx].
     exists (fun x => L x /\ R x); split.
+    split.
     now apply open_and.
-    easy.
+    all: easy.
 Qed.
 
-Lemma open_basis_eq (T: obj): basis_mixin (open T) (open_basis T) = obj.class T.
+Lemma open_basis_eq (T: obj): basis_mixin (fun P x => open T P /\ P x) _ = obj.class T.
 Proof.
   apply obj.mixin_eq.
   intros P.
   split.
-  + intros [F [HF HP]].
-    subst P.
-    apply open_union.
-    intros P.
-    destruct (classic (F P)) as [HP | HP].
-    specialize (HF P HP).
-    revert HF.
-    change (?P -> ?Q) with (impl P Q).
-    f_equiv.
-    extensionality x.
-    now apply propositional_extensionality.
-    now apply open_never'.
+  + revert P.
+    apply basis_continue.
+    intros i.
+    now apply open_filter.
   + intros HP.
-    exists (eq P); split.
-    now intros _ [].
-    extensionality x.
-    apply propositional_extensionality.
-    split.
-    now intros [_ [[] Hx]].
-    intros Hx.
+    apply basis_open.
     now exists P.
 Qed.
 
-Lemma basis_open {T} (F: (T -> Prop) -> Prop) (HF: is_basis F) (P: T -> Prop): F P -> obj.open T (basis_mixin F HF) P.
-Proof.
-  intros HP.
-  exists (eq P); split.
-  now intros _ [].
-  extensionality x.
-  apply propositional_extensionality.
+Program Definition sig_mixin {T: obj} (P: T -> Prop) := basis_mixin (fun Q (x: sig P) => open T Q /\ Q (proj1_sig x)) _.
+Next Obligation.
   split.
-  now intros [_ [[] Hx]].
-  intros Hx.
-  now exists P.
-Qed.
-
-Lemma basis_continue {S: obj} {T} (F: (T -> Prop) -> Prop) (HF: is_basis F) (f: S -> T): (forall P: T -> Prop, obj.open T (basis_mixin F HF) P -> open S (fun x => P (f x))) <-> (forall P: T -> Prop, F P -> open S (fun x => P (f x))).
-Proof.
-  split; intros H P.
-  + intros HP.
-    apply H.
-    exists (eq P); split.
-    now intros _ [].
-    extensionality x.
-    apply propositional_extensionality.
+  + intros x.
+    exists (fun _ => True); split.
+    apply open_all.
+    exact I.
+  + intros L R x Lx Rx.
+    exists (fun x => L x /\ R x); split.
     split.
-    now intros [_ [[] Hx]].
-    intros Hx.
-    now exists P.
-  + intros [G [HG HP]].
-    subst P.
-    enough (forall P, (exists Q, G Q /\ (fun x => Q (f x)) = P) -> open S P).
-    apply open_union' in H0.
-    revert H0.
-    change (?P -> ?Q) with (impl P Q).
-    f_equiv.
-    extensionality x.
-    apply propositional_extensionality.
-    split.
-    - intros [_ [[P [HP []]] Hx]].
-      now exists P.
-    - intros [P [HP Hx]].
-      exists (fun x => P (f x)); split.
-      now exists P.
-      exact Hx.
-    - intros _ [P [HP []]].
-      apply H, HG, HP.
-Qed.
-
-Program Definition sig_mixin {T: obj} (P: T -> Prop) := obj.Mixin (sig P)
-  (fun S => exists Q, open T Q /\ S = (fun x => Q (proj1_sig x)))
-  _ _ _.
-Next Obligation.
-  exists (fun _ => True); split.
-  apply open_all.
-  reflexivity.
-Qed.
-Next Obligation.
-  apply ex_forall in H.
-  destruct H as [G H].
-  exists (fun x => exists i, G i x); split.
-  apply open_union.
-  intros i.
-  apply H.
-  extensionality x.
-  apply propositional_extensionality.
-  f_equiv.
-  intros i.
-  now rewrite (proj2 (H i)).
-Qed.
-Next Obligation.
-  rename H into L, H3 into HL, H0 into R, H1 into HR.
-  exists (fun x => L x /\ R x); split.
-  now apply open_and.
-  reflexivity.
+    now apply open_and.
+    all: easy.
 Qed.
 
 Canonical sig {T: obj} (P: T -> Prop) := obj.Pack (sig P) (sig_mixin P).
@@ -329,7 +296,8 @@ Program Canonical proj1_sig {T: obj} {P: T -> Prop} := {|
   map := @proj1_sig T P;
 |}.
 Next Obligation.
-  now exists P0; split.
+  apply basis_open.
+  now exists P0.
 Qed.
 
 Module Open.
@@ -375,9 +343,11 @@ Program Definition Proj {T} := {|
   |};
 |}.
 Next Obligation.
-  destruct H as [Q [HQ HP]].
-  subst P.
-  now exists Q.
+  revert P H.
+  apply basis_continue.
+  intros P; simpl.
+  apply basis_open.
+  now exists P.
 Qed.
 Next Obligation.
   apply Topology.hom_eq; simpl.
@@ -783,21 +753,20 @@ Next Obligation.
 Qed.
 Canonical coprodCat := CoprodCategory.Pack cat coprodCat_mixin.
 
-Program Definition prod_mixin (T U: obj) := @basis_mixin (T * U) (fun P => exists L R, (fun p => L (fst p) /\ R (snd p)) = P /\ open T L /\ open U R) _.
+Program Definition prod_mixin (T U: obj) := basis_mixin (fun (P: (T -> Prop) * (U -> Prop)) p => (open T (fst P) /\ open U (snd P)) /\ fst P (fst p) /\ snd P (snd p)) _.
 Next Obligation.
   split.
   + intros [x y].
-    exists (fun _ => True); repeat split.
-    exists (fun _ => True), (fun _ => True); split.
-    extensionality p.
-    now apply propositional_extensionality.
+    exists (fun _ => True, fun _ => True); split.
     split; apply open_all.
-  + intros _ _ [x y] [L1 [R1 [[] [HL1 HR1]]]] [L2 [R2 [[] [HL2 HR2]]]] [Lx Ly] [Rx Ry]; simpl in *.
-    exists (fun p => (L1 (fst p) /\ L2 (fst p)) /\ R1 (snd p) /\ R2 (snd p)); split.
-    exists (fun x => L1 x /\ L2 x), (fun y => R1 y /\ R2 y); split.
-    reflexivity.
+    now split.
+  + intros [L1 R1] [L2 R2] p [H1 Hp1] [H2 Hp2]; simpl in *.
+    exists (fun x => L1 x /\ L2 x, fun y => R1 y /\ R2 y); split.
+    split.
     now split; apply open_and.
-    easy.
+    now split.
+    clear p Hp1 Hp2.
+    now intros p [_]; simpl in *.
 Qed.
 Canonical prod (T U: obj) := obj.Pack (T * U) (prod_mixin T U).
 
@@ -806,12 +775,15 @@ Program Canonical fst {T U: obj} := {|
 |}.
 Next Obligation.
   apply basis_open.
-  exists P, (fun _ => True); split.
-  extensionality p.
-  now apply propositional_extensionality.
-  split.
+  exists (P, (fun _ => True)); simpl.
+  intros p; split.
+  easy.
+  intros Hp.
+  do 2 split.
   exact H.
   apply open_all.
+  exact Hp.
+  exact I.
 Qed.
 
 Program Canonical snd {T U: obj} := {|
@@ -819,12 +791,15 @@ Program Canonical snd {T U: obj} := {|
 |}.
 Next Obligation.
   apply basis_open.
-  exists (fun _ => True), P; split.
-  extensionality p.
-  now apply propositional_extensionality.
-  split.
+  exists ((fun _ => True), P); simpl.
+  intros p; split.
+  easy.
+  intros Hp.
+  do 2 split.
   apply open_all.
   exact H.
+  exact I.
+  exact Hp.
 Qed.
 
 Program Definition prodCat_mixin := ProdCategory.Mixin cat prod
@@ -836,7 +811,9 @@ Program Definition prodCat_mixin := ProdCategory.Mixin cat prod
 Next Obligation.
   revert P H.
   apply basis_continue.
-  intros _ [P [Q [[] [HP HQ]]]].
+  intros [P Q]; simpl.
+  apply open_filter.
+  intros [HP HQ].
   apply open_and.
   all: now apply continue.
 Qed.
@@ -893,35 +870,17 @@ Next Obligation.
 Qed.
 Canonical scoprodCat := SCoprodCategory.Pack cat scoprodCat_mixin.
 
-Program Definition Prod_mixin {I} (F: I -> obj) := @basis_mixin (forall i, F i) (fun P => exists l: list ((forall i, F i) -> Prop), (fun f => forall P, List.In P l -> P f) = P /\ (forall P, List.In P l -> exists i (Q: F i -> Prop), open (F i) Q /\ (fun f => Q (f i)) = P)) _.
+Program Definition Prod_mixin {I} (F: I -> obj) := basis_mixin (fun l (f: forall i, F i) => List.Forall (fun P => (exists i (Q: F i -> Prop), open (F i) Q /\ (fun f => Q (f i)) = P) /\ P f) l) _.
 Next Obligation.
   split.
   + intros f.
-    exists (fun _ => True); split.
-    exists nil; split.
-    extensionality g.
-    now apply propositional_extensionality.
-    intros _ [].
-    easy.
-  + intros _ _ f [l [[] Hl]] [r [[] Hr]] lf rf.
-    exists (fun f => forall P, List.In P (l ++ r) -> P f); split.
+    now exists nil.
+  + intros l r f Hl Hr.
     exists (l ++ r)%list; split.
-    reflexivity.
-    intros P HP.
-    apply List.in_app_or in HP.
-    destruct HP as [HP | HP].
-    now apply Hl.
-    now apply Hr.
-    split.
-    intros P HP.
-    apply List.in_app_or in HP.
-    destruct HP as [HP | HP].
-    now apply lf.
-    now apply rf.
-    intros g Hg; split.
-    all: intros P HP.
-    all: apply Hg, List.in_or_app.
-    all: now [> left | right].
+    now apply List_Forall_app.
+    clear f Hl Hr.
+    intros f.
+    apply List_Forall_app.
 Qed.
 
 Definition Prod {I} (F: I -> obj) := obj.Pack (forall i, F i) (Prod_mixin F).
@@ -936,41 +895,29 @@ Program Definition sprodCat_mixin := SProdCategory.Mixin cat (@Prod)
 Next Obligation.
   revert P H.
   apply basis_continue.
-  intros _ [l [[] Hl]].
-  induction l; simpl.
+  intros l.
+  setoid_rewrite List_Forall_and.
+  apply open_filter.
+  intros Hl.
+  induction Hl.
   now apply open_all'.
-  specialize (IHl (fun P HP => Hl P (or_intror HP))).
-  specialize (Hl a (or_introl eq_refl)) as [i [Q [HQ Ha]]].
-  subst a.
-  apply (continue (f i)) in HQ.
-  generalize (open_and T _ _ HQ IHl).
-  change (?P -> ?Q) with (impl P Q).
-  f_equiv.
-  extensionality x.
-  apply propositional_extensionality.
-  split.
-  + intros [Qx lx] P [HP | HP].
-    now subst P.
-    now apply lx.
-  + intros H; split.
-    apply (H (fun f => Q (f i))).
-    now left.
-    intros P HP.
-    apply H.
-    now right.
+  setoid_rewrite List_Forall_cons.
+  apply open_and, IHHl.
+  destruct H as [i [Q [HQ Hx]]].
+  subst x.
+  now apply continue.
 Qed.
 Next Obligation.
   apply basis_open.
-  exists ((fun f => P (f i)) :: nil)%list; split.
-  extensionality f.
-  apply propositional_extensionality.
+  exists ((fun f => P (f i)) :: nil)%list.
+  intros f.
+  rewrite List_Forall_cons.
   split.
-  intros HP.
-  apply HP.
-  now left.
-  now intros HP _ [[]|[]].
-  intros _ [[]|[]].
+  now intros [[_ Hi] _].
+  intros Hi.
+  repeat split; [..|easy].
   now exists i, P.
+  exact Hi.
 Qed.
 Next Obligation.
   split.
@@ -984,6 +931,87 @@ Next Obligation.
     now apply hom_eq.
 Qed.
 Canonical sprodCat := SProdCategory.Pack cat sprodCat_mixin.
+
+Program Definition Pull_mixin {X Y Z: obj} (f: X ~> Z) (g: Y ~> Z) := basis_mixin (fun (P: ((X -> Prop) * (Y -> Prop))) (p: PullTyp f g) => (open X (Datatypes.fst P) /\ open Y (Datatypes.snd P)) /\ Datatypes.fst P (pfst p) /\ Datatypes.snd P (psnd p)) _.
+Next Obligation.
+  split.
+  + intros p.
+    exists (fun _ => True, fun _ => True); split.
+    split; apply open_all.
+    split; exact I.
+  + intros [L1 R1] [L2 R2] p [H1 Hp1] [H2 Hp2]; simpl in *.
+    exists (fun x => L1 x /\ L2 x, fun y => R1 y /\ R2 y); split.
+    split.
+    now split; apply open_and.
+    now split.
+    clear p Hp1 Hp2.
+    now intros p [_ [Hp1 Hp2]]; simpl in *.
+Qed.
+Canonical Pull {X Y Z: obj} (f: X ~> Z) (g: Y ~> Z) := obj.Pack (PullTyp f g) (Pull_mixin f g).
+
+Program Canonical pfst {X Y Z: obj} {f: X ~> Z} {g: Y ~> Z} := {|
+  map := @pfst X Y Z f g;
+|}.
+Next Obligation.
+  apply basis_open.
+  exists (P, fun _ => True).
+  intros p; split; simpl.
+  now intros [_ [Hp _]].
+  intros Hp; repeat split.
+  exact H.
+  apply open_all.
+  exact Hp.
+Qed.
+
+Program Canonical psnd {X Y Z: obj} {f: X ~> Z} {g: Y ~> Z} := {|
+  map := @psnd X Y Z f g;
+|}.
+Next Obligation.
+  apply basis_open.
+  exists (fun _ => True, P).
+  intros p; split; simpl.
+  now intros [_ [_ Hp]].
+  intros Hp; repeat split.
+  apply open_all.
+  exact H.
+  exact Hp.
+Qed.
+
+Program Definition pullCat_mixin := PullCategory.Mixin cat (@Pull)
+  (@pfst) (@psnd)
+  _
+  (fun X Y Z V f g p1 p2 H => {|
+    map x := {|
+      PullTyp.pfst := p1 x;
+      PullTyp.psnd := p2 x;
+      PullTyp.comm := f_equal (fun f => map f x) H;
+    |};
+  |}) _ _ _.
+Next Obligation.
+  apply hom_eq, PullTyp.comm.
+Qed.
+Next Obligation.
+  revert P H0.
+  apply basis_continue.
+  intros [L R]; simpl.
+  apply open_filter.
+  intros [HL HR].
+  apply open_and.
+  all: now apply continue.
+Qed.
+Next Obligation.
+  now apply hom_eq.
+Qed.
+Next Obligation.
+  now apply hom_eq.
+Qed.
+Next Obligation.
+  apply hom_eq; simpl.
+  intros e.
+  now apply PullTyp.t_eq.
+Qed.
+
+Canonical pullCat := PullCategory.Pack cat pullCat_mixin.
 
 Program Canonical Forget: Functor cat Typ := {|
   fobj := obj.sort;

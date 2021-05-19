@@ -88,21 +88,7 @@ Next Obligation.
 Qed.
 Canonical cat := Category.Pack obj cat_mixin.
 
-Program Definition exp_mixin (T S: obj) := obj.Mixin (hom S T) (fun f g => forall x, f x <= g x) _.
-Next Obligation.
-  split.
-  easy.
-  intros f g h H1 H2 x.
-  now transitivity (g x).
-Qed.
-Canonical exp (T S: obj) := obj.Pack (hom S T) (exp_mixin T S).
-
-Instance map_monotone S T: Proper (le ==> le ==> le) (@map S T).
-Proof.
-  intros f g Hf x y Hx.
-  rewrite <- (Hf y).
-  now apply monotone.
-Qed.
+Instance map_monotone S T f: Proper (le ==> le) (@map S T f) := monotone f.
 
 Program Definition dual_mixin (P: obj) := obj.Mixin P (fun x y => y <= x) _.
 Next Obligation.
@@ -369,6 +355,15 @@ Canonical sprodCat := SProdCategory.Pack cat sprodCat_mixin.
 
 Definition cartCat_class := CartCategory.Class cat topCat_mixin prodCat_mixin.
 Canonical cartCat := CartCategory.Pack cat cartCat_class.
+
+Program Definition exp_mixin (T S: obj) := obj.Mixin (hom S T) (fun f g => forall x, f x <= g x) _.
+Next Obligation.
+  split.
+  easy.
+  intros f g h H1 H2 x.
+  now transitivity (g x).
+Qed.
+Canonical exp (T S: obj) := obj.Pack (hom S T) (exp_mixin T S).
 
 Program Definition expCat_mixin := ExpCategory.Mixin prodCat
   exp
